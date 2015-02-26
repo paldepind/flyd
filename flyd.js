@@ -1,3 +1,13 @@
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory); // AMD. Register as an anonymous module.
+  } else if (typeof exports === 'object') {
+    module.exports = factory(); // NodeJS
+  } else { // Browser globals (root is window)
+    root.returnExports = factory();
+  }
+}(this, function () {
+
 'use strict';
 
 function isFunction(obj) {
@@ -112,5 +122,5 @@ function pipe(f) {
   return newPipe;
 }
 
-exports.stream = stream;
-exports.pipe = pipe;
+return {stream: stream, pipe: pipe};
+}));
