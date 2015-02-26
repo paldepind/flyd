@@ -1,6 +1,6 @@
 var assert = require('assert');
 
-var lib = require('../snapview.js');
+var lib = require('../flyd.js');
 var stream = lib.stream;
 var pipe = lib.pipe;
 
@@ -78,6 +78,17 @@ describe('pipe', function() {
     assert.equal(called, 6);
     assert.equal(sum(), 8);
   });
+  it('is not called until explicit dependencies have value', function() {
+    var x = stream();
+    var y = stream();
+    var called = 0;
+    var sum = pipe([x, y], function(s) {
+      called++;
+      return x() + y();
+    });
+    x(2); x(1); y(2); y(4); x(2);
+    assert.equal(called, 3);
+  });
   it('pipes can lead into other pipes', function() {
     var x = stream(3);
     var y = stream(4);
@@ -151,6 +162,13 @@ describe('pipe', function() {
       thrown = true;
     }
     assert.equal(errMsg, 'Circular dependency detected');
+  });
+  it('can get its own value', function() {
+    var num = stream();
+    var sum = pipe(function(sum) {
+      return (sum() || 0) + num();
+    });
+    num(12);
   });
   it('handles dependencies when pipes are triggered in pipes', function() {
     var x = stream(4);

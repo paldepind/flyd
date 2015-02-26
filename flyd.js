@@ -1,13 +1,25 @@
 'use strict';
 
+function isFunction(obj) {
+  return !!(obj && obj.constructor && obj.call && obj.apply);
+}
+
+function isUndefined(v) {
+  return v === undefined;
+}
+
 // Globals
 var curPipe;
 var nextId = 0;
 
 var queue = [];
 
-function isFunction(obj) {
-  return !!(obj && obj.constructor && obj.call && obj.apply);
+function flushQueue() {
+  for (var q; q = queue.pop();) {
+    for (var i = 0; i < q.l.length; ++i) {
+      q.l[i](q.v);
+    }
+  }
 }
 
 function addDependency(pipe, stream) {
@@ -18,7 +30,9 @@ function addDependency(pipe, stream) {
 }
 
 function checkCirc(pipe, id) {
-  if (id in pipe.deps) throw new Error('Circular dependency detected');
+  if (pipe.deps[id]) {
+    throw new Error('Circular dependency detected');
+  }
 }
 
 function removeListener(listeners, cb) {
@@ -31,7 +45,7 @@ function stream(val) {
   function streamFunc(n) {
     if (arguments.length === 1) {
       val = n;
-      if (curPipe) {
+      if (!isUndefined(curPipe)) {
         checkCirc(curPipe, streamFunc.id);
         queue.push({v: n, l: streamFunc.listeners});
       } else {
@@ -49,36 +63,49 @@ function stream(val) {
   return streamFunc;
 }
 
-function updatePipe(pipe, f) {
-  curPipe = pipe;
-  var returnVal = f(pipe);
-  curPipe = undefined;
-  for (var q; q = queue.pop();) {
-    q.l.forEach(function(f) { f(q.v); });
+function initialDepsNotMet(pipe) {
+  if (pipe.initialDeps) {
+    var met = pipe.initialDeps.every(function(stream) {
+      return !isUndefined(stream());
+    });
+    if(met) pipe.initialDeps = undefined;
   }
+  return !isUndefined(pipe.initialDeps);
+}
+
+function updatePipe(pipe, cb) {
+  if (initialDepsNotMet(pipe)) return;
+  curPipe = pipe;
+  var returnVal = cb(pipe);
+  curPipe = undefined;
   if (returnVal !== undefined) pipe(returnVal);
+  flushQueue();
 }
 
 function destroyPipe(pipe) {
   if (pipe.listeners.length !== 0) {
     throw new Error('Trying to destroy pipe with listeners attached');
-  } else {
-    for (var id in pipe.deps)
-      removeListener(pipe.deps[id], pipe.update);
+  }
+  for (var id in pipe.deps) {
+    if (pipe.deps[id]) removeListener(pipe.deps[id], pipe.update);
   }
 }
 
 function pipe(f) {
-  var newPipe = stream(), dynamicDeps = true;
+  var newPipe = stream();
   newPipe.deps = {};
+  newPipe.initialDeps = undefined;
+  newPipe.deps[newPipe.id] = false;
   newPipe.dynamicDeps = true;
   newPipe.update = updatePipe.bind(null, newPipe, f);
   if (arguments.length === 2) {
     f = arguments[1];
     newPipe.update = updatePipe.bind(null, newPipe, f);
-    arguments[0].forEach(addDependency.bind(null, newPipe));
+    newPipe.initialDeps = arguments[0];
+    arguments[0].forEach(function(stream) {
+      addDependency(newPipe, stream);
+    });
     newPipe.dynamicDeps = false;
-    dynamicDeps = false;
   }
   newPipe.destroy = destroyPipe.bind(null, newPipe);
   newPipe.update();
