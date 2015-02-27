@@ -4,7 +4,7 @@
   } else if (typeof exports === 'object') {
     module.exports = factory(); // NodeJS
   } else { // Browser globals (root is window)
-    root.returnExports = factory();
+    root.flyd = factory();
   }
 }(this, function () {
 
