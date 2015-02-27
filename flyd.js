@@ -51,6 +51,11 @@ function removeListener(listeners, cb) {
   listeners.length--;
 }
 
+function map(f) {
+  var stream = this;
+  return pipe(function() { return f(stream()); });
+}
+
 function stream(val) {
   function streamFunc(n) {
     if (arguments.length === 1) {
@@ -70,6 +75,7 @@ function stream(val) {
   }
   streamFunc.listeners = [];
   streamFunc.id = nextId++;
+  streamFunc.map = map;
   return streamFunc;
 }
 

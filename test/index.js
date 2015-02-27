@@ -20,6 +20,32 @@ describe('stream', function() {
     var s = stream();
     assert.equal(s, s(23));
   });
+  describe('map', function() {
+    it('maps a function', function() {
+      var x = stream(3);
+      var doubleX = x.map(function(x) { return 2*x; });
+      assert.equal(doubleX(), 6);
+      x(1);
+      assert.equal(doubleX(), 2);
+    });
+    it('returns equivalent stream when mapping identity', function() {
+      var x = stream(3);
+      var x2 = x.map(function(a) { return a; });
+      assert.equal(x2(), x());
+      x('foo');
+      assert.equal(x2(), x());
+    });
+    it('is compositive', function() {
+      function f(x) { return x * 2; }
+      function g(x) { return x + 4; }
+      var x = stream(3);
+      var s1 = x.map(g).map(f);
+      var s2 = x.map(function(x) { return f(g(x)); });
+      assert.equal(s1(), s2());
+      x(12);
+      assert.equal(s1(), s2());
+    });
+  });
 });
 describe('pipe', function() {
   it('can set result by calling callback', function() {
@@ -168,7 +194,8 @@ describe('pipe', function() {
     var sum = pipe(function(sum) {
       return (sum() || 0) + num();
     });
-    num(12);
+    num(2)(3)(8)(7);
+    assert.equal(sum(), 20);
   });
   it('handles dependencies when pipes are triggered in pipes', function() {
     var x = stream(4);
