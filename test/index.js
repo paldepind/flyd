@@ -46,6 +46,42 @@ describe('stream', function() {
       assert.equal(s1(), s2());
     });
   });
+  describe('ap', function() {
+    it('applies functions in stream', function() {
+      var a = stream(function(x) { return 2*x; });
+      var v = stream(3);
+      var s = a.ap(v);
+      assert.equal(s(), 6);
+      a(function(x) { return x/3; });
+      assert.equal(s(), 1);
+      v(9);
+      assert.equal(s(), 3);
+    });
+    it('is compositive', function() {
+      var a = stream(function(x) { return x * 2; });
+      var u = stream(function(x) { return x + 5; });
+      var v = stream(8);
+      var s1 = a.map(function(f) {
+        return function(g) {
+          return function(x) {
+            return f(g(x));
+          };
+        };
+      }).ap(u).ap(v);
+      var s2 = a.ap(u.ap(v));
+      assert.equal(s1(), 26);
+      assert.equal(s2(), 26);
+      a(function(x) { return x * 4; });
+      assert.equal(s1(), 52);
+      assert.equal(s2(), 52);
+      u(function(x) { return x / 8; });
+      assert.equal(s1(), 4);
+      assert.equal(s2(), 4);
+      v(24);
+      assert.equal(s1(), 12);
+      assert.equal(s2(), 12);
+    });
+  });
 });
 describe('pipe', function() {
   it('can set result by calling callback', function() {

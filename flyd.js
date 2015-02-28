@@ -56,6 +56,11 @@ function map(f) {
   return pipe(function() { return f(stream()); });
 }
 
+function ap(s2) {
+  var s1 = this;
+  return pipe(function() { return s1()(s2()); });
+}
+
 function stream(val) {
   function streamFunc(n) {
     if (arguments.length === 1) {
@@ -76,6 +81,7 @@ function stream(val) {
   streamFunc.listeners = [];
   streamFunc.id = nextId++;
   streamFunc.map = map;
+  streamFunc.ap = ap;
   return streamFunc;
 }
 
