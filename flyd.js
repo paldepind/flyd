@@ -19,7 +19,7 @@ function isUndefined(v) {
 }
 
 // Globals
-var curPipe;
+var curStream;
 var nextId = 0;
 
 var queue = [];
@@ -32,15 +32,15 @@ function flushQueue() {
   }
 }
 
-function addDependency(pipe, stream) {
-  if (!(stream.id in pipe.deps)) {
-    pipe.deps[stream.id] = stream.listeners;
-    stream.listeners.push(pipe.update);
+function addDependency(to, from) {
+  if (!(from.id in to.deps)) {
+    to.deps[from.id] = from.listeners;
+    from.listeners.push(to.update);
   }
 }
 
-function checkCirc(pipe, id) {
-  if (pipe.deps[id]) {
+function checkCirc(stream, id) {
+  if (stream.deps[id]) {
     throw new Error('Circular dependency detected');
   }
 }
@@ -52,87 +52,91 @@ function removeListener(listeners, cb) {
 }
 
 function map(f) {
-  var stream = this;
-  return pipe(function() { return f(stream()); });
+  var s = this;
+  return stream(function() { return f(s()); });
 }
 
 function ap(s2) {
   var s1 = this;
-  return pipe(function() { return s1()(s2()); });
+  return stream(function() { return s1()(s2()); });
 }
 
-function stream(val) {
-  function streamFunc(n) {
-    if (arguments.length === 1) {
-      val = n;
-      if (!isUndefined(curPipe)) {
-        checkCirc(curPipe, streamFunc.id);
-        queue.push({v: n, l: streamFunc.listeners});
-      } else {
-        streamFunc.listeners.forEach(function(f) { f(n); });
-      }
-      return streamFunc;
-    } else {
-      if (curPipe && curPipe.dynamicDeps)
-        addDependency(curPipe, streamFunc);
-      return val;
-    }
-  }
-  streamFunc.listeners = [];
-  streamFunc.id = nextId++;
-  streamFunc.map = map;
-  streamFunc.ap = ap;
-  return streamFunc;
-}
-
-function initialDepsNotMet(pipe) {
-  if (pipe.initialDeps) {
-    var met = pipe.initialDeps.every(function(stream) {
+function initialDepsNotMet(stream) {
+  if (stream.initialDeps) {
+    var met = stream.initialDeps.every(function(stream) {
       return !isUndefined(stream());
     });
-    if(met) pipe.initialDeps = undefined;
+    if(met) stream.initialDeps = undefined;
   }
-  return !isUndefined(pipe.initialDeps);
+  return !isUndefined(stream.initialDeps);
 }
 
-function updatePipe(pipe, cb) {
-  if (initialDepsNotMet(pipe)) return;
-  curPipe = pipe;
-  var returnVal = cb(pipe);
-  curPipe = undefined;
-  if (returnVal !== undefined) pipe(returnVal);
+function updateStream(stream, cb) {
+  if (initialDepsNotMet(stream)) return;
+  curStream = stream;
+  var returnVal = cb(stream);
+  curStream = undefined;
+  if (returnVal !== undefined) stream(returnVal);
   flushQueue();
 }
 
-function destroyPipe(pipe) {
-  if (pipe.listeners.length !== 0) {
-    throw new Error('Trying to destroy pipe with listeners attached');
+function destroystream(stream) {
+  if (stream.listeners.length !== 0) {
+    throw new Error('Trying to destroy stream with listeners attached');
   }
-  for (var id in pipe.deps) {
-    if (pipe.deps[id]) removeListener(pipe.deps[id], pipe.update);
+  for (var id in stream.deps) {
+    if (stream.deps[id]) removeListener(stream.deps[id], stream.update);
   }
 }
 
-function pipe(f) {
-  var newPipe = stream();
-  newPipe.deps = {};
-  newPipe.initialDeps = undefined;
-  newPipe.deps[newPipe.id] = false;
-  newPipe.dynamicDeps = true;
-  newPipe.update = updatePipe.bind(null, newPipe, f);
+function stream(arg) {
+  var val;
+  function s(n) {
+    if (arguments.length === 1) {
+      val = n;
+      if (!isUndefined(curStream)) {
+        checkCirc(curStream, s.id);
+        queue.push({v: n, l: s.listeners});
+      } else {
+        s.listeners.forEach(function(f) { f(n); });
+      }
+      return s;
+    } else {
+      if (curStream && curStream.dynamicDeps) {
+        addDependency(curStream, s);
+      }
+      return val;
+    }
+  }
+  s.listeners = [];
+  s.id = nextId++;
+  s.map = map;
+  s.ap = ap;
+  s.deps = {};
+  s.initialDeps = undefined;
+  s.deps[s.id] = false;
+  s.dynamicDeps = true;
+  s.destroy = destroystream.bind(null, s);
+
   if (arguments.length === 2) {
-    f = arguments[1];
-    newPipe.update = updatePipe.bind(null, newPipe, f);
-    newPipe.initialDeps = arguments[0];
-    arguments[0].forEach(function(stream) {
-      addDependency(newPipe, stream);
-    });
-    newPipe.dynamicDeps = false;
+    s.initialDeps = arg;
+    arg = arguments[1];
   }
-  newPipe.destroy = destroyPipe.bind(null, newPipe);
-  newPipe.update();
-  return newPipe;
+  if (isFunction(arg)) {
+    s.update = updateStream.bind(null, s, arg);
+    if (s.initialDeps) {
+      s.initialDeps.forEach(function(stream) {
+        addDependency(s, stream);
+      });
+      s.dynamicDeps = false;
+    }
+    s.update();
+  } else {
+    val = arg;
+  }
+
+  return s;
 }
 
-return {stream: stream, pipe: pipe};
+return {stream: stream};
 }));

@@ -2,7 +2,6 @@ var assert = require('assert');
 
 var lib = require('../flyd.js');
 var stream = lib.stream;
-var pipe = lib.pipe;
 
 describe('stream', function() {
   it('can be set with initial value', function() {
@@ -48,7 +47,9 @@ describe('stream', function() {
   });
   describe('ap', function() {
     it('applies functions in stream', function() {
-      var a = stream(function(x) { return 2*x; });
+      var a = stream(function() {
+        return function(x) { return 2*x; };
+      });
       var v = stream(3);
       var s = a.ap(v);
       assert.equal(s(), 6);
@@ -58,8 +59,12 @@ describe('stream', function() {
       assert.equal(s(), 3);
     });
     it('is compositive', function() {
-      var a = stream(function(x) { return x * 2; });
-      var u = stream(function(x) { return x + 5; });
+      var a = stream(function() {
+        return function(x) { return x * 2; };
+      });
+      var u = stream(function() {
+        return function(x) { return x + 5; };
+      });
       var v = stream(8);
       var s1 = a.map(function(f) {
         return function(g) {
@@ -82,12 +87,10 @@ describe('stream', function() {
       assert.equal(s2(), 12);
     });
   });
-});
-describe('pipe', function() {
   it('can set result by calling callback', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = pipe(function(s) {
+    var sum = stream(function(s) {
       s(x() + y());
     });
     assert.equal(sum(), x() + y());
@@ -95,7 +98,7 @@ describe('pipe', function() {
   it('can set result by returning value', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = pipe(function() {
+    var sum = stream(function() {
       return x() + y();
     });
     assert.equal(sum(), x() + y());
@@ -103,7 +106,7 @@ describe('pipe', function() {
   it('is updated when dependencies change', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = pipe(function(s) {
+    var sum = stream(function(s) {
       s(x() + y());
     });
     assert.equal(sum(), x() + y()); // 7
@@ -116,7 +119,7 @@ describe('pipe', function() {
     var x = stream(3);
     var y = stream(4);
     var called = 0;
-    var sum = pipe(function(s) {
+    var sum = stream(function(s) {
       called++;
       y(x() + 5);
     });
@@ -130,7 +133,7 @@ describe('pipe', function() {
     var x = stream(3);
     var y = stream(4);
     var called = 0;
-    var sum = pipe([x], function(s) {
+    var sum = stream([x], function(s) {
       called++;
       return x() + y();
     });
@@ -144,23 +147,23 @@ describe('pipe', function() {
     var x = stream();
     var y = stream();
     var called = 0;
-    var sum = pipe([x, y], function(s) {
+    var sum = stream([x, y], function(s) {
       called++;
       return x() + y();
     });
     x(2); x(1); y(2); y(4); x(2);
     assert.equal(called, 3);
   });
-  it('pipes can lead into other pipes', function() {
+  it('streams can lead into other streams', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = pipe(function() {
+    var sum = stream(function() {
       return x() + y();
     });
-    var twiceSum = pipe(function() {
+    var twiceSum = stream(function() {
       return sum() * 2;
     });
-    var sumPlusDoubleSum = pipe(function() {
+    var sumPlusDoubleSum = stream(function() {
       return twiceSum() + sum();
     });
     x(12);
@@ -171,10 +174,10 @@ describe('pipe', function() {
     assert.equal(sumPlusDoubleSum(), sum() * 3);
     assert.equal(sumPlusDoubleSum(), (2 + 3) * 3);
   });
-  it('can destroy pipe', function() {
+  it('can destroy stream', function() {
     var x = stream(3);
     var y = stream(2);
-    var sum = pipe(function() {
+    var sum = stream(function() {
       return y() * x();
     });
     assert.equal(y.listeners.length, 1);
@@ -183,12 +186,12 @@ describe('pipe', function() {
     assert.equal(y.listeners.length, 0);
     assert.equal(x.listeners.length, 0);
   });
-  it('can not destroy pipe with listeners', function() {
+  it('can not destroy stream with listeners', function() {
     var x = stream(3), thrown;
-    var x2 = pipe(function() {
+    var x2 = stream(function() {
       return x() * 2;
     });
-    var x4 = pipe(function() {
+    var x4 = stream(function() {
       return x2() * 2;
     });
     assert.equal(x4(), 12);
@@ -202,7 +205,7 @@ describe('pipe', function() {
   it('detects circular dependencies when get then set', function() {
     var x = stream(3), errMsg;
     try {
-      var xTwice = pipe(function() {
+      var xTwice = stream(function() {
         return x(x() * 2);
       });
     } catch(e) {
@@ -214,7 +217,7 @@ describe('pipe', function() {
   it('detects circular dependencies', function() {
     var x = stream(3), errMsg;
     try {
-      var xTwice = pipe(function() {
+      var xTwice = stream(function() {
         x(3);
         return x();
       });
@@ -227,20 +230,20 @@ describe('pipe', function() {
   });
   it('can get its own value', function() {
     var num = stream();
-    var sum = pipe(function(sum) {
+    var sum = stream(function(sum) {
       return (sum() || 0) + num();
     });
     num(2)(3)(8)(7);
     assert.equal(sum(), 20);
   });
-  it('handles dependencies when pipes are triggered in pipes', function() {
+  it('handles dependencies when streams are triggered in streams', function() {
     var x = stream(4);
     var y = stream(3);
     var z = stream(1);
-    var doubleX = pipe(function() {
+    var doubleX = stream(function() {
       return x() * 2;
     });
-    var setAndSum = pipe(function() {
+    var setAndSum = stream(function() {
       x(3);
       return z() + y();
     });
@@ -251,11 +254,11 @@ describe('pipe', function() {
     var order = [];
     var x = stream(4);
     var y = stream(3);
-    var doubleX = pipe(function() {
+    var doubleX = stream(function() {
       if (x() === 3) order.push(2);
       return x() * 2;
     });
-    var setAndY = pipe(function() {
+    var setAndY = stream(function() {
       x(3);
       order.push(1);
       return y();
@@ -267,11 +270,11 @@ describe('pipe', function() {
     var order = [];
     var x = stream(4);
     var y = stream(3);
-    var doubleX = pipe(function() {
+    var doubleX = stream(function() {
       if (x() === 3) order.push(2);
       return x() * 2;
     });
-    var setAndY = pipe([y], function() {
+    var setAndY = stream([y], function() {
       x(3);
       order.push(1);
       return y();
