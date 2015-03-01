@@ -55,9 +55,9 @@ But, to your great disappointment it seems as if the rest of your program don't
 care the slightest about the fact that you've changed `x`! The sum is still
 `sum === 7` and the HTML element keeps showing a big fat __7__ to your face.
 
-Wouldn't it be great if you chould just define a special kind of variables that
-whould just sorta _flow_ like _streams_ through your program? You chould define
-a sum that whould not just equal the current values of `x` and `y` but instead whould
+Wouldn't it be great if you could just define a special kind of variables that
+would just sorta _flow_ like _streams_ through your program? You could define
+a sum that would not just equal the current values of `x` and `y` but instead would
 depend on them so that it's value _changed over time_ if its dependents did?
 
 Well, with Flyd you can do just that!
@@ -66,8 +66,8 @@ Well, with Flyd you can do just that!
 
 ## Tutorial
 
-Flyd gives you two functions as the building blocks for creating reactive dataflows.
-The first, `stream`, creates a representation of a value that changes over time.
+Flyd gives you streams as the building block for creating reactive dataflows.
+The function `stream` creates a representation of a value that changes over time.
 At first sight it works a bit like a getter-setter:
 
 ```javascript
@@ -81,12 +81,9 @@ number(7); // returns 7
 number(); // returns 7
 ```
 
-The real magic is introduces by the second building block `pipe`! A pipe is a
-stream that depends on other streams. It has a function that produces a value
-based on the streams on which it dependents.
-
-To rephrase, `pipe` creates streams just like `stream` does. But you don't set
-their values. Instead there value is calculated based on other streams.
+Streams can depend on other streams. Instead of calling `stream` with a value
+as in the above example we can pass it a function. The function will calculate
+a value based on other streams.
 
 ```javascript
 // Create two streams of numbers
@@ -94,7 +91,7 @@ var x = stream(4);
 var y = stream(6);
 // Create a stream that depends on the two previous streams
 // and with its value given by the two added together.
-var sum = pipe(function() {
+var sum = stream(function() {
   return x() + y();
 });
 // `sum` is automatically recalculated whenever the streams it depends on changes.
@@ -104,13 +101,13 @@ y(8);
 sum(); // returns 20
 ```
 
-Since pipes are streams a pipe can depend on other pipes.
+Streams can depend on other streams with dependencies.
 
 ```javascript
 // Create two streams of numbers
 var x = stream(4);
 var y = stream(6);
-var doubleX = pipe(function() {
+var doubleX = stream(function() {
   return 2 * x();
 });
 var doubleXPlusY(function() {
@@ -120,3 +117,38 @@ doubleXPlusY(); // returns 12
 x(2);
 doubleXPlusY(); // returns 10
 ```
+
+## API
+
+### stream
+
+Creates a new stream.
+
+__Arguments__
+  * \[`dependencies`\] (array) - The streams on which this stream should initially depend.
+  * `body` (function|\*) - The function body of the stream or it initial value.
+
+__Returns__
+
+The created stream.
+
+###stream()
+
+Returns the last value of the stream.
+
+###stream(val)
+
+Pushes a value down the stream.
+
+###stream.map(f)
+
+Returns a new stream identical to the original exept every
+value will be passed through `f`.
+
+###stream1.ap(stream2)
+
+`stream1` must be a stream of functions.
+
+Returns a new stream which is the result of applying the
+functions from `stream1` to the values in `stream2`.
+
