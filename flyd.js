@@ -61,6 +61,10 @@ function ap(s2) {
   return stream(function() { return s1()(s2()); });
 }
 
+function of(v) {
+  return stream()(v);
+}
+
 function initialDepsNotMet(stream) {
   if (stream.initialDeps) {
     var met = stream.initialDeps.every(function(stream) {
@@ -80,7 +84,7 @@ function updateStream(stream, cb) {
   flushQueue();
 }
 
-function destroystream(stream) {
+function destroyStream(stream) {
   if (stream.listeners.length !== 0) {
     throw new Error('Trying to destroy stream with listeners attached');
   }
@@ -112,11 +116,12 @@ function stream(arg) {
   s.id = nextId++;
   s.map = map;
   s.ap = ap;
+  s.of = of;
   s.deps = {};
   s.initialDeps = undefined;
   s.deps[s.id] = false;
   s.dynamicDeps = true;
-  s.destroy = destroystream.bind(null, s);
+  s.destroy = destroyStream.bind(null, s);
 
   if (arguments.length === 2) {
     s.initialDeps = arg;
