@@ -87,6 +87,32 @@ describe('stream', function() {
       assert.equal(s2(), 12);
     });
   });
+  describe('of', function() {
+    it('returns a stream with the passed value', function() {
+      var s1 = stream(2);
+      var s2 = s1.of(3);
+      assert.equal(s2(), 3);
+    });
+    it('has identity', function() {
+      var a = stream();
+      var id = function(a) { return a; };
+      var v = stream(12);
+      assert.equal(a.of(id).ap(v)(), v());
+    });
+    it('is homomorphic', function() {
+      var a = stream(0);
+      var f = function(x) { return 2*x; };
+      var x = 12;
+      assert.equal(a.of(f).ap(a.of(x))(), a.of(f(x))());
+    });
+    it('is interchangeable', function() {
+      var y = 7;
+      var a = stream();
+      var u = stream()(function(x) { return 3*x; });
+      assert.equal(u.ap(a.of(y))(),
+                   a.of(function(f) { return f(y); }).ap(u)());
+    });
+  });
   it('can set result by calling callback', function() {
     var x = stream(3);
     var y = stream(4);
