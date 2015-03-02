@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sum – a Flyd demo</title>
+    <link href='http://fonts.googleapis.com/css?family=Inconsolata|Josefin+Sans:400,300' rel='stylesheet' type='text/css'>
+    <style>
+    * {
+      font-family: 'Josefin Sans', sans-serif;
+    }
+    body {
+      text-align: center;
+      font-size: 1.0em;
+    }
+    .column {
+      text-align: left;
+    }
+    @media (min-width: 400px) {
+      .column {
+        display: inline-block;
+        width: 21em;
+        vertical-align: top;
+        max-width: 100%;
+      }
+    }
+    @media (min-width: 450px) {
+      .center-column {
+         width: 5em;
+      }
+    }
+    @media (min-width: 800px) {
+      .right-column {
+        text-align: left;
+        margin-left: .4em;
+      }
+      .center-column {
+        text-align: center;
+      }
+      .left-column {
+        text-align: right;
+        margin-right: .4em;
+      }
+    }
+    @media (min-width: 900px) {
+      body { font-size: 1.1em; }
+    }
+    @media (min-width: 950px) {
+      body { font-size: 1.2em; }
+    }
+    @media (min-width: 1050px) {
+      body { font-size: 1.3em; }
+    }
+    @media (min-width: 1200px) {
+      body { font-size: 1.4em; }
+    }
+    a, code {
+      transition: .1s ease all;
+    }
+    h1 {
+      font-weight: 300;
+      font-size: 3.6em;
+    }
+    .title-container {
+    }
+    h1, h2, p {
+      margin: 15px 0;
+    }
+    .title-container h1 {
+      margin-top: 28px;
+    }
+    .title-container h2 {
+      font-weight: 300;
+      font-size: 1.8em;
+    }
+    code {
+      font-family: 'Inconsolata';
+      background: #ececec;
+      padding: 0 .1em;
+    }
+    .code-block {
+      white-space: pre;
+      padding: .5em;
+      display: block;
+      font-size: .9em;
+    }
+    #sumBox {
+      font-weight: bold;
+    }
+    .a-exe a {
+      cursor: pointer;
+      font-family: 'Inconsolata';
+      color: #6851ff;
+      background: #ececec;
+      padding: 0 .1em;
+    }
+    .a-exe {
+      -moz-user-select: none;
+      -ms-user-select: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .a-exe a:active {
+      color: yellow;
+      background: black;
+    }
+    </style>
+    <script type="text/javascript" src="../../flyd.js"></script>
+    <script type="text/javascript">
+    var stream = flyd.stream
+    document.addEventListener('DOMContentLoaded', function() {
+      var magicSeq = 'abbaba'
+      var setMsg = (msg) => message.innerHTML = msg;
+      var click = stream((click) => {
+        btnA.addEventListener('click', () => click('a'));
+        btnB.addEventListener('click', () => click('b'));
+      });
+      var corrects = stream([click], () => {
+        var l = corrects().length, correct = click() === magicSeq[l]
+        return !correct && l > 0       ? []
+             : !correct && l === 0     ? undefined
+             : l + 1 < magicSeq.length ? corrects().concat(click())
+                                       : (setMsg('Combination unlocked!'), []);
+      })([])
+      var scheduled = stream(() => {
+        if (corrects().length === 1) return setTimeout(() => {
+          setMsg('You\'re not fast enough, try again');
+          corrects([])
+        }, 5000)
+      })
+      stream(() => console.log(corrects()));
+      stream(() => {
+        if (corrects().length === 0 && scheduled.val) clearTimeout(scheduled.val)
+      })
+    })
+    </script>
+  </head>
+  <body>
+    <button id="btnA">A</button>
+    <button id="btnB">B</button>
+    <div id="message"></div>
+  </body>
+</html>

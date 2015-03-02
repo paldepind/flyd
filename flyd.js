@@ -94,10 +94,9 @@ function destroyStream(stream) {
 }
 
 function stream(arg) {
-  var val;
   function s(n) {
     if (arguments.length === 1) {
-      val = n;
+      s.val = n;
       if (!isUndefined(curStream)) {
         checkCirc(curStream, s.id);
         queue.push({v: n, l: s.listeners});
@@ -109,9 +108,10 @@ function stream(arg) {
       if (curStream && curStream.dynamicDeps) {
         addDependency(curStream, s);
       }
-      return val;
+      return s.val;
     }
   }
+  s.val = undefined;
   s.listeners = [];
   s.id = nextId++;
   s.map = map;
@@ -137,9 +137,8 @@ function stream(arg) {
     }
     s.update();
   } else {
-    val = arg;
+    s.val = arg;
   }
-
   return s;
 }
 
