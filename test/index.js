@@ -1,4 +1,5 @@
 var assert = require('assert');
+var Promise = require('bluebird');
 
 var lib = require('../flyd.js');
 var stream = lib.stream;
@@ -307,5 +308,29 @@ describe('stream', function() {
     });
     assert.equal(order[0], 1);
     assert.equal(order[1], 2);
+  });
+  describe('Promise integration', function() {
+    it('pushes result of promise down the stream', function(done) {
+      var s = stream();
+      stream([s], function() {
+        assert.equal(s(), 12);
+        done();
+      });
+      s(Promise.resolve(12));
+    });
+    it('recursively unpacks promise', function(done) {
+      var s = stream();
+      stream([s], function() {
+        assert.equal(s(), 12);
+        done();
+      });
+      s(new Promise(function(res, rej) {
+        setTimeout(function() {
+          res(new Promise(function(res, rej) {
+            setTimeout(res.bind(null, 12));
+          }));
+        }, 20);
+      }));
+    });
   });
 });

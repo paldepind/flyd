@@ -96,6 +96,10 @@ function destroyStream(stream) {
 function stream(arg) {
   function s(n) {
     if (arguments.length === 1) {
+      if (!isUndefined(n) && isFunction(n.then)) {
+        n.then(s);
+        return;
+      }
       s.val = n;
       if (!isUndefined(curStream)) {
         checkCirc(curStream, s.id);
