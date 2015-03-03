@@ -47,6 +47,16 @@ describe('stream', function() {
       assert.equal(s1(), s2());
     });
   });
+  describe('reduce', function() {
+    it('can sum streams of integers', function() {
+      var numbers = stream();
+      var sum = numbers.reduce(function(sum, n) {
+        return sum + n;
+      }, 0);
+      numbers(3)(2)(4)(10);
+      assert.equal(sum(), 19);
+    });
+  });
   describe('ap', function() {
     it('applies functions in stream', function() {
       var a = stream(function() {
@@ -310,7 +320,7 @@ describe('stream', function() {
     assert.equal(order[0], 1);
     assert.equal(order[1], 2);
   });
-  describe('Promise integration', function() {
+  describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {
       var s = stream();
       stream([s], function() {
@@ -334,7 +344,7 @@ describe('stream', function() {
       }));
     });
   });
-  describe.only('Transducer support', function() {
+  describe('transducer support', function() {
     it('creates new stream with map applied', function() {
       var results = [];
       var s1 = stream();

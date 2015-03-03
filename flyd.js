@@ -56,6 +56,12 @@ function map(f) {
   return stream(function() { return f(s()); });
 }
 
+function reduce(s, f, acc) {
+  return stream([s], function() {
+    return (acc = f(acc, s()));
+  });
+}
+
 function ap(s2) {
   var s1 = this;
   return stream(function() { return s1()(s2()); });
@@ -118,14 +124,16 @@ function stream(arg) {
   s.val = undefined;
   s.listeners = [];
   s.id = nextId++;
-  s.map = map;
-  s.ap = ap;
-  s.of = of;
   s.deps = {};
   s.initialDeps = undefined;
   s.deps[s.id] = false;
   s.dynamicDeps = true;
+
   s.destroy = destroyStream.bind(null, s);
+  s.map = map;
+  s.reduce = reduce.bind(null, s);
+  s.ap = ap;
+  s.of = of;
 
   if (arguments.length === 2) {
     s.initialDeps = arg;
