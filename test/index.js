@@ -1,8 +1,9 @@
 var assert = require('assert');
 var Promise = require('bluebird');
+var t = require('transducers.js');
 
-var lib = require('../flyd.js');
-var stream = lib.stream;
+var flyd = require('../flyd.js');
+var stream = flyd.stream;
 
 describe('stream', function() {
   it('can be set with initial value', function() {
@@ -331,6 +332,41 @@ describe('stream', function() {
           }));
         }, 20);
       }));
+    });
+  });
+  describe.only('Transducer support', function() {
+    it('creates new stream with map applied', function() {
+      var results = [];
+      var s1 = stream();
+      var tx = t.map(function(x) { return x * 3; });
+      var s2 = flyd.transduce(s1, tx);
+      stream([s2], function() { results.push(s2()); });
+      s1(1)(2)(4)(6);
+      assert.deepEqual(results, [3, 6, 12, 18]);
+    });
+    it('creates new stream with filter applied', function() {
+      var results = [];
+      var s1 = stream();
+      var tx = t.compose(
+        t.map(function(x) { return x * 3; }),
+        t.filter(function(x) { return x % 2 === 0; })
+      );
+      var s2 = flyd.transduce(s1, tx);
+      stream([s2], function() { results.push(s2()); });
+      s1(1)(2)(3)(4);
+      assert.deepEqual(results, [6, 12]);
+    });
+    it('supports dedupe', function() {
+      var results = [];
+      var s1 = stream();
+      var tx = t.compose(
+        t.map(function(x) { return x * 2; }),
+        t.dedupe()
+      );
+      var s2 = flyd.transduce(s1, tx);
+      stream([s2], function() { results.push(s2()); });
+      s1(1)(1)(2)(3)(3)(3)(4);
+      assert.deepEqual(results, [2, 4, 6, 8]);
     });
   });
 });

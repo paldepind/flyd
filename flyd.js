@@ -146,5 +146,17 @@ function stream(arg) {
   return s;
 }
 
-return {stream: stream};
+function transduce(source, xform) {
+  xform = xform(new StreamTransformer(stream));
+  return stream([source], function() {
+    return xform.step(undefined, source());
+  });
+}
+
+function StreamTransformer(res) { }
+StreamTransformer.prototype.init = function() { };
+StreamTransformer.prototype.result = function() { };
+StreamTransformer.prototype.step = function(s, v) { return v; };
+
+return {stream: stream, transduce: transduce};
 }));
