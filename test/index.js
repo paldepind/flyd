@@ -21,110 +21,6 @@ describe('stream', function() {
     var s = stream();
     assert.equal(s, s(23));
   });
-  describe('map', function() {
-    it('maps a function', function() {
-      var x = stream(3);
-      var doubleX = x.map(function(x) { return 2*x; });
-      assert.equal(doubleX(), 6);
-      x(1);
-      assert.equal(doubleX(), 2);
-    });
-    it('returns equivalent stream when mapping identity', function() {
-      var x = stream(3);
-      var x2 = x.map(function(a) { return a; });
-      assert.equal(x2(), x());
-      x('foo');
-      assert.equal(x2(), x());
-    });
-    it('is compositive', function() {
-      function f(x) { return x * 2; }
-      function g(x) { return x + 4; }
-      var x = stream(3);
-      var s1 = x.map(g).map(f);
-      var s2 = x.map(function(x) { return f(g(x)); });
-      assert.equal(s1(), s2());
-      x(12);
-      assert.equal(s1(), s2());
-    });
-  });
-  describe('reduce', function() {
-    it('can sum streams of integers', function() {
-      var numbers = stream();
-      var sum = numbers.reduce(function(sum, n) {
-        return sum + n;
-      }, 0);
-      numbers(3)(2)(4)(10);
-      assert.equal(sum(), 19);
-    });
-  });
-  describe('ap', function() {
-    it('applies functions in stream', function() {
-      var a = stream(function() {
-        return function(x) { return 2*x; };
-      });
-      var v = stream(3);
-      var s = a.ap(v);
-      assert.equal(s(), 6);
-      a(function(x) { return x/3; });
-      assert.equal(s(), 1);
-      v(9);
-      assert.equal(s(), 3);
-    });
-    it('is compositive', function() {
-      var a = stream(function() {
-        return function(x) { return x * 2; };
-      });
-      var u = stream(function() {
-        return function(x) { return x + 5; };
-      });
-      var v = stream(8);
-      var s1 = a.map(function(f) {
-        return function(g) {
-          return function(x) {
-            return f(g(x));
-          };
-        };
-      }).ap(u).ap(v);
-      var s2 = a.ap(u.ap(v));
-      assert.equal(s1(), 26);
-      assert.equal(s2(), 26);
-      a(function(x) { return x * 4; });
-      assert.equal(s1(), 52);
-      assert.equal(s2(), 52);
-      u(function(x) { return x / 8; });
-      assert.equal(s1(), 4);
-      assert.equal(s2(), 4);
-      v(24);
-      assert.equal(s1(), 12);
-      assert.equal(s2(), 12);
-    });
-  });
-  describe('of', function() {
-    it('returns a stream with the passed value', function() {
-      var s1 = stream(2);
-      var s2 = s1.of(3);
-      assert.equal(s2(), 3);
-    });
-    it('has identity', function() {
-      var a = stream();
-      var id = function(a) { return a; };
-      var v = stream(12);
-      assert.equal(a.of(id).ap(v)(), v());
-    });
-    it('is homomorphic', function() {
-      var a = stream(0);
-      var f = function(x) { return 2*x; };
-      var x = 12;
-      assert.equal(a.of(f).ap(a.of(x))(), a.of(f(x))());
-    });
-    it('is interchangeable', function() {
-      var y = 7;
-      var a = stream();
-      var u = stream()(function(x) { return 3*x; });
-      assert.equal(u.ap(a.of(y))(),
-                   a.of(function(f) { return f(y); }).ap(u)());
-    });
-  });
   it('can set result by calling callback', function() {
     var x = stream(3);
     var y = stream(4);
@@ -274,6 +170,23 @@ describe('stream', function() {
     num(2)(3)(8)(7);
     assert.equal(sum(), 20);
   });
+  it('is called with changed stream', function() {
+    var s1 = stream();
+    var s2 = stream();
+    var results = [];
+    var dependend = stream(function(d, changed) {
+      s1(); s2();
+      if (changed === s1) results.push(1);
+      if (changed === s2) results.push(2);
+    });
+    s1(1);
+    s2(1);
+    s2(1);
+    s1(1);
+    s2(1);
+    s1(1);
+    assert.deepEqual(results, [1, 2, 2, 1, 2, 1]);
+  });
   it('handles dependencies when streams are triggered in streams', function() {
     var x = stream(4);
     var y = stream(3);
@@ -342,6 +255,134 @@ describe('stream', function() {
           }));
         }, 20);
       }));
+    });
+  });
+  describe('map', function() {
+    it('maps a function', function() {
+      var x = stream(3);
+      var doubleX = x.map(function(x) { return 2*x; });
+      assert.equal(doubleX(), 6);
+      x(1);
+      assert.equal(doubleX(), 2);
+    });
+    it('returns equivalent stream when mapping identity', function() {
+      var x = stream(3);
+      var x2 = x.map(function(a) { return a; });
+      assert.equal(x2(), x());
+      x('foo');
+      assert.equal(x2(), x());
+    });
+    it('is compositive', function() {
+      function f(x) { return x * 2; }
+      function g(x) { return x + 4; }
+      var x = stream(3);
+      var s1 = x.map(g).map(f);
+      var s2 = x.map(function(x) { return f(g(x)); });
+      assert.equal(s1(), s2());
+      x(12);
+      assert.equal(s1(), s2());
+    });
+  });
+  describe('reduce', function() {
+    it('can sum streams of integers', function() {
+      var numbers = stream();
+      var sum = numbers.reduce(function(sum, n) {
+        return sum + n;
+      }, 0);
+      numbers(3)(2)(4)(10);
+      assert.equal(sum(), 19);
+    });
+  });
+  describe('merge', function() {
+    it('can sum streams of integers', function() {
+      var results = [];
+      var s1 = stream();
+      var s2 = stream();
+      var merged = flyd.merge(s1, s2);
+      stream([merged], function() {
+        results.push(merged());
+      });
+      s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
+      assert.deepEqual(results, [12, 2, 4, 44, 1, 12, 2]);
+    });
+    it('can merge as method', function() {
+      var results = [];
+      var s1 = stream();
+      var s2 = stream();
+      var merged = s1.merge(s2);
+      stream([merged], function() {
+        results.push(merged());
+      });
+      s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
+      assert.deepEqual(results, [12, 2, 4, 44, 1, 12, 2]);
+    });
+  });
+  describe('ap', function() {
+    it('applies functions in stream', function() {
+      var a = stream(function() {
+        return function(x) { return 2*x; };
+      });
+      var v = stream(3);
+      var s = a.ap(v);
+      assert.equal(s(), 6);
+      a(function(x) { return x/3; });
+      assert.equal(s(), 1);
+      v(9);
+      assert.equal(s(), 3);
+    });
+    it('is compositive', function() {
+      var a = stream(function() {
+        return function(x) { return x * 2; };
+      });
+      var u = stream(function() {
+        return function(x) { return x + 5; };
+      });
+      var v = stream(8);
+      var s1 = a.map(function(f) {
+        return function(g) {
+          return function(x) {
+            return f(g(x));
+          };
+        };
+      }).ap(u).ap(v);
+      var s2 = a.ap(u.ap(v));
+      assert.equal(s1(), 26);
+      assert.equal(s2(), 26);
+      a(function(x) { return x * 4; });
+      assert.equal(s1(), 52);
+      assert.equal(s2(), 52);
+      u(function(x) { return x / 8; });
+      assert.equal(s1(), 4);
+      assert.equal(s2(), 4);
+      v(24);
+      assert.equal(s1(), 12);
+      assert.equal(s2(), 12);
+    });
+  });
+  describe('of', function() {
+    it('returns a stream with the passed value', function() {
+      var s1 = stream(2);
+      var s2 = s1.of(3);
+      assert.equal(s2(), 3);
+    });
+    it('has identity', function() {
+      var a = stream();
+      var id = function(a) { return a; };
+      var v = stream(12);
+      assert.equal(a.of(id).ap(v)(), v());
+    });
+    it('is homomorphic', function() {
+      var a = stream(0);
+      var f = function(x) { return 2*x; };
+      var x = 12;
+      assert.equal(a.of(f).ap(a.of(x))(), a.of(f(x))());
+    });
+    it('is interchangeable', function() {
+      var y = 7;
+      var a = stream();
+      var u = stream()(function(x) { return 3*x; });
+      assert.equal(u.ap(a.of(y))(),
+                   a.of(function(f) { return f(y); }).ap(u)());
     });
   });
   describe('transducer support', function() {

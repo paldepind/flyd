@@ -62,6 +62,17 @@ function reduce(s, f, acc) {
   });
 }
 
+function merge(s1, s2) {
+  return stream(function(n, changed) {
+    var v1, v2;
+    if (changed) return changed();
+    else {
+     v1 = s1(), v2 = s2();
+     return v1 === undefined ? v2 : v1;
+    }
+  });
+}
+
 function ap(s2) {
   var s1 = this;
   return stream(function() { return s1()(s2()); });
@@ -81,10 +92,10 @@ function initialDepsNotMet(stream) {
   return !isUndefined(stream.initialDeps);
 }
 
-function updateStream(stream, cb) {
+function updateStream(stream, cb, changed) {
   if (initialDepsNotMet(stream)) return;
   curStream = stream;
-  var returnVal = cb(stream);
+  var returnVal = cb(stream, changed);
   curStream = undefined;
   if (returnVal !== undefined) stream(returnVal);
   flushQueue();
@@ -109,9 +120,9 @@ function stream(arg) {
       s.val = n;
       if (!isUndefined(curStream)) {
         checkCirc(curStream, s.id);
-        queue.push({v: n, l: s.listeners});
+        queue.push({v: s, l: s.listeners});
       } else {
-        s.listeners.forEach(function(f) { f(n); });
+        s.listeners.forEach(function(f) { f(s); });
       }
       return s;
     } else {
@@ -132,6 +143,7 @@ function stream(arg) {
   s.destroy = destroyStream.bind(null, s);
   s.map = map;
   s.reduce = reduce.bind(null, s);
+  s.merge = merge.bind(null, s);
   s.ap = ap;
   s.of = of;
 
@@ -166,5 +178,9 @@ StreamTransformer.prototype.init = function() { };
 StreamTransformer.prototype.result = function() { };
 StreamTransformer.prototype.step = function(s, v) { return v; };
 
-return {stream: stream, transduce: transduce};
+return {
+  stream: stream,
+  transduce: transduce,
+  merge: merge,
+};
 }));
