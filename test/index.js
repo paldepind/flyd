@@ -69,8 +69,22 @@ describe('stream', function() {
     var called = 0;
     var sum = stream([x], function(s) {
       called++;
-      return x() + y();
+      return x() + y.val;
     });
+    x(1)(2)(3);
+    y(1)(2)(3);
+    x(4)(5);
+    assert.equal(called, 6);
+    assert.equal(sum(), 8);
+  });
+  it('dependencies can be static', function() {
+    var x = stream(3);
+    var y = stream(4);
+    var called = 0;
+    var sum = stream([x], function(s) {
+      called++;
+      return x() + y();
+    }, true);
     x(1)(2)(3);
     y(1)(2)(3);
     x(4)(5);
@@ -232,6 +246,8 @@ describe('stream', function() {
     });
     assert.equal(order[0], 1);
     assert.equal(order[1], 2);
+  });
+  it('with static deps executes to the end', function() {
   });
   describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {

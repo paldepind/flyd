@@ -147,9 +147,12 @@ function stream(arg) {
   s.ap = ap;
   s.of = of;
 
-  if (arguments.length === 2) {
+  if (arguments.length > 1) {
     s.initialDeps = arg;
     arg = arguments[1];
+    if (arguments[2] === true) {
+      s.dynamicDeps = false;
+    }
   }
   if (isFunction(arg)) {
     s.update = updateStream.bind(null, s, arg);
@@ -157,7 +160,6 @@ function stream(arg) {
       s.initialDeps.forEach(function(stream) {
         addDependency(s, stream);
       });
-      s.dynamicDeps = false;
     }
     s.update();
   } else {
