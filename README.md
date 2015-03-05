@@ -1,7 +1,7 @@
 # Flyd
-The less is more functional reactive programming library in JavaScript.
+The less is more _modular_ functional reactive programming library in JavaScript.
 
-__Note:__ Flyd is pre-release. It works as advertised – but the API might
+__Note:__ Flyd is pre-release. It works as advertised – but the API _might_
 change. Once I've recieved feedback and become certain of the API an actual
 release will happen.
 
@@ -12,13 +12,15 @@ expressing values that change over time. But existing libraries for JavaScript
 are huge, complex and has a high learning curve.
 
 Flyd is different. It is simple, expressive and powerful. It is fast to learn
-and easy to use.
+and easy to use. It has a minimal core on top of which new abstractions can be
+built.
 
 ## At a glance
 
-* Combineable observable streams with automatic dependency resolution.
+* Combineable observable streams with automatic dependency resolution as the
+  building blocks.
 * Extremely simple and lightweight. It's less than 200 SLOC.
-* Supports the transducer protocol. You can for instance transduce stream with
+* Supports the transducer protocol. You can for instance transduce streams with
   ([transducers.js](https://github.com/jlongster/transducers.js).
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
@@ -59,14 +61,14 @@ webSocket.onmessage = messages;
 ```
 
 Clicks events will now flow down the `clicks` stream and WebSockets messages
-down the `message` stream.
+down the `messages` stream.
 
 ### Dependent streams
 
 Streams can depend on other streams. Instead of calling `stream` with a value
-as in the above examples we can pass it a function. The function can calculate
-a value based on other streams. Flyd automatically collects the streams dependencies
-and updates it whenever a dependency changes.
+as in the above examples we can pass it a function. The function calculates a
+value based on other streams. Flyd automatically collects the streams
+dependencies and updates it whenever a dependency changes.
 
 ```javascript
 // Create two streams of numbers
@@ -84,25 +86,25 @@ y(8);
 sum(); // returns 20
 ```
 
-A stream with dependencies can depend on other streams with dependencies.
+Naturally, a stream with dependencies can depend on other streams with dependencies.
 
 ```javascript
 // Create two streams of numbers
 var x = stream(4);
 var y = stream(6);
-var doubleX = stream(function() {
-  return 2 * x();
+var squareX = stream(function() {
+  return x() * x();
 });
-var doubleXPlusY(function() {
+var squareXPlusY(function() {
   return y() + doubleX();
 });
-doubleXPlusY(); // returns 12
+squareXPlysY(); // returns 22
 x(2);
-doubleXPlusY(); // returns 10
+squareXPlysY(); // returns 10
 ```
 
-The body of a dependent stream is called with two streams: its own stream and
-the last changed stream on which it depends.
+The body of a dependent stream is called with two streams: itself and the last
+changed stream on which it depends.
 
 ```javascript
 // Create two streams of numbers
@@ -144,8 +146,8 @@ streams evaluate to something other than `undefined`.
 ### Using promises for asynchronous operations
 
 Flyd has inbuilt support for promises. Just like a promise can never be resolved with
-a promise can never flow down a stream. Instead the fulfilled value of the promise will
-be sent down the stream.
+a promise, a promise can never flow down a stream. Instead the fulfilled value
+of the promise will be sent down the stream.
 
 ```javascript
 var urls = stream('/something.json');
@@ -157,6 +159,46 @@ stream([responses], function() {
   console.log(responses());
 });
 ```
+
+### Mapping over a stream
+
+You've now seen the basic building block of Flyd. Let's see what we can
+do with them. Lets write a function that takes a stream and a function
+and returns a new stream with the functin applied to every value emitted
+by the stream. In short, a `map` function.
+
+```javascript
+var mapStream = functin(s, f) {
+  return stream([s], function() {
+    return f(s());
+  });
+};
+
+We simply create a new stream dependent on the first stream. We declare
+the stream as a dependency so that our stream wont return values before
+the original stream produces its first value.
+
+Flyd includes a map function as part of its core.
+
+### Reducing a stream
+
+Lets try something else, reducing a stream! It could look like this:
+
+```javascript
+var reduceStream = function(s, f, acc) {
+  return stream([s], function() {
+    return f(acc, s());
+  });
+};
+```
+
+Our reduce function takes a stream, a reducer function and in initial
+value. Every time the original stream emit a value we pass it to the
+reducer along with the accumulator.
+
+### Applying a function to multiple streams
+
+### Creating a flat map
 
 ## API
 
@@ -192,9 +234,17 @@ value will be passed through `f`.
 Returns a new stream which is the result of applying the
 functions from `stream1` to the values in `stream2`.
 
-###stream1.reduce(stream2)
+###flyd.reduce(s, fn, acc)
 
-###stream1.merge(stream1)
+Creates a new stream with the results of calling the function on every incoming
+stream with and accumulator and the incoming value.
+
+###flyd.merge(stream1, stream2)
+
+Creates a new stream down which all values from both `stream1` and `stream2`
+will be sent.
 
 ### flyd.transduce(stream, transducer)
+
+Creates a new stream resulting from applying `transducer` to `stream`.
 
