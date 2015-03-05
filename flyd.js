@@ -142,8 +142,6 @@ function stream(arg) {
 
   s.destroy = destroyStream.bind(null, s);
   s.map = map;
-  s.reduce = reduce.bind(null, s);
-  s.merge = merge.bind(null, s);
   s.ap = ap;
   s.of = of;
 
@@ -184,5 +182,6 @@ return {
   stream: stream,
   transduce: transduce,
   merge: merge,
+  reduce: reduce,
 };
 }));

@@ -302,7 +302,7 @@ describe('stream', function() {
   describe('reduce', function() {
     it('can sum streams of integers', function() {
       var numbers = stream();
-      var sum = numbers.reduce(function(sum, n) {
+      var sum = flyd.reduce(numbers, function(sum, n) {
         return sum + n;
       }, 0);
       numbers(3)(2)(4)(10);
@@ -315,17 +315,6 @@ describe('stream', function() {
       var s1 = stream();
       var s2 = stream();
       var merged = flyd.merge(s1, s2);
-      stream([merged], function() {
-        results.push(merged());
-      });
-      s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
-      assert.deepEqual(results, [12, 2, 4, 44, 1, 12, 2]);
-    });
-    it('can merge as method', function() {
-      var results = [];
-      var s1 = stream();
-      var s2 = stream();
-      var merged = s1.merge(s2);
       stream([merged], function() {
         results.push(merged());
       });
