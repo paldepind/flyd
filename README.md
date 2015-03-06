@@ -1,15 +1,23 @@
 # Flyd
-The less is more _modular_ functional reactive programming library in JavaScript.
+The less is more, modular, functional reactive programming library in JavaScript.
 
 __Note:__ Flyd is pre-release. It works as advertised – but the API _might_
 change. Once I've recieved feedback and become certain of the API an actual
 release will happen.
 
+[![browser support](https://ci.testling.com/paldepind/flyd.png)
+](https://ci.testling.com/paldepind/flyd)
+
+# Table of contents
+[Introduction](#introduction)
+[Tutorial](#tutorial)
+[API](#api)
+
 ## Introduction
 
 Functional reactive programming is a powerful programming paradigm for
 expressing values that change over time. But existing libraries for JavaScript
-are huge, complex and has a high learning curve.
+are huge, complex and have a high learning curve.
 
 Flyd is different. It is simple, expressive and powerful. It is fast to learn
 and easy to use. It has a minimal core on top of which new abstractions can be
@@ -173,6 +181,7 @@ var mapStream = functin(s, f) {
     return f(s());
   });
 };
+```
 
 We simply create a new stream dependent on the first stream. We declare
 the stream as a dependency so that our stream wont return values before
@@ -207,16 +216,69 @@ reducer along with the accumulator.
 Creates a new stream.
 
 __Arguments__
-  * \[`dependencies`\] (array) - The streams on which this stream should initially depend.
-  * `body` (function|\*) - The function body of the stream or it initial value.
+  * \[`dependencies`\] (array) – The streams on which this stream should initially depend.
+  * `body` (function|\*) – The function body of the stream or it initial value.
+  * \[`staticDependencies`\] – Disables automatic dependency resolution of the stream.
 
 __Returns__
 
 The created stream.
 
+###flyd.map(s, fn)
+
+Returns a new stream consisting of every value from `s` passed through `fn.
+
+__Example__
+```javascript
+var numbers = stream(0);
+var squaredNumbers = flyd.map(numbers, function(n) { return n*n; });
+```
+
+###flyd.reduce(s, fn, acc)
+
+Creates a new stream with the results of calling the function on every incoming
+stream with and accumulator and the incoming value.
+
+__Example__
+```javascript
+var clicks = stream();
+element.addEventListener(clicks);
+var nrOfClicks = flyd.reduce(clicks, function(sum) { return sum+1; }, 0);
+```
+
+###flyd.merge(stream1, stream2)
+
+Creates a new stream down which all values from both `stream1` and `stream2`
+will be sent.
+
+__Example__
+```javascript
+var btn1Clicks = stream();
+button1Elm.addEventListener(clicks);
+var btn2Clicks = stream();
+button2Elm.addEventListener(clicks);
+var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
+```
+
+### flyd.transduce(stream, transducer)
+
+Creates a new stream resulting from applying `transducer` to `stream`.
+
+__Example__
+```javascript
+```
+
 ###stream()
 
 Returns the last value of the stream.
+
+__Example__
+```javascript
+var names = stream('Turing');
+names(); // 'Turing'
+names('Bohr');
+names(); // 'Bohr'
+```
 
 ###stream(val)
 
@@ -233,18 +295,3 @@ value will be passed through `f`.
 
 Returns a new stream which is the result of applying the
 functions from `stream1` to the values in `stream2`.
-
-###flyd.reduce(s, fn, acc)
-
-Creates a new stream with the results of calling the function on every incoming
-stream with and accumulator and the incoming value.
-
-###flyd.merge(stream1, stream2)
-
-Creates a new stream down which all values from both `stream1` and `stream2`
-will be sent.
-
-### flyd.transduce(stream, transducer)
-
-Creates a new stream resulting from applying `transducer` to `stream`.
-
