@@ -1,0 +1,37 @@
+{
+  "name": "flyd",
+  "version": "0.0.1",
+  "description": "The less is more, modular, functional reactive programming library",
+  "main": "flyd.js",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "bluebird": "^2.9.13",
+    "benchmark": "^2.0.0-pre",
+    "lodash": "^3.3.1",
+    "transducers.js": "^0.2.3"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paldepind/flyd.git"
+  },
+  "keywords": [
+    "functional",
+    "reactive",
+    "modular",
+    "library"
+  ],
+  "author": "Simon Friis Vindum",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paldepind/flyd/issues"
+  },
+  "homepage": "https://github.com/paldepind/flyd"
+}
