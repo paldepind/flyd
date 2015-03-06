@@ -51,8 +51,7 @@ function removeListener(listeners, cb) {
   listeners.length--;
 }
 
-function map(f) {
-  var s = this;
+function map(s, f) {
   return stream(function() { return f(s()); });
 }
 
@@ -141,7 +140,7 @@ function stream(arg) {
   s.dynamicDeps = true;
 
   s.destroy = destroyStream.bind(null, s);
-  s.map = map;
+  s.map = map.bind(null, s);
   s.ap = ap;
   s.of = of;
 
@@ -183,5 +182,6 @@ return {
   transduce: transduce,
   merge: merge,
   reduce: reduce,
+  map: map,
 };
 }));
