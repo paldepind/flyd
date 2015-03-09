@@ -52,7 +52,7 @@ function removeListener(listeners, cb) {
 }
 
 function map(s, f) {
-  return stream(function() { return f(s()); });
+  return stream([s], function() { return f(s()); }, true);
 }
 
 function reduce(s, f, acc) {
