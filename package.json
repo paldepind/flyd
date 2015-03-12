@@ -7,15 +7,15 @@
     "example": "examples",
     "test": "test"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "bluebird": "^2.9.13",
     "lodash": "^3.3.1",
+    "mocha": "^2.2.1",
     "transducers.js": "^0.2.3"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "./node_modules/mocha/bin/mocha"
   },
   "repository": {
     "type": "git",
