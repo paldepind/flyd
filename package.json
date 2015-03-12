@@ -11,7 +11,6 @@
   },
   "devDependencies": {
     "bluebird": "^2.9.13",
-    "benchmark": "^2.0.0-pre",
     "lodash": "^3.3.1",
     "transducers.js": "^0.2.3"
   },
