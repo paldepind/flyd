@@ -281,6 +281,13 @@ describe('stream', function() {
       x(1);
       assert.equal(doubleX(), 2);
     });
+    it('maps a function', function() {
+      var x = stream(3);
+      var doubleX = flyd.map(x, function(x) { return 2*x; });
+      assert.equal(doubleX(), 6);
+      x(1);
+      assert.equal(doubleX(), 2);
+    });
     it('returns equivalent stream when mapping identity', function() {
       var x = stream(3);
       var x2 = x.map(function(a) { return a; });

@@ -7,7 +7,10 @@
     "example": "examples",
     "test": "test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "coveralls": "^2.11.2",
+    "mocha-lcov-reporter": "0.0.2"
+  },
   "devDependencies": {
     "bluebird": "^2.9.13",
     "lodash": "^3.3.1",
