@@ -1,6 +1,16 @@
 var _ = require('lodash');
 var Benchmark = require('benchmark.js');
 
+var flyd = require('../flyd');
+var oldFlyd = require('../flyd-old');
+
+var stream = flyd.stream;
+
+global.stream = flyd.stream;
+global.flyd = flyd;
+global.oldFlyd = oldFlyd;
+global.oldStream = oldFlyd.stream;
+
 // ************************************************
 // Util functions
 
@@ -46,66 +56,10 @@ Benchmark.Suite.options.onComplete = function() {
   }
 };
 
-function isStringable(value) {
-  return _.isString(value) || (_.has(value, 'toString') && _.isFunction(value.toString));
-}
-
-function getSource(fn) {
-  var support = {decompilation: true};
-  var result = '';
-  if (isStringable(fn)) {
-    result = String(fn);
-  } else if (support.decompilation) {
-    // Escape the `{` for Firefox 1.
-    result = _.result(/^[^{]+\{([\s\S]*)\}\s*$/.exec(fn), 1);
-  }
-  // Trim string.
-  result = (result || '').replace(/^\s+|\s+$/g, '');
-  // Detect strings containing only the "use strict" directive.
-  return /^(?:\/\*+[\w\W]*?\*\/|\/\/.*?[\n\r\u2028\u2029]|\s)*(["'])use strict\1;?$/.test(result) ? ''
-                                                                                                  : result;
-}
-
-function createBenchmark(name, opts) {
-  var suite = Benchmark.Suite(name);
-  libraries.forEach(function(lib) {
-    var libOpts = _.extend({}, opts);
-    if (lib.setup) {
-      libOpts.setup = getSource(lib.setup) + getSource(opts.setup);
-    }
-    suite.add(lib.name, opts);
-  });
-  suites.push(suite);
-}
-
 // ************************************************
 // Benchmarks!
 
-var flyd = require('../flyd');
-var oldFlyd = require('../flyd-old');
-
-var stream = flyd.stream;
-global.stream = flyd.stream;
-
-var oldLib = {
-  name: 'old',
-  setup: function() {
-    var flyd = oldFlyd;
-    var stream = oldFlyd.stream;
-  }
-};
-
-var newLib = {
-  name: 'new',
-  setup: function() {
-    var flyd = flyd;
-    var stream = flyd.stream;
-  }
-};
-
-var libraries = [oldLib, newLib];
-
-createBenchmark('dynamic dependencies', {
+suites.push(Benchmark.Suite('dynamic dependencies').add('New', {
   setup: function() {
     var s = stream();
     stream(function() {
@@ -115,9 +69,19 @@ createBenchmark('dynamic dependencies', {
   fn: function() {
     s(12);
   },
-});
+}).add('Old', {
+  setup: function() {
+    var s = oldStream();
+    oldStream(function() {
+      return s();
+    });
+  },
+  fn: function() {
+    s(12);
+  },
+}));
 
-createBenchmark('static dependencies', {
+suites.push(Benchmark.Suite('static dependencies').add('New', {
   setup: function() {
     var s = stream();
     stream([s], function() {
@@ -127,9 +91,49 @@ createBenchmark('static dependencies', {
   fn: function() {
     s(12);
   },
-});
+}).add('Old', {
+  setup: function() {
+    var s = oldStream();
+    oldStream([s], function() {
+      return s();
+    });
+  },
+  fn: function() {
+    s(12);
+  },
+}));
 
-createBenchmark('dynamic dependency graph', {
+suites.push(Benchmark.Suite('map').add('First', {
+  setup: function() {
+    var flyd = global.flyd;
+    var stream = global.flyd.stream;
+    function f(x) { return x; }
+    var s1 = stream();
+    var s2 = s1.map(f);
+    var s3 = s2.map(f);
+    var s4 = s3.map(f);
+    var s5 = s4.map(f);
+  },
+  fn: function() {
+    s1(12);
+  },
+}).add('Second', {
+  setup: function() {
+    var flyd = global.flyd;
+    var stream = global.flyd.stream;
+    function f(x) { return x; }
+    var s1 = stream();
+    var s2 = s1.map(f);
+    var s3 = s2.map(f);
+    var s4 = s3.map(f);
+    var s5 = s4.map(f);
+  },
+  fn: function() {
+    s1(12);
+  },
+}));
+
+suites.push(Benchmark.Suite('dynamic dependency graph').add('New', {
   setup: function() {
     var s1 = stream();
     var s2 = stream(function() {
@@ -148,20 +152,25 @@ createBenchmark('dynamic dependency graph', {
   fn: function() {
     s1(12);
   },
-});
-
-createBenchmark('map', {
+}).add('Old', {
   setup: function() {
-    function f(x) { return x; }
-    var s1 = stream();
-    var s2 = s1.map(f);
-    var s3 = s2.map(f);
-    var s4 = s3.map(f);
-    var s5 = s4.map(f);
+    var s1 = oldStream();
+    var s2 = oldStream(function() {
+      s1(); s1();
+    });
+    var s3 = oldStream(function() {
+      s1(); s2(); s1();
+    });
+    var s4 = oldStream(function() {
+      s1(); s2(); s3(); s1(); s3();
+    });
+    oldStream(function() {
+      s3(); s2(); s1(); s3(); s4();
+    });
   },
   fn: function() {
     s1(12);
   },
-});
+}));
 
 suites[0].run({ 'async': true });
