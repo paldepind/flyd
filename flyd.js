@@ -111,7 +111,7 @@ function destroyStream(stream) {
 
 function stream(arg) {
   function s(n) {
-    if (arguments.length === 1) {
+    if (arguments.length > 0) {
       if (!isUndefined(n) && isFunction(n.then)) {
         n.then(s);
         return;
