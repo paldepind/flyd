@@ -1,11 +1,12 @@
 [![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
 
 # Flyd
-The less is more, modular, functional reactive programming library in JavaScript.
+The modular functional reactive programming library in JavaScript.
 
 # Table of contents
 
 * [Introduction](#introduction)
+* [Features](#features)
 * [Example](#example)
 * [Tutorial](#tutorial)
 * [API](#api)
@@ -21,7 +22,7 @@ Flyd is different. It is simple, expressive and powerful. It is fast to learn
 and easy to use. It has a minimal core on top of which new abstractions can be
 built modularly.
 
-## At a glance
+## Features
 
 * Combineable observable streams with automatic dependency resolution as the
   core building block.
@@ -31,6 +32,7 @@ built modularly.
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
 * Elegant support for promises.
+* Easy to extend with custom [modules](#modules)
 
 
 ## Example
@@ -133,7 +135,7 @@ var sum = stream(function(sum, changed) {
 ### Using calback APIs for asynchronous operations
 
 Instead of returning a value a stream can update itself by calling itself. This
-is handy when working with callback taking APIs.
+is handy when working with APIs that takes callbacks.
 
 ```
 var urls = stream('/something.json');
@@ -149,7 +151,7 @@ stream([responses], function() {
 The stream above that logs the responses from the server should only be called
 after an actual response has been recieved (otherwise `responses()` whould return
 `undefined`). For this purpose you can pass `stream` an array of initial
-dependencies. The stream body will not be called before all of the declared
+dependencies. The streams body will not be called before all of the declared
 streams evaluate to something other than `undefined`.
 
 ### Using promises for asynchronous operations
@@ -269,7 +271,20 @@ var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
 Creates a new stream resulting from applying `transducer` to `stream`.
 
 __Example__
+
 ```javascript
+var t = require('transducers.js');
+
+var results = [];
+var s1 = stream();
+var tx = t.compose(
+  t.map(function(x) { return x * 2; }),
+  t.dedupe()
+);
+var s2 = flyd.transduce(s1, tx);
+stream([s2], function() { results.push(s2()); });
+s1(1)(1)(2)(3)(3)(3)(4);
+result; // [2, 4, 6, 8]
 ```
 
 ###stream()
@@ -314,4 +329,5 @@ additional references to it.
 ### Modules
 
 * [flyd-lift](https://github.com/paldepind/flyd-lift)
+* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap)
 
