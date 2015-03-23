@@ -197,7 +197,7 @@ Flyd includes a map function as part of its core.
 Lets try something else, reducing a stream! It could look like this:
 
 ```javascript
-var reduceStream = function(s, f, acc) {
+var reduceStream = function(f, acc, s) {
   return stream([s], function() {
     acc = f(acc, s());
     return acc;
@@ -205,9 +205,9 @@ var reduceStream = function(s, f, acc) {
 };
 ```
 
-Our reduce function takes a stream, a reducer function and in initial
-value. Every time the original stream emit a value we pass it to the
-reducer along with the accumulator.
+Our reduce function takes a reducer function, in initial value and a stream.
+Every time the original stream emit a value we pass it to the reducer along
+with the accumulator.
 
 Flyd includes a reduce function as part of its core.
 
@@ -230,17 +230,17 @@ __Returns__
 
 The created stream.
 
-###flyd.map(s, fn)
+###flyd.map(fn, s)
 
 Returns a new stream consisting of every value from `s` passed through `fn.
 
 __Example__
 ```javascript
 var numbers = stream(0);
-var squaredNumbers = flyd.map(numbers, function(n) { return n*n; });
+var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 ```
 
-###flyd.reduce(s, fn, acc)
+###flyd.reduce(fn, acc, stream)
 
 Creates a new stream with the results of calling the function on every incoming
 stream with and accumulator and the incoming value.
@@ -249,7 +249,7 @@ __Example__
 ```javascript
 var clicks = stream();
 element.addEventListener(clicks);
-var nrOfClicks = flyd.reduce(clicks, function(sum) { return sum+1; }, 0);
+var nrOfClicks = flyd.reduce(function(sum) { return sum+1; }, 0, clicks);
 ```
 
 ###flyd.merge(stream1, stream2)
@@ -266,7 +266,7 @@ button2Elm.addEventListener(clicks);
 var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
 ```
 
-### flyd.transduce(stream, transducer)
+### flyd.transduce(transducer, stream)
 
 Creates a new stream resulting from applying `transducer` to `stream`.
 
@@ -281,7 +281,7 @@ var tx = t.compose(
   t.map(function(x) { return x * 2; }),
   t.dedupe()
 );
-var s2 = flyd.transduce(s1, tx);
+var s2 = flyd.transduce(tx, s1);
 stream([s2], function() { results.push(s2()); });
 s1(1)(1)(2)(3)(3)(3)(4);
 result; // [2, 4, 6, 8]

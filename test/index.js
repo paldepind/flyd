@@ -283,7 +283,7 @@ describe('stream', function() {
     });
     it('maps a function', function() {
       var x = stream(3);
-      var doubleX = flyd.map(x, function(x) { return 2*x; });
+      var doubleX = flyd.map(function(x) { return 2*x; }, x);
       assert.equal(doubleX(), 6);
       x(1);
       assert.equal(doubleX(), 2);
@@ -309,9 +309,9 @@ describe('stream', function() {
   describe('reduce', function() {
     it('can sum streams of integers', function() {
       var numbers = stream();
-      var sum = flyd.reduce(numbers, function(sum, n) {
+      var sum = flyd.reduce(function(sum, n) {
         return sum + n;
-      }, 0);
+      }, 0, numbers);
       numbers(3)(2)(4)(10);
       assert.equal(sum(), 19);
     });
@@ -402,7 +402,7 @@ describe('stream', function() {
       var results = [];
       var s1 = stream();
       var tx = t.map(function(x) { return x * 3; });
-      var s2 = flyd.transduce(s1, tx);
+      var s2 = flyd.transduce(tx, s1);
       stream([s2], function() { results.push(s2()); });
       s1(1)(2)(4)(6);
       assert.deepEqual(results, [3, 6, 12, 18]);
@@ -414,7 +414,7 @@ describe('stream', function() {
         t.map(function(x) { return x * 3; }),
         t.filter(function(x) { return x % 2 === 0; })
       );
-      var s2 = flyd.transduce(s1, tx);
+      var s2 = flyd.transduce(tx, s1);
       stream([s2], function() { results.push(s2()); });
       s1(1)(2)(3)(4);
       assert.deepEqual(results, [6, 12]);
@@ -426,7 +426,7 @@ describe('stream', function() {
         t.map(function(x) { return x * 2; }),
         t.dedupe()
       );
-      var s2 = flyd.transduce(s1, tx);
+      var s2 = flyd.transduce(tx, s1);
       stream([s2], function() { results.push(s2()); });
       s1(1)(1)(2)(3)(3)(3)(4);
       assert.deepEqual(results, [2, 4, 6, 8]);
