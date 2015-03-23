@@ -55,7 +55,7 @@ function map(s, f) {
   return stream([s], function() { return f(s()); }, true);
 }
 
-function reduce(s, f, acc) {
+function reduce(f, acc, s) {
   return stream([s], function() {
     return (acc = f(acc, s()));
   });
@@ -165,7 +165,7 @@ function stream(arg) {
   return s;
 }
 
-function transduce(source, xform) {
+function transduce(xform, source) {
   xform = xform(new StreamTransformer(stream));
   return stream([source], function() {
     return xform.step(undefined, source());
@@ -182,6 +182,8 @@ return {
   transduce: transduce,
   merge: merge,
   reduce: reduce,
-  map: map,
+  map: function(f, s) {
+    return map(s, f);
+  },
 };
 }));
