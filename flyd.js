@@ -112,7 +112,7 @@ function destroyStream(stream) {
 function stream(arg) {
   function s(n) {
     if (arguments.length > 0) {
-      if (!isUndefined(n) && isFunction(n.then)) {
+      if (!isUndefined(n) && n !== null && isFunction(n.then)) {
         n.then(s);
         return;
       }
@@ -183,7 +183,13 @@ return {
   merge: merge,
   reduce: reduce,
   map: function(f, s) {
-    return map(s, f);
+    if (arguments.length === 2) {
+      return map(s, f);
+    } else if (arguments.length === 1) {
+      return function(s) {
+        return map(s, f);
+      };
+    }
   },
 };
 }));

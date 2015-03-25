@@ -247,7 +247,8 @@ describe('stream', function() {
     assert.equal(order[0], 1);
     assert.equal(order[1], 2);
   });
-  it('with static deps executes to the end', function() {
+  it('handles a null floating down the stream', function() {
+    stream()(null);
   });
   describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {
@@ -287,6 +288,14 @@ describe('stream', function() {
       assert.equal(doubleX(), 6);
       x(1);
       assert.equal(doubleX(), 2);
+    });
+    it('is curried', function() {
+      var x = stream(3);
+      var doubler = flyd.map(function(x) { return 2*x; });
+      var quadroX = doubler(doubler(x));
+      assert.equal(quadroX(), 12);
+      x(2);
+      assert.equal(quadroX(), 8);
     });
     it('returns equivalent stream when mapping identity', function() {
       var x = stream(3);
