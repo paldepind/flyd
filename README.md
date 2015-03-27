@@ -77,9 +77,13 @@ down the `messages` stream.
 ### Dependent streams
 
 Streams can depend on other streams. Instead of calling `stream` with a value
-as in the above examples we can pass it a function. The function calculates a
-value based on other streams and a new stream results. Flyd automatically
+as in the above examples we can pass it a function. The function should calculate a
+value based on other streams which forms a new stream. Flyd automatically
 collects the streams dependencies and updates it whenever a dependency changes.
+
+This means that the `sum` function below will be called whenever `x` and `y` changes.
+You can think of dependent stream as streams that automatically
+listens/subscribes to their dependencies.
 
 ```javascript
 // Create two streams of numbers
@@ -232,7 +236,8 @@ The created stream.
 
 ###flyd.map(fn, s)
 
-Returns a new stream consisting of every value from `s` passed through `fn.
+Returns a new stream consisting of every value from `s` passed through `fn. I.e. `map` creates
+a new stream that listens to `s` and applies `fn` to every new value.
 
 __Example__
 ```javascript
@@ -247,9 +252,10 @@ stream with and accumulator and the incoming value.
 
 __Example__
 ```javascript
-var clicks = stream();
-element.addEventListener(clicks);
-var nrOfClicks = flyd.reduce(function(sum) { return sum+1; }, 0, clicks);
+var numbers = stream();
+var sum = flyd.reduce(function(sum, n) { return sum+n; }, 0, numbers);
+numbers(2)(3)(5);
+sum(); // 10
 ```
 
 ###flyd.merge(stream1, stream2)
