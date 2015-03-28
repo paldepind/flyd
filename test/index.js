@@ -130,7 +130,7 @@ describe('stream', function() {
     });
     assert.equal(y.listeners.length, 1);
     assert.equal(x.listeners.length, 1);
-    sum.destroy();
+    flyd.destroy(sum);
     assert.equal(y.listeners.length, 0);
     assert.equal(x.listeners.length, 0);
   });

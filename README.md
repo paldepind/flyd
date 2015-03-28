@@ -293,6 +293,12 @@ s1(1)(1)(2)(3)(3)(3)(4);
 result; // [2, 4, 6, 8]
 ```
 
+###flyd.destroy(stream)
+
+If the stream has no dependencies this will detach it from any streams it
+depends on. This makes it available for garbage collection if there are no
+additional references to it.
+
 ###stream()
 
 Returns the last value of the stream.
@@ -325,15 +331,9 @@ functions from `stream1` to the values in `stream2`.
 
 Returns a new stream with `value` as its initial value.
 
-###stream.destroy()
-
-If the stream has no dependencies this will detach it from any streams it
-depends on. This makes it available for garbage collection if there are no
-additional references to it.
-
 
 ### Modules
 
 * [flyd-lift](https://github.com/paldepind/flyd-lift)
 * [flyd-flatmap](https://github.com/paldepind/flyd-flatmap)
-
+* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen)

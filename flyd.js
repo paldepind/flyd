@@ -100,7 +100,7 @@ function updateStream(stream, cb, changed) {
   flushQueue();
 }
 
-function destroyStream(stream) {
+function destroy(stream) {
   if (stream.listeners.length !== 0) {
     throw new Error('Trying to destroy stream with listeners attached');
   }
@@ -139,7 +139,6 @@ function stream(arg) {
   s.deps[s.id] = false;
   s.dynamicDeps = true;
 
-  s.destroy = destroyStream.bind(null, s);
   s.map = map.bind(null, s);
   s.ap = ap;
   s.of = of;
@@ -182,6 +181,7 @@ return {
   transduce: transduce,
   merge: merge,
   reduce: reduce,
+  destroy: destroy,
   map: function(f, s) {
     if (arguments.length === 2) {
       return map(s, f);
