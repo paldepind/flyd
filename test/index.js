@@ -316,6 +316,13 @@ describe('stream', function() {
     });
   });
   describe('reduce', function() {
+    it('has initial acc as value when stream is undefined', function() {
+      var numbers = stream();
+      var sum = flyd.reduce(function(sum, n) {
+        return sum + n;
+      }, 0, numbers);
+      assert.equal(sum(), 0);
+    });
     it('can sum streams of integers', function() {
       var numbers = stream();
       var sum = flyd.reduce(function(sum, n) {

@@ -56,9 +56,11 @@ function map(s, f) {
 }
 
 function reduce(f, acc, s) {
-  return stream([s], function() {
+  var ns = stream([s], function() {
     return (acc = f(acc, s()));
-  });
+  }, true);
+  if (isUndefined(ns.val)) ns(acc);
+  return ns;
 }
 
 function merge(s1, s2) {
@@ -82,11 +84,11 @@ function of(v) {
 }
 
 function initialDepsNotMet(stream) {
-  if (stream.initialDeps) {
+  if (!isUndefined(stream.initialDeps)) {
     var met = stream.initialDeps.every(function(stream) {
       return !isUndefined(stream());
     });
-    if(met) stream.initialDeps = undefined;
+    if (met) stream.initialDeps = undefined;
   }
   return !isUndefined(stream.initialDeps);
 }
