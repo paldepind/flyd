@@ -306,6 +306,10 @@ additional references to it.
 Returns `fn` curried to `n`. Use this function to curry functions exposed by
 modules for Flyd.
 
+###flyd.isStream(stream)
+
+Returns `true` if the supplied argument is a Flyd stream and `false` otherwise.
+
 ###stream()
 
 Returns the last value of the stream.

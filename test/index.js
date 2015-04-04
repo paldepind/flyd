@@ -251,6 +251,16 @@ describe('stream', function() {
   it('handles a null floating down the stream', function() {
     stream()(null);
   });
+  it('can typecheck', function() {
+    var s1 = stream();
+    var s2 = stream(null);
+    var s3 = stream();
+    var f = function() { };
+    assert(flyd.isStream(s1));
+    assert(flyd.isStream(s2));
+    assert(flyd.isStream(s3));
+    assert(!flyd.isStream(f));
+  });
   describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {
       var s = stream();
@@ -405,6 +415,17 @@ describe('stream', function() {
       v(24);
       assert.equal(s1(), 12);
       assert.equal(s2(), 12);
+    });
+    it('supports neat ap pattern', function() {
+      var result = [];
+      var sumThree = flyd.curryN(3, function(x, y, z) {
+        return x + y + z;
+      });
+      var s1 = stream(0), s2 = stream(0), s3 = stream(0);
+      var sum = flyd.map(sumThree, s1).ap(s2).ap(s3);
+      flyd.map(function (v) { result.push(v); }, sum);
+      s1(3); s2(2); s3(5);
+      assert.deepEqual(result, [0, 3, 5, 10]);
     });
   });
   describe('of', function() {

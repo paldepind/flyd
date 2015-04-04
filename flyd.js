@@ -111,6 +111,10 @@ function destroy(stream) {
   }
 }
 
+function isStream(stream) {
+  return isFunction(stream) && 'id' in stream;
+}
+
 function stream(arg) {
   function s(n) {
     if (arguments.length > 0) {
@@ -291,6 +295,7 @@ function curryN(length, fn) {
 
 return {
   stream: stream,
+  isStream: isStream,
   transduce: transduce,
   merge: merge,
   reduce: reduce,
