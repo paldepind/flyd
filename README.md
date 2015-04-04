@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
 
 # Flyd
-The modular functional reactive programming library in JavaScript.
+The modular, KISS, functional reactive programming JavaScript library.
 
 # Table of contents
 
@@ -16,19 +16,19 @@ The modular functional reactive programming library in JavaScript.
 
 Functional reactive programming is a powerful programming paradigm for
 expressing values that change over time. But existing libraries for JavaScript
-are huge, complex and have a high learning curve.
+are huge, complex, have a high learning curve and aren't functional enough.
 
-Flyd is different. It is simple, expressive and powerful. It is fast to learn
-and easy to use. It has a minimal core on top of which new abstractions can be
-built modularly.
+Flyd is simple and expressive. It is fast to learn and powerful to use. It has
+a minimal core on top of which new abstractions can be built modularly.
 
 ## Features
 
-* Combineable observable streams with automatic dependency resolution as the
-  core building block.
-* Actually functional. No methods – curried functions with arguments in the
-  right order. This adds power and extensibility.
-* Simple and lightweight. Less than 200 SLOC.
+* __Simple and powerful__. Less is more. Flyd has combineable observable streams with automatic
+  dependency resolution as the basic building block. This minimal core is less
+  than 200 SLOC and new FRP abstractions can easily be built on top of it.
+* __More functional__. Flyd is more functional and less object oriented. Instead of methods it gives
+  you curried functions with arguments in the right ordere. This increases the
+  expressive power and the extensibility of the library.
 * Supports the transducer protocol. You can for instance transduce streams with
   ([transducers.js](https://github.com/jlongster/transducers.js).
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
@@ -341,6 +341,8 @@ Returns a new stream with `value` as its initial value.
 
 ### Modules
 
+* [flyd-filter](https://github.com/paldepind/flyd-filter)
 * [flyd-lift](https://github.com/paldepind/flyd-lift)
 * [flyd-flatmap](https://github.com/paldepind/flyd-flatmap)
 * [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen)
+* [flyd-sampleon](https://github.com/paldepind/flyd-sampleon)
