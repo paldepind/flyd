@@ -26,6 +26,8 @@ built modularly.
 
 * Combineable observable streams with automatic dependency resolution as the
   core building block.
+* Actually functional. No methods – curried functions with arguments in the
+  right order. This adds power and extensibility.
 * Simple and lightweight. Less than 200 SLOC.
 * Supports the transducer protocol. You can for instance transduce streams with
   ([transducers.js](https://github.com/jlongster/transducers.js).
@@ -298,6 +300,11 @@ result; // [2, 4, 6, 8]
 If the stream has no dependencies this will detach it from any streams it
 depends on. This makes it available for garbage collection if there are no
 additional references to it.
+
+###flyd.curryN(n, fn)
+
+Returns `fn` curried to `n`. Use this function to curry functions exposed by
+modules for Flyd.
 
 ###stream()
 

@@ -1,5 +1,6 @@
 var assert = require('assert');
 var Promise = require('bluebird');
+var R = require('ramda');
 var t = require('transducers.js');
 
 var flyd = require('../flyd.js');
@@ -187,11 +188,11 @@ describe('stream', function() {
   it('is called with changed stream', function() {
     var s1 = stream();
     var s2 = stream();
-    var results = [];
+    var result = [];
     var dependend = stream(function(d, changed) {
       s1(); s2();
-      if (changed === s1) results.push(1);
-      if (changed === s2) results.push(2);
+      if (changed === s1) result.push(1);
+      if (changed === s2) result.push(2);
     });
     s1(1);
     s2(1);
@@ -199,7 +200,7 @@ describe('stream', function() {
     s1(1);
     s2(1);
     s1(1);
-    assert.deepEqual(results, [1, 2, 2, 1, 2, 1]);
+    assert.deepEqual(result, [1, 2, 2, 1, 2, 1]);
   });
   it('handles dependencies when streams are triggered in streams', function() {
     var x = stream(4);
@@ -331,18 +332,37 @@ describe('stream', function() {
       numbers(3)(2)(4)(10);
       assert.equal(sum(), 19);
     });
+    it('is curried', function() {
+      var numbers = stream();
+      var sumStream = flyd.reduce(function(sum, n) {
+        return sum + n;
+      }, 0);
+      var sum = sumStream(numbers);
+      numbers(3)(2)(4)(10);
+      assert.equal(sum(), 19);
+    });
   });
   describe('merge', function() {
     it('can sum streams of integers', function() {
-      var results = [];
+      var result = [];
       var s1 = stream();
       var s2 = stream();
       var merged = flyd.merge(s1, s2);
       stream([merged], function() {
-        results.push(merged());
+        result.push(merged());
       });
       s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
-      assert.deepEqual(results, [12, 2, 4, 44, 1, 12, 2]);
+      assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
+    });
+    it('is curried', function() {
+      var result = [];
+      var s1 = stream();
+      var mergeWithS1 = flyd.merge(s1);
+      var s2 = stream();
+      s1and2 = mergeWithS1(s2);
+      flyd.map(function(v) { result.push(v); }, s1and2);
+      s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
+      assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
     });
   });
   describe('ap', function() {
@@ -413,39 +433,82 @@ describe('stream', function() {
                    a.of(function(f) { return f(y); }).ap(u)());
     });
   });
-  describe('transducer support', function() {
+  describe('transducer.js transducer support', function() {
     it('creates new stream with map applied', function() {
-      var results = [];
+      var result = [];
       var s1 = stream();
       var tx = t.map(function(x) { return x * 3; });
       var s2 = flyd.transduce(tx, s1);
-      stream([s2], function() { results.push(s2()); });
+      stream([s2], function() { result.push(s2()); });
       s1(1)(2)(4)(6);
-      assert.deepEqual(results, [3, 6, 12, 18]);
+      assert.deepEqual(result, [3, 6, 12, 18]);
     });
     it('creates new stream with filter applied', function() {
-      var results = [];
+      var result = [];
       var s1 = stream();
       var tx = t.compose(
         t.map(function(x) { return x * 3; }),
         t.filter(function(x) { return x % 2 === 0; })
       );
       var s2 = flyd.transduce(tx, s1);
-      stream([s2], function() { results.push(s2()); });
+      stream([s2], function() { result.push(s2()); });
       s1(1)(2)(3)(4);
-      assert.deepEqual(results, [6, 12]);
+      assert.deepEqual(result, [6, 12]);
     });
     it('supports dedupe', function() {
-      var results = [];
+      var result = [];
       var s1 = stream();
       var tx = t.compose(
         t.map(function(x) { return x * 2; }),
         t.dedupe()
       );
       var s2 = flyd.transduce(tx, s1);
-      stream([s2], function() { results.push(s2()); });
+      stream([s2], function() { result.push(s2()); });
       s1(1)(1)(2)(3)(3)(3)(4);
-      assert.deepEqual(results, [2, 4, 6, 8]);
+      assert.deepEqual(result, [2, 4, 6, 8]);
+    });
+  });
+  describe('Ramda transducer support', function() {
+    it('creates new stream with map applied', function() {
+      var result = [];
+      var s1 = stream();
+      var tx = R.map(function(x) { return x * 3; });
+      var s2 = flyd.transduce(tx, s1);
+      stream([s2], function() { result.push(s2()); });
+      s1(1)(2)(4)(6);
+      assert.deepEqual(result, [3, 6, 12, 18]);
+    });
+    it('creates new stream with filter applied', function() {
+      var result = [];
+      var s1 = stream();
+      var tx = R.pipe(
+        R.map(function(x) { return x * 3; }),
+        R.filter(function(x) { return x % 2 === 0; })
+      );
+      var s2 = flyd.transduce(tx, s1);
+      stream([s2], function() { result.push(s2()); });
+      s1(1)(2)(3)(4);
+      assert.deepEqual(result, [6, 12]);
+    });
+    it('filters empty elements', function() {
+      var result = [];
+      var s1 = stream();
+      var s2 = flyd.transduce(R.reject(R.isEmpty), s1);
+      flyd.map(function (v) { result.push(v); }, s2);
+      s1('foo')('')('bar')('')('')('!');
+      assert.deepEqual(result, ['foo', 'bar', '!']);
+    });
+    it.skip('supports dedupe', function() {
+      var result = [];
+      var s1 = stream();
+      var tx = R.compose(
+        R.map(function(x) { return x * 2; }),
+        R.dedupe() // Ramda has no dedupe function
+      );
+      var s2 = flyd.transduce(tx, s1);
+      stream([s2], function() { result.push(s2()); });
+      s1(1)(1)(2)(3)(3)(3)(4);
+      assert.deepEqual(result, [2, 4, 6, 8]);
     });
   });
 });
