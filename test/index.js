@@ -261,6 +261,14 @@ describe('stream', function() {
     assert(flyd.isStream(s3));
     assert(!flyd.isStream(f));
   });
+  it('has pretty string representation', function() {
+    var ns = stream(1);
+    var ss = stream('hello');
+    var os = stream({});
+    assert.deepEqual('' + ns, 'stream(1)');
+    assert.deepEqual('' + ss, 'stream(hello)');
+    assert.deepEqual('' + os, 'stream([object Object])');
+  });
   describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {
       var s = stream();

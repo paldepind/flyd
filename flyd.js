@@ -115,6 +115,10 @@ function isStream(stream) {
   return isFunction(stream) && 'id' in stream;
 }
 
+function streamToString() {
+  return 'stream(' + this.val + ')';
+}
+
 function stream(arg) {
   function s(n) {
     if (arguments.length > 0) {
@@ -148,6 +152,7 @@ function stream(arg) {
   s.map = map.bind(null, s);
   s.ap = ap;
   s.of = of;
+  s.toString = streamToString;
 
   if (arguments.length > 1) {
     s.initialDeps = arg;
