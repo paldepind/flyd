@@ -248,6 +248,13 @@ describe('stream', function() {
     assert.equal(order[0], 1);
     assert.equal(order[1], 2);
   });
+  it("let's explicit `undefined` flow down streams", function() {
+    var result = [];
+    var s1 = stream(undefined);
+    var s2 = flyd.map(function(v) { result.push(v); }, s1);
+    s1(2)(undefined);
+    assert.deepEqual(result, [undefined, 2, undefined]);
+  });
   it('handles a null floating down the stream', function() {
     stream()(null);
   });

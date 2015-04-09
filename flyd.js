@@ -21,7 +21,6 @@ function isUndefined(v) {
 // Globals
 var curStream;
 var nextId = 0;
-
 var queue = [];
 
 function flushQueue() {
@@ -86,7 +85,7 @@ function of(v) {
 function initialDepsNotMet(stream) {
   if (!isUndefined(stream.initialDeps)) {
     var met = stream.initialDeps.every(function(stream) {
-      return !isUndefined(stream());
+      return stream.hasVal;
     });
     if (met) stream.initialDeps = undefined;
   }
@@ -127,6 +126,7 @@ function stream(arg) {
         return;
       }
       s.val = n;
+      s.hasVal = true;
       if (!isUndefined(curStream)) {
         checkCirc(curStream, s.id);
         queue.push({v: s, l: s.listeners});
@@ -141,6 +141,7 @@ function stream(arg) {
       return s.val;
     }
   }
+  s.hasVal = false;
   s.val = undefined;
   s.listeners = [];
   s.id = nextId++;
@@ -161,16 +162,19 @@ function stream(arg) {
       s.dynamicDeps = false;
     }
   }
-  if (isFunction(arg)) {
-    s.update = updateStream.bind(null, s, arg);
-    if (s.initialDeps) {
-      s.initialDeps.forEach(function(stream) {
-        addDependency(s, stream);
-      });
+  if (arguments.length > 0) {
+    if (isFunction(arg)) {
+      s.update = updateStream.bind(null, s, arg);
+      if (s.initialDeps) {
+        s.initialDeps.forEach(function(stream) {
+          addDependency(s, stream);
+        });
+      }
+      s.update();
+    } else {
+      s.val = arg;
+      s.hasVal = true;
     }
-    s.update();
-  } else {
-    s.val = arg;
   }
   return s;
 }
