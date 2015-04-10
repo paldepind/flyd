@@ -58,7 +58,7 @@ var reduce = curryN(3, function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
   }, true);
-  if (isUndefined(ns.val)) ns(acc);
+  if (!ns.hasVal) ns(acc);
   return ns;
 });
 
