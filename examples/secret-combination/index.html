@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Sum – a Flyd demo</title>
+    <title>Secret combination</title>
     <link href='http://fonts.googleapis.com/css?family=Inconsolata|Josefin+Sans:400,300' rel='stylesheet' type='text/css'>
     <style>
     * {
@@ -110,25 +110,25 @@
     document.addEventListener('DOMContentLoaded', function() {
       var magicSeq = 'abbaba'
       var setMsg = (msg) => message.innerHTML = msg;
-      var click = stream((click) => {
-        btnA.addEventListener('click', () => click('a'));
-        btnB.addEventListener('click', () => click('b'));
+      var click = stream(function(click) {
+        btnA.addEventListener('click', click.bind(null, 'a'));
+        btnB.addEventListener('click', click.bind(null, 'b'));
       });
-      var corrects = stream([click], () => {
-        var l = corrects().length, correct = click() === magicSeq[l]
+      var corrects = flyd.reduce(function(cs, c) {
+        var l = cs.length, correct = (c === magicSeq[l]);
         return !correct && l > 0       ? []
              : !correct && l === 0     ? undefined
-             : l + 1 < magicSeq.length ? corrects().concat(click())
+             : l + 1 < magicSeq.length ? cs.concat(c)
                                        : (setMsg('Combination unlocked!'), []);
-      })([])
-      var scheduled = stream(() => {
-        if (corrects().length === 1) return setTimeout(() => {
+      }, [], click);
+      var scheduled = stream(function() {
+        if (corrects().length === 1) return setTimeout(function() {
           setMsg('You\'re not fast enough, try again');
           corrects([])
         }, 5000)
       })
-      stream(() => console.log(corrects()));
-      stream(() => {
+      flyd.map(function(c) { console.log(c); }, corrects);
+      stream(function() {
         if (corrects().length === 0 && scheduled.val) clearTimeout(scheduled.val)
       })
     })
