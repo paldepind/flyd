@@ -68,10 +68,6 @@
     .title-container h1 {
       margin-top: 28px;
     }
-    .title-container h2 {
-      font-weight: 300;
-      font-size: 1.8em;
-    }
     code {
       font-family: 'Inconsolata';
       background: #ececec;
@@ -106,7 +102,7 @@
     </style>
     <script type="text/javascript" src="../../flyd.js"></script>
     <script type="text/javascript">
-    var stream = flyd.stream, pipe = flyd.pipe;
+    var stream = flyd.stream;
     var x, y; // Let x and y be globals
     document.addEventListener('DOMContentLoaded', function() {
       var sumBox = document.getElementById('sumBox');
@@ -114,7 +110,7 @@
       var yBox = document.getElementById('yBox');
       x = stream(10);
       y = stream(20);
-      var sum = pipe(function() {
+      var sum = stream(function() {
         if (typeof y() !== 'number' || typeof x() !== 'number') {
           // Use called x or y with invalid value
           console.log('Numbers only, please!');
@@ -122,13 +118,13 @@
         }
         return x() + y();
       });
-      pipe(function() {
+      stream(function() {
         sumBox.innerHTML = sum();
       });
-      pipe(function() {
+      stream(function() {
         xBox.innerHTML = x();
       });
-      pipe(function() {
+      stream(function() {
         if (typeof y() !== 'number' || typeof x() !== 'number') {
           // Use called x or y with invalid value
           console.log('Numbers only, please!');
@@ -136,8 +132,8 @@
         yBox.innerHTML = y();
       });
       // Do animations
-      function animate(stream, elm) {
-        pipe([stream], function(s) {
+      function animate(s, elm) {
+        stream([s], function(s) {
           elm.style.background = 'black';
           elm.style.color = 'yellow';
           setTimeout(function() {
@@ -155,9 +151,6 @@
   <body>
     <div class="title-container">
       <h1>Sum</h1>
-      <h2>
-        a <i>Flyd</i> demonstration
-      </h2>
     </div>
     <div class="column left-column a-exe">
       <h2>Execute</h2>
@@ -205,11 +198,11 @@
       <h2>Source code</h2>
       <code class="code-block">var x = stream(10);
 var y = stream(20);
-var sum = pipe(function() {
+var sum = stream(function() {
   return x() + y();
 });
 var elm = document.getElementById('sumBox');
-pipe(function() {
+stream(function() {
   elm.innerHTML = sum();
 });</code>
     </div>

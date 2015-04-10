@@ -19,9 +19,8 @@ function isUndefined(v) {
 }
 
 // Globals
-var curPipe;
+var curStream;
 var nextId = 0;
-
 var queue = [];
 
 function flushQueue() {
@@ -32,15 +31,15 @@ function flushQueue() {
   }
 }
 
-function addDependency(pipe, stream) {
-  if (!(stream.id in pipe.deps)) {
-    pipe.deps[stream.id] = stream.listeners;
-    stream.listeners.push(pipe.update);
+function addDependency(to, from) {
+  if (!(from.id in to.deps)) {
+    to.deps[from.id] = from.listeners;
+    from.listeners.push(to.update);
   }
 }
 
-function checkCirc(pipe, id) {
-  if (pipe.deps[id]) {
+function checkCirc(stream, id) {
+  if (stream.deps[id]) {
     throw new Error('Circular dependency detected');
   }
 }
@@ -51,76 +50,268 @@ function removeListener(listeners, cb) {
   listeners.length--;
 }
 
-function stream(val) {
-  function streamFunc(n) {
-    if (arguments.length === 1) {
-      val = n;
-      if (!isUndefined(curPipe)) {
-        checkCirc(curPipe, streamFunc.id);
-        queue.push({v: n, l: streamFunc.listeners});
-      } else {
-        streamFunc.listeners.forEach(function(f) { f(n); });
-      }
-      return streamFunc;
-    } else {
-      if (curPipe && curPipe.dynamicDeps)
-        addDependency(curPipe, streamFunc);
-      return val;
+function map(s, f) {
+  return stream([s], function() { return f(s()); }, true);
+}
+
+var reduce = curryN(3, function(f, acc, s) {
+  var ns = stream([s], function() {
+    return (acc = f(acc, s()));
+  }, true);
+  if (!ns.hasVal) ns(acc);
+  return ns;
+});
+
+var merge = curryN(2, function(s1, s2) {
+  return stream(function(n, changed) {
+    var v1, v2;
+    if (changed) return changed();
+    else {
+     v1 = s1(); v2 = s2();
+     return v1 === undefined ? v2 : v1;
     }
-  }
-  streamFunc.listeners = [];
-  streamFunc.id = nextId++;
-  return streamFunc;
+  });
+});
+
+function ap(s2) {
+  var s1 = this;
+  return stream(function() { return s1()(s2()); });
 }
 
-function initialDepsNotMet(pipe) {
-  if (pipe.initialDeps) {
-    var met = pipe.initialDeps.every(function(stream) {
-      return !isUndefined(stream());
+function of(v) {
+  return stream()(v);
+}
+
+function initialDepsNotMet(stream) {
+  if (!isUndefined(stream.initialDeps)) {
+    var met = stream.initialDeps.every(function(stream) {
+      return stream.hasVal;
     });
-    if(met) pipe.initialDeps = undefined;
+    if (met) stream.initialDeps = undefined;
   }
-  return !isUndefined(pipe.initialDeps);
+  return !isUndefined(stream.initialDeps);
 }
 
-function updatePipe(pipe, cb) {
-  if (initialDepsNotMet(pipe)) return;
-  curPipe = pipe;
-  var returnVal = cb(pipe);
-  curPipe = undefined;
-  if (returnVal !== undefined) pipe(returnVal);
+function updateStream(stream, cb, changed) {
+  if (initialDepsNotMet(stream)) return;
+  curStream = stream;
+  var returnVal = cb(stream, changed);
+  curStream = undefined;
+  if (returnVal !== undefined) stream(returnVal);
   flushQueue();
 }
 
-function destroyPipe(pipe) {
-  if (pipe.listeners.length !== 0) {
-    throw new Error('Trying to destroy pipe with listeners attached');
+function destroy(stream) {
+  if (stream.listeners.length !== 0) {
+    throw new Error('Trying to destroy stream with listeners attached');
   }
-  for (var id in pipe.deps) {
-    if (pipe.deps[id]) removeListener(pipe.deps[id], pipe.update);
+  for (var id in stream.deps) {
+    if (stream.deps[id]) removeListener(stream.deps[id], stream.update);
   }
 }
 
-function pipe(f) {
-  var newPipe = stream();
-  newPipe.deps = {};
-  newPipe.initialDeps = undefined;
-  newPipe.deps[newPipe.id] = false;
-  newPipe.dynamicDeps = true;
-  newPipe.update = updatePipe.bind(null, newPipe, f);
-  if (arguments.length === 2) {
-    f = arguments[1];
-    newPipe.update = updatePipe.bind(null, newPipe, f);
-    newPipe.initialDeps = arguments[0];
-    arguments[0].forEach(function(stream) {
-      addDependency(newPipe, stream);
-    });
-    newPipe.dynamicDeps = false;
-  }
-  newPipe.destroy = destroyPipe.bind(null, newPipe);
-  newPipe.update();
-  return newPipe;
+function isStream(stream) {
+  return isFunction(stream) && 'id' in stream;
 }
 
-return {stream: stream, pipe: pipe};
+function streamToString() {
+  return 'stream(' + this.val + ')';
+}
+
+function stream(arg) {
+  function s(n) {
+    if (arguments.length > 0) {
+      if (!isUndefined(n) && n !== null && isFunction(n.then)) {
+        n.then(s);
+        return;
+      }
+      s.val = n;
+      s.hasVal = true;
+      if (!isUndefined(curStream)) {
+        checkCirc(curStream, s.id);
+        queue.push({v: s, l: s.listeners});
+      } else {
+        s.listeners.forEach(function(f) { f(s); });
+      }
+      return s;
+    } else {
+      if (curStream && curStream.dynamicDeps) {
+        addDependency(curStream, s);
+      }
+      return s.val;
+    }
+  }
+  s.hasVal = false;
+  s.val = undefined;
+  s.listeners = [];
+  s.id = nextId++;
+  s.deps = {};
+  s.initialDeps = undefined;
+  s.deps[s.id] = false;
+  s.dynamicDeps = true;
+
+  s.map = map.bind(null, s);
+  s.ap = ap;
+  s.of = of;
+  s.toString = streamToString;
+
+  if (arguments.length > 1) {
+    s.initialDeps = arg;
+    arg = arguments[1];
+    if (arguments[2] === true) {
+      s.dynamicDeps = false;
+    }
+  }
+  if (arguments.length > 0) {
+    if (isFunction(arg)) {
+      s.update = updateStream.bind(null, s, arg);
+      if (s.initialDeps) {
+        s.initialDeps.forEach(function(stream) {
+          addDependency(s, stream);
+        });
+      }
+      s.update();
+    } else {
+      s.val = arg;
+      s.hasVal = true;
+    }
+  }
+  return s;
+}
+
+var transduce = curryN(2, function(xform, source) {
+  xform = xform(new StreamTransformer(stream));
+  return stream([source], function() {
+    return xform.step(undefined, source());
+  });
+});
+
+function StreamTransformer(res) { }
+StreamTransformer.prototype.init = function() { };
+StreamTransformer.prototype.result = function() { };
+StreamTransformer.prototype.step = function(s, v) { return v; };
+
+// Own curry implementation snatched from Ramda
+// Figure out something nicer later on
+var _ = {placeholder: true};
+
+// Detect both own and Ramda placeholder
+function isPlaceholder(p) {
+  return p === _ || (p && p.ramda === 'placeholder');
+}
+
+function toArray(arg) {
+  var arr = [];
+  for (var i = 0; i < arg.length; ++i) {
+    arr[i] = arg[i];
+  }
+  return arr;
+}
+
+// Modified versions of arity and curryN from Ramda
+function ofArity(n, fn) {
+  if (arguments.length === 1) {
+    return ofArity.bind(undefined, n);
+  }
+  switch (n) {
+  case 0:
+    return function () {
+      return fn.apply(this, arguments);
+    };
+  case 1:
+    return function (a0) {
+      void a0;
+      return fn.apply(this, arguments);
+    };
+  case 2:
+    return function (a0, a1) {
+      void a1;
+      return fn.apply(this, arguments);
+    };
+  case 3:
+    return function (a0, a1, a2) {
+      void a2;
+      return fn.apply(this, arguments);
+    };
+  case 4:
+    return function (a0, a1, a2, a3) {
+      void a3;
+      return fn.apply(this, arguments);
+    };
+  case 5:
+    return function (a0, a1, a2, a3, a4) {
+      void a4;
+      return fn.apply(this, arguments);
+    };
+  case 6:
+    return function (a0, a1, a2, a3, a4, a5) {
+      void a5;
+      return fn.apply(this, arguments);
+    };
+  case 7:
+    return function (a0, a1, a2, a3, a4, a5, a6) {
+      void a6;
+      return fn.apply(this, arguments);
+    };
+  case 8:
+    return function (a0, a1, a2, a3, a4, a5, a6, a7) {
+      void a7;
+      return fn.apply(this, arguments);
+    };
+  case 9:
+    return function (a0, a1, a2, a3, a4, a5, a6, a7, a8) {
+      void a8;
+      return fn.apply(this, arguments);
+    };
+  case 10:
+    return function (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) {
+      void a9;
+      return fn.apply(this, arguments);
+    };
+  default:
+    throw new Error('First argument to arity must be a non-negative integer no greater than ten');
+  }
+}
+
+function curryN(length, fn) {
+  return ofArity(length, function () {
+    var n = arguments.length;
+    var shortfall = length - n;
+    var idx = n;
+    while (--idx >= 0) {
+      if (isPlaceholder(arguments[idx])) {
+        shortfall += 1;
+      }
+    }
+    if (shortfall <= 0) {
+      return fn.apply(this, arguments);
+    } else {
+      var initialArgs = toArray(arguments);
+      return curryN(shortfall, function () {
+        var currentArgs = toArray(arguments);
+        var combinedArgs = [];
+        var idx = -1;
+        while (++idx < n) {
+          var val = initialArgs[idx];
+          combinedArgs[idx] = isPlaceholder(val) ? currentArgs.shift() : val;
+        }
+        return fn.apply(this, combinedArgs.concat(currentArgs));
+      });
+    }
+  });
+}
+
+
+return {
+  stream: stream,
+  isStream: isStream,
+  transduce: transduce,
+  merge: merge,
+  reduce: reduce,
+  destroy: destroy,
+  map: curryN(2, function(f, s) { return map(s, f); }),
+  curryN: curryN,
+  _: _,
+};
+
 }));
