@@ -19,7 +19,6 @@ function isUndefined(v) {
 }
 
 // Globals
-var nextId = 0;
 var queue = [];
 var isFlushingQueue = false;
 
@@ -31,13 +30,6 @@ function flushQueue() {
     s.update();
   }
   isFlushingQueue = false;
-}
-
-function addDependency(to, from) {
-  if (!(from.id in to.deps)) {
-    to.deps[from.id] = from.listeners;
-    from.listeners.push(to);
-  }
 }
 
 function removeListener(listeners, s) {
@@ -79,39 +71,36 @@ function of(v) {
 }
 
 function initialDepsNotMet(stream) {
-  if (!isUndefined(stream.initialDeps)) {
-    var met = stream.initialDeps.every(function(stream) {
-      return stream.hasVal;
+  if (!stream.depsMet) {
+    stream.depsMet = stream.deps.every(function(s) {
+      return s.hasVal;
     });
-    if (met) stream.initialDeps = undefined;
   }
-  return !isUndefined(stream.initialDeps);
+  return !stream.depsMet;
 }
 
-function updateStream(stream, cb) {
-  if (initialDepsNotMet(stream)) return;
-  var returnVal = cb(stream, stream.lastChanged);
-  if (returnVal !== undefined) stream(returnVal);
+function updateStream() {
+  if (initialDepsNotMet(this)) return;
+  var returnVal = this.fn(this, this.depChanged);
+  if (returnVal !== undefined) this(returnVal);
 }
 
 function destroy(stream) {
   if (stream.listeners.length !== 0) {
     throw new Error('Trying to destroy stream with listeners attached');
   }
-  for (var id in stream.deps) {
-    if (stream.deps[id]) removeListener(stream.deps[id], stream);
-  }
+  stream.deps.forEach(function(dep) { removeListener(dep.listeners, stream); });
 }
 
 function isStream(stream) {
-  return isFunction(stream) && 'id' in stream;
+  return isFunction(stream) && 'depsMet' in stream;
 }
 
 function streamToString() {
   return 'stream(' + this.val + ')';
 }
 
-function stream(arg, fn, wait) {
+function stream(arg, fn, waitForDeps) {
   function s(n) {
     if (arguments.length > 0) {
       if (!isUndefined(n) && n !== null && isFunction(n.then)) {
@@ -121,7 +110,7 @@ function stream(arg, fn, wait) {
       s.val = n;
       s.hasVal = true;
       s.listeners.forEach(function(st) {
-        st.lastChanged = s;
+        st.depChanged = s;
         if (!st.inQueue) {
           st.inQueue = true;
           queue.push(st);
@@ -136,12 +125,11 @@ function stream(arg, fn, wait) {
   s.hasVal = false;
   s.val = undefined;
   s.listeners = [];
-  s.id = nextId++;
-  s.deps = {};
-  s.initialDeps = undefined;
-  s.deps[s.id] = false;
-  s.lastChanged = undefined;
+  s.deps = [];
+  s.depsMet = isUndefined(waitForDeps) ? false : true;
+  s.depChanged = undefined;
   s.inQueue = true;
+  s.fn = fn;
 
   s.map = map.bind(null, s);
   s.ap = ap;
@@ -149,12 +137,10 @@ function stream(arg, fn, wait) {
   s.toString = streamToString;
 
   if (arguments.length > 1) {
-    if (isUndefined(wait)) {
-      s.initialDeps = arg;
-    }
-    s.update = updateStream.bind(null, s, fn);
-    arg.forEach(function(stream) {
-      addDependency(s, stream);
+    s.update = updateStream;
+    s.deps = arg;
+    arg.forEach(function(dep) {
+      dep.listeners.push(s);
     });
     queue.push(s);
     flushQueue();

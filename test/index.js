@@ -192,17 +192,6 @@ describe('stream', function() {
     assert.equal(order[0], 1);
     assert.equal(order[1], 2);
   });
-  it('does atomic updates', function() {
-    var result = [];
-    var a = stream(1);
-    var b = stream([a], function() { return a() * 2; });
-    var c = stream([a], function() { return a() + 4; });
-    var d = stream([b, c], function(self, ch) {
-      result.push(b() + c());
-    });
-    a(2);
-    assert.deepEqual(result, [7, 10]);
-  });
   it("let's explicit `undefined` flow down streams", function() {
     var result = [];
     var s1 = stream(undefined);
@@ -495,6 +484,29 @@ describe('stream', function() {
       stream([s2], function() { result.push(s2()); });
       s1(1)(1)(2)(3)(3)(3)(4);
       assert.deepEqual(result, [2, 4, 6, 8]);
+    });
+  });
+  describe('atomic updates', function() {
+    it('does atomic updates', function() {
+      var result = [];
+      var a = stream(1);
+      var b = stream([a], function() { return a() * 2; });
+      var c = stream([a], function() { return a() + 4; });
+      var d = stream([b, c], function(self, ch) {
+        result.push(b() + c());
+      });
+      a(2);
+      assert.deepEqual(result, [7, 10]);
+    });
+    it('does not glitch', function() {
+      var result = [];
+      var s1 = stream(1);
+      var s1x2 = flyd.map(function(n) { return n*2; }, s1);
+      var s2 = stream([s1, s1x2], function() { return s1() + s1x2(); });
+      var s1x4 = stream([s1, s2], function() { return s1() + s2(); });
+      flyd.map(function(n) { result.push(n); }, s1x4);
+      s1(2)(3)(4);
+      assert.deepEqual(result, [4, 8, 12, 16]);
     });
   });
 });
