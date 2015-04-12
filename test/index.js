@@ -123,32 +123,6 @@ describe('stream', function() {
     }
     assert(thrown);
   });
-  it('detects circular dependencies when get then set', function() {
-    var x = stream(3), errMsg;
-    try {
-      var xTwice = stream([x], function() {
-        return x(x() * 2);
-      });
-    } catch(e) {
-      errMsg = e.message;
-      thrown = true;
-    }
-    assert.equal(errMsg, 'Circular dependency detected');
-  });
-  it('detects circular dependencies', function() {
-    var x = stream(3), errMsg;
-    try {
-      var xTwice = stream([x], function() {
-        x(3);
-        return x();
-      });
-      x(1);
-    } catch(e) {
-      errMsg = e.message;
-      thrown = true;
-    }
-    assert.equal(errMsg, 'Circular dependency detected');
-  });
   it('can get its own value', function() {
     var num = stream(0);
     var sum = stream([num], function(sum) {

@@ -19,7 +19,6 @@ function isUndefined(v) {
 }
 
 // Globals
-var curStream;
 var nextId = 0;
 var queue = [];
 var isFlushingQueue = false;
@@ -38,15 +37,6 @@ function addDependency(to, from) {
   if (!(from.id in to.deps)) {
     to.deps[from.id] = from.listeners;
     from.listeners.push(to);
-  }
-}
-
-function checkCirc(stream, id) {
-  if (stream.deps[id]) {
-    isFlushingQueue = false;
-    curStream = undefined;
-    queue = [];
-    throw new Error('Circular dependency detected');
   }
 }
 
@@ -100,9 +90,7 @@ function initialDepsNotMet(stream) {
 
 function updateStream(stream, cb) {
   if (initialDepsNotMet(stream)) return;
-  curStream = stream;
   var returnVal = cb(stream, stream.lastChanged);
-  curStream = undefined;
   if (returnVal !== undefined) stream(returnVal);
 }
 
@@ -139,9 +127,6 @@ function stream(arg, fn, wait) {
           queue.push(st);
         }
       });
-      if (!isUndefined(curStream)) {
-        checkCirc(curStream, s.id);
-      }
       flushQueue();
       return s;
     } else {
