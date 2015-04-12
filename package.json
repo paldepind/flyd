@@ -1,6 +1,6 @@
 {
   "name": "flyd",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "The less is more, modular, functional reactive programming library",
   "main": "flyd.js",
   "directories": {
@@ -8,8 +8,6 @@
     "test": "test"
   },
   "dependencies": {
-    "coveralls": "^2.11.2",
-    "mocha-lcov-reporter": "0.0.2"
   },
   "devDependencies": {
     "bluebird": "^2.9.13",
