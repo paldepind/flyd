@@ -51,31 +51,31 @@ function removeListener(listeners, cb) {
 }
 
 function map(s, f) {
-  return stream([s], function() { return f(s()); }, true);
+  return stream([s], function() { return f(s()); });
 }
 
 var reduce = curryN(3, function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
-  }, true);
+  });
   if (!ns.hasVal) ns(acc);
   return ns;
 });
 
 var merge = curryN(2, function(s1, s2) {
-  return stream(function(n, changed) {
+  return stream([s1, s2], function(n, changed) {
     var v1, v2;
     if (changed) return changed();
     else {
      v1 = s1(); v2 = s2();
      return v1 === undefined ? v2 : v1;
     }
-  });
+  }, true);
 });
 
 function ap(s2) {
   var s1 = this;
-  return stream(function() { return s1()(s2()); });
+  return stream([s1, s2], function() { return s1()(s2()); }, true);
 }
 
 function of(v) {
@@ -118,7 +118,7 @@ function streamToString() {
   return 'stream(' + this.val + ')';
 }
 
-function stream(arg) {
+function stream(arg, fn, wait) {
   function s(n) {
     if (arguments.length > 0) {
       if (!isUndefined(n) && n !== null && isFunction(n.then)) {
@@ -135,9 +135,6 @@ function stream(arg) {
       }
       return s;
     } else {
-      if (curStream && curStream.dynamicDeps) {
-        addDependency(curStream, s);
-      }
       return s.val;
     }
   }
@@ -148,7 +145,6 @@ function stream(arg) {
   s.deps = {};
   s.initialDeps = undefined;
   s.deps[s.id] = false;
-  s.dynamicDeps = true;
 
   s.map = map.bind(null, s);
   s.ap = ap;
@@ -156,25 +152,17 @@ function stream(arg) {
   s.toString = streamToString;
 
   if (arguments.length > 1) {
-    s.initialDeps = arg;
-    arg = arguments[1];
-    if (arguments[2] === true) {
-      s.dynamicDeps = false;
+    if (isUndefined(wait)) {
+      s.initialDeps = arg;
     }
-  }
-  if (arguments.length > 0) {
-    if (isFunction(arg)) {
-      s.update = updateStream.bind(null, s, arg);
-      if (s.initialDeps) {
-        s.initialDeps.forEach(function(stream) {
-          addDependency(s, stream);
-        });
-      }
-      s.update();
-    } else {
-      s.val = arg;
-      s.hasVal = true;
-    }
+    s.update = updateStream.bind(null, s, fn);
+    arg.forEach(function(stream) {
+      addDependency(s, stream);
+    });
+    s.update();
+  } else if (arguments.length === 1) {
+    s.val = arg;
+    s.hasVal = true;
   }
   return s;
 }

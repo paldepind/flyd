@@ -25,7 +25,7 @@ describe('stream', function() {
   it('can set result by calling callback', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = stream(function(s) {
+    var sum = stream([x, y], function(s) {
       s(x() + y());
     });
     assert.equal(sum(), x() + y());
@@ -33,7 +33,7 @@ describe('stream', function() {
   it('can set result by returning value', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = stream(function() {
+    var sum = stream([x, y], function() {
       return x() + y();
     });
     assert.equal(sum(), x() + y());
@@ -41,7 +41,7 @@ describe('stream', function() {
   it('is updated when dependencies change', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = stream(function(s) {
+    var sum = stream([x, y], function(s) {
       s(x() + y());
     });
     assert.equal(sum(), x() + y()); // 7
@@ -49,20 +49,6 @@ describe('stream', function() {
     assert.equal(sum(), x() + y()); // 16
     y(8);
     assert.equal(sum(), x() + y()); // 20
-  });
-  it('putting to stream does not add dependency', function() {
-    var x = stream(3);
-    var y = stream(4);
-    var called = 0;
-    var sum = stream(function(s) {
-      called++;
-      y(x() + 5);
-    });
-    x(1)(2)(3);
-    y(1)(2)(3);
-    x(4)(5);
-    assert.equal(called, 6);
-    assert.equal(y(), 10);
   });
   it('can specify dependencies manually', function() {
     var x = stream(3);
@@ -78,21 +64,7 @@ describe('stream', function() {
     assert.equal(called, 6);
     assert.equal(sum(), 8);
   });
-  it('dependencies can be static', function() {
-    var x = stream(3);
-    var y = stream(4);
-    var called = 0;
-    var sum = stream([x], function(s) {
-      called++;
-      return x() + y();
-    }, true);
-    x(1)(2)(3);
-    y(1)(2)(3);
-    x(4)(5);
-    assert.equal(called, 6);
-    assert.equal(sum(), 8);
-  });
-  it('is not called until explicit dependencies have value', function() {
+  it('is not called until dependencies have value', function() {
     var x = stream();
     var y = stream();
     var called = 0;
@@ -106,13 +78,13 @@ describe('stream', function() {
   it('streams can lead into other streams', function() {
     var x = stream(3);
     var y = stream(4);
-    var sum = stream(function() {
+    var sum = stream([x, y], function() {
       return x() + y();
     });
-    var twiceSum = stream(function() {
+    var twiceSum = stream([sum], function() {
       return sum() * 2;
     });
-    var sumPlusDoubleSum = stream(function() {
+    var sumPlusDoubleSum = stream([twiceSum, sum], function() {
       return twiceSum() + sum();
     });
     x(12);
@@ -126,7 +98,7 @@ describe('stream', function() {
   it('can destroy stream', function() {
     var x = stream(3);
     var y = stream(2);
-    var sum = stream(function() {
+    var sum = stream([y, x], function() {
       return y() * x();
     });
     assert.equal(y.listeners.length, 1);
@@ -137,10 +109,10 @@ describe('stream', function() {
   });
   it('can not destroy stream with listeners', function() {
     var x = stream(3), thrown;
-    var x2 = stream(function() {
+    var x2 = stream([x], function() {
       return x() * 2;
     });
-    var x4 = stream(function() {
+    var x4 = stream([x2], function() {
       return x2() * 2;
     });
     assert.equal(x4(), 12);
@@ -154,7 +126,7 @@ describe('stream', function() {
   it('detects circular dependencies when get then set', function() {
     var x = stream(3), errMsg;
     try {
-      var xTwice = stream(function() {
+      var xTwice = stream([x], function() {
         return x(x() * 2);
       });
     } catch(e) {
@@ -166,7 +138,7 @@ describe('stream', function() {
   it('detects circular dependencies', function() {
     var x = stream(3), errMsg;
     try {
-      var xTwice = stream(function() {
+      var xTwice = stream([x], function() {
         x(3);
         return x();
       });
@@ -178,19 +150,18 @@ describe('stream', function() {
     assert.equal(errMsg, 'Circular dependency detected');
   });
   it('can get its own value', function() {
-    var num = stream();
-    var sum = stream(function(sum) {
+    var num = stream(0);
+    var sum = stream([num], function(sum) { //FIXME
       return (sum() || 0) + num();
     });
     num(2)(3)(8)(7);
     assert.equal(sum(), 20);
   });
   it('is called with changed stream', function() {
-    var s1 = stream();
-    var s2 = stream();
+    var s1 = stream(0);
+    var s2 = stream(0);
     var result = [];
-    var dependend = stream(function(d, changed) {
-      s1(); s2();
+    var dependend = stream([s1, s2], function(d, changed) {
       if (changed === s1) result.push(1);
       if (changed === s2) result.push(2);
     });
@@ -206,10 +177,10 @@ describe('stream', function() {
     var x = stream(4);
     var y = stream(3);
     var z = stream(1);
-    var doubleX = stream(function() {
+    var doubleX = stream([x], function() {
       return x() * 2;
     });
-    var setAndSum = stream(function() {
+    var setAndSum = stream([y, z], function() {
       x(3);
       return z() + y();
     });
@@ -220,11 +191,11 @@ describe('stream', function() {
     var order = [];
     var x = stream(4);
     var y = stream(3);
-    var doubleX = stream(function() {
+    var doubleX = stream([x], function() {
       if (x() === 3) order.push(2);
       return x() * 2;
     });
-    var setAndY = stream(function() {
+    var setAndY = stream([y], function() {
       x(3);
       order.push(1);
       return y();
@@ -236,7 +207,7 @@ describe('stream', function() {
     var order = [];
     var x = stream(4);
     var y = stream(3);
-    var doubleX = stream(function() {
+    var doubleX = stream([x], function() {
       if (x() === 3) order.push(2);
       return x() * 2;
     });
@@ -345,6 +316,7 @@ describe('stream', function() {
     it('has initial acc as value when stream is undefined', function() {
       var numbers = stream();
       var sum = flyd.reduce(function(sum, n) {
+        console.log(sum, n);
         return sum + n;
       }, 0, numbers);
       assert.equal(sum(), 0);
@@ -392,9 +364,7 @@ describe('stream', function() {
   });
   describe('ap', function() {
     it('applies functions in stream', function() {
-      var a = stream(function() {
-        return function(x) { return 2*x; };
-      });
+      var a = stream(function(x) { return 2*x; });
       var v = stream(3);
       var s = a.ap(v);
       assert.equal(s(), 6);
@@ -404,12 +374,8 @@ describe('stream', function() {
       assert.equal(s(), 3);
     });
     it('is compositive', function() {
-      var a = stream(function() {
-        return function(x) { return x * 2; };
-      });
-      var u = stream(function() {
-        return function(x) { return x + 5; };
-      });
+      var a = stream(function(x) { return x * 2; });
+      var u = stream(function(x) { return x + 5; });
       var v = stream(8);
       var s1 = a.map(function(f) {
         return function(g) {
