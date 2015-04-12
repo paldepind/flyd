@@ -1,13 +1,13 @@
 [![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
 
 # Flyd
-The modular, KISS, functional reactive programming JavaScript library.
+The modular, KISS, functional reactive programming library for JavaScript.
 
 # Table of contents
 
 * [Introduction](#introduction)
 * [Features](#features)
-* [Example](#example)
+* [Examples](#example)
 * [Tutorial](#tutorial)
 * [API](#api)
 * [Modules](#modules)
@@ -18,28 +18,36 @@ Functional reactive programming is a powerful programming paradigm for
 expressing values that change over time. But existing libraries for JavaScript
 are huge, complex, have a high learning curve and aren't functional enough.
 
-Flyd is simple and expressive. It is fast to learn and powerful to use. It has
-a minimal core on top of which new abstractions can be built modularly.
+Flyd is simple and expressive. It has a minimal but powerful core on top of
+which new abstractions can be built modularly.
 
 ## Features
 
-* __Simple and powerful__. Less is more. Flyd has combineable observable streams with automatic
-  dependency resolution as the basic building block. This minimal core is less
-  than 200 SLOC and new FRP abstractions can easily be built on top of it.
-* __More functional__. Flyd is more functional and less object oriented. Instead of methods it gives
-  you curried functions with arguments in the right ordere. This increases the
-  expressive power and the extensibility of the library.
+* __Simple and powerful__. Less is more! Flyd provides combineable observable
+  streams as the basic building block. This minimal core is less than 200 SLOC
+  and FRP abstractions can easily be built on top of it.
+* __A more functional style__. Flyd is more functional and less object oriented.
+  Instead of methods it gives you curried functions with arguments in the
+  correct order for partial aplication. This increases the expressive power and
+  the extensibility of the library.
 * Supports the transducer protocol. You can for instance transduce streams with
-  ([transducers.js](https://github.com/jlongster/transducers.js).
+  ([Ramda](http://ramdajs.com/).
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
 * Elegant support for promises.
+* Atomic updates
 * Easy to extend with custom [modules](#modules)
 
+## Examples
 
-## Example
+* [Sum](http://paldepind.github.io/flyd/examples/sum/) - very simple example
+* [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/)
+  - a remake of the multiple clicks example from "The introduction to
+  Reactive Programming you've been missing". Compare it to the [Rx
+  implementation](http://jsfiddle.net/staltz/4gGgs/27/) not quite as elegant.
+* [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
 
-[Simple example](http://paldepind.github.io/flyd/examples/sum/).
+For other examples check the source code of the [modules](#modules).
 
 ## Tutorial
 
@@ -79,9 +87,10 @@ down the `messages` stream.
 ### Dependent streams
 
 Streams can depend on other streams. Instead of calling `stream` with a value
-as in the above examples we can pass it a function. The function should calculate a
-value based on other streams which forms a new stream. Flyd automatically
-collects the streams dependencies and updates it whenever a dependency changes.
+as in the above examples we can pass it a list of dependencies and a function.
+The function should calculate a value based on its dependencies which results
+in a new stream. Flyd automatically updates the stream whenever a dependency
+changes.
 
 This means that the `sum` function below will be called whenever `x` and `y` changes.
 You can think of dependent stream as streams that automatically
@@ -93,7 +102,7 @@ var x = stream(4);
 var y = stream(6);
 // Create a stream that depends on the two previous streams
 // and with its value given by the two added together.
-var sum = stream(function() {
+var sum = stream([x, y], function() {
   return x() + y();
 });
 // `sum` is automatically recalculated whenever the streams it depends on changes.
@@ -109,10 +118,10 @@ Naturally, a stream with dependencies can depend on other streams with dependenc
 // Create two streams of numbers
 var x = stream(4);
 var y = stream(6);
-var squareX = stream(function() {
+var squareX = stream([x], function() {
   return x() * x();
 });
-var squareXPlusY(function() {
+var squareXPlusY([y, doubleX], function() {
   return y() + doubleX();
 });
 squareXPlysY(); // returns 22
@@ -127,10 +136,10 @@ changed stream on which it depends.
 // Create two streams of numbers
 var x = stream(1);
 var y = stream(2);
-var sum = stream(function(sum, changed) {
+var sum = stream([x, y], function(sum, changed) {
   // The stream can read from itself
   console.log('Last sum was ' + sum());
-  if (changed) { // On the initial call no stream changed
+  if (changed) { // On the initial call no stream has changed
     var changedName = (changed === y ? 'y' : 'x');
     console.log(changedName + ' changed to ' + changed());
   }
@@ -145,7 +154,7 @@ is handy when working with APIs that takes callbacks.
 
 ```
 var urls = stream('/something.json');
-var responses = stream(function(resp) {
+var responses = stream([urls], function(resp) {
   makeRequest(urls(), resp);
 });
 stream([responses], function() {
@@ -154,11 +163,10 @@ stream([responses], function() {
 });
 ```
 
-The stream above that logs the responses from the server should only be called
+Note that the stream above logging the responses from the server should only be called
 after an actual response has been recieved (otherwise `responses()` whould return
-`undefined`). For this purpose you can pass `stream` an array of initial
-dependencies. The streams body will not be called before all of the declared
-streams evaluate to something other than `undefined`.
+`undefined`). Fortunately a streams body will not be called before all of its declared
+streams has recieved a value.
 
 ### Using promises for asynchronous operations
 
@@ -185,7 +193,7 @@ returns a new stream with the functin applied to every value emitted by the
 stream. In short, a `map` function.
 
 ```javascript
-var mapStream = functin(s, f) {
+var mapStream = functin(f, s) {
   return stream([s], function() {
     return f(s());
   });
@@ -196,11 +204,11 @@ We simply create a new stream dependent on the first stream. We declare
 the stream as a dependency so that our stream wont return values before
 the original stream produces its first value.
 
-Flyd includes a map function as part of its core.
+Flyd includes a similair map function as part of its core.
 
 ### Reducing a stream
 
-Lets try something else, reducing a stream! It could look like this:
+Lets try something else: reducing a stream! It could look like this:
 
 ```javascript
 var reduceStream = function(f, acc, s) {
@@ -219,7 +227,7 @@ Flyd includes a reduce function as part of its core.
 
 ### Fin
 
-You're done. Check out the [API](#api) and/or the [examples](#examples).
+You're done! Now, check out the [API](#api) and/or the [examples](#examples).
 
 ## API
 
