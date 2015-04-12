@@ -151,7 +151,7 @@ describe('stream', function() {
   });
   it('can get its own value', function() {
     var num = stream(0);
-    var sum = stream([num], function(sum) { //FIXME
+    var sum = stream([num], function(sum) {
       return (sum() || 0) + num();
     });
     num(2)(3)(8)(7);
@@ -200,8 +200,7 @@ describe('stream', function() {
       order.push(1);
       return y();
     });
-    assert.equal(order[0], 1);
-    assert.equal(order[1], 2);
+    assert.deepEqual(order, [1, 2]);
   });
   it('with static deps executes to the end', function() {
     var order = [];
@@ -218,6 +217,17 @@ describe('stream', function() {
     });
     assert.equal(order[0], 1);
     assert.equal(order[1], 2);
+  });
+  it('does atomic updates', function() {
+    var result = [];
+    var a = stream(1);
+    var b = stream([a], function() { return a() * 2; });
+    var c = stream([a], function() { return a() + 4; });
+    var d = stream([b, c], function(self, ch) {
+      result.push(b() + c());
+    });
+    a(2);
+    assert.deepEqual(result, [7, 10]);
   });
   it("let's explicit `undefined` flow down streams", function() {
     var result = [];

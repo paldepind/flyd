@@ -22,30 +22,36 @@ function isUndefined(v) {
 var curStream;
 var nextId = 0;
 var queue = [];
+var isFlushingQueue = false;
 
 function flushQueue() {
-  for (var q; q = queue.pop();) {
-    for (var i = 0; i < q.l.length; ++i) {
-      q.l[i](q.v);
-    }
+  if (isFlushingQueue) return;
+  isFlushingQueue = true;
+  for (var s; s = queue.shift();) {
+    s.inQueue = false;
+    s.update();
   }
+  isFlushingQueue = false;
 }
 
 function addDependency(to, from) {
   if (!(from.id in to.deps)) {
     to.deps[from.id] = from.listeners;
-    from.listeners.push(to.update);
+    from.listeners.push(to);
   }
 }
 
 function checkCirc(stream, id) {
   if (stream.deps[id]) {
+    isFlushingQueue = false;
+    curStream = undefined;
+    queue = [];
     throw new Error('Circular dependency detected');
   }
 }
 
-function removeListener(listeners, cb) {
-  var idx = listeners.indexOf(cb);
+function removeListener(listeners, s) {
+  var idx = listeners.indexOf(s);
   listeners[idx] = listeners[listeners.length - 1];
   listeners.length--;
 }
@@ -92,13 +98,12 @@ function initialDepsNotMet(stream) {
   return !isUndefined(stream.initialDeps);
 }
 
-function updateStream(stream, cb, changed) {
+function updateStream(stream, cb) {
   if (initialDepsNotMet(stream)) return;
   curStream = stream;
-  var returnVal = cb(stream, changed);
+  var returnVal = cb(stream, stream.lastChanged);
   curStream = undefined;
   if (returnVal !== undefined) stream(returnVal);
-  flushQueue();
 }
 
 function destroy(stream) {
@@ -106,7 +111,7 @@ function destroy(stream) {
     throw new Error('Trying to destroy stream with listeners attached');
   }
   for (var id in stream.deps) {
-    if (stream.deps[id]) removeListener(stream.deps[id], stream.update);
+    if (stream.deps[id]) removeListener(stream.deps[id], stream);
   }
 }
 
@@ -127,12 +132,17 @@ function stream(arg, fn, wait) {
       }
       s.val = n;
       s.hasVal = true;
+      s.listeners.forEach(function(st) {
+        st.lastChanged = s;
+        if (!st.inQueue) {
+          st.inQueue = true;
+          queue.push(st);
+        }
+      });
       if (!isUndefined(curStream)) {
         checkCirc(curStream, s.id);
-        queue.push({v: s, l: s.listeners});
-      } else {
-        s.listeners.forEach(function(f) { f(s); });
       }
+      flushQueue();
       return s;
     } else {
       return s.val;
@@ -145,6 +155,8 @@ function stream(arg, fn, wait) {
   s.deps = {};
   s.initialDeps = undefined;
   s.deps[s.id] = false;
+  s.lastChanged = undefined;
+  s.inQueue = true;
 
   s.map = map.bind(null, s);
   s.ap = ap;
@@ -159,7 +171,8 @@ function stream(arg, fn, wait) {
     arg.forEach(function(stream) {
       addDependency(s, stream);
     });
-    s.update();
+    queue.push(s);
+    flushQueue();
   } else if (arguments.length === 1) {
     s.val = arg;
     s.hasVal = true;
