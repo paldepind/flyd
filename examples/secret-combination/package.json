@@ -1,0 +1,18 @@
+{
+  "name": "secret-combination",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Simon Friis Vindum",
+  "license": "MIT",
+  "dependencies": {
+    "flyd": "0.1.x",
+    "flyd-filter": "1.0.x",
+    "flyd-inlast": "0.0.x",
+    "flyd-lift": "1.0.x",
+    "flyd-sampleon": "1.0.x"
+  }
+}
