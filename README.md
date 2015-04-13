@@ -231,14 +231,16 @@ You're done! Now, check out the [API](#api) and/or the [examples](#examples).
 
 ## API
 
-### flyd.stream
+### flyd.stream(dependencies, body[, doesNotRequireDeps])
 
 Creates a new stream.
 
-__Arguments__
-  * \[`dependencies`\] (array) – The streams on which this stream should initially depend.
-  * `body` (function|\*) – The function body of the stream or it initial value.
-  * \[`staticDependencies`\] – Disables automatic dependency resolution of the stream.
+__Signature__
+
+  * `dependencies` (array) – The streams on which this stream depends.
+  * `body` (function) – The function body of the stream.
+  * \[`doesNotRequireDeps`\] (boolean) – If `true` the function body can be
+    invoked even before all dependencies have a value.
 
 __Returns__
 
@@ -246,8 +248,12 @@ The created stream.
 
 ###flyd.map(fn, s)
 
-Returns a new stream consisting of every value from `s` passed through `fn. I.e. `map` creates
+Returns a new stream consisting of every value from `s` passed through `fn`. I.e. `map` creates
 a new stream that listens to `s` and applies `fn` to every new value.
+
+__Signature__
+
+`(a -> result) -> Stream a -> Stream result`
 
 __Example__
 ```javascript
@@ -259,6 +265,10 @@ var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 
 Creates a new stream with the results of calling the function on every incoming
 stream with and accumulator and the incoming value.
+
+__Signature__
+
+`(a -> b -> a) -> a -> Stream b -> Stream a`
 
 __Example__
 ```javascript
@@ -273,6 +283,10 @@ sum(); // 10
 Creates a new stream down which all values from both `stream1` and `stream2`
 will be sent.
 
+__Signature__
+
+`Stream a -> Stream a - Stream a`
+
 __Example__
 ```javascript
 var btn1Clicks = stream();
@@ -285,6 +299,10 @@ var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
 ### flyd.transduce(transducer, stream)
 
 Creates a new stream resulting from applying `transducer` to `stream`.
+
+__Signature__
+
+`Transducer -> Stream a -> Stream b`
 
 __Example__
 
@@ -309,35 +327,101 @@ If the stream has no dependencies this will detach it from any streams it
 depends on. This makes it available for garbage collection if there are no
 additional references to it.
 
+__Signature__
+
+`Stream -> undefined`
+
+__Example__
+
+```javascript
+var s = flyd.map(function() { /* something */ }, someStream);
+flyd.destroy(s);
+s = undefined;
+// `s` can be garbage collected
+```
+
 ###flyd.curryN(n, fn)
 
 Returns `fn` curried to `n`. Use this function to curry functions exposed by
 modules for Flyd.
 
+__Signature__
+
+`Integer -> (\* -> a) -> (\* -> a)`
+
+__Example__
+
+```javascript
+function add(x, y) { return x + y; };
+flyd.curryN(2, add);
+var add
+```
+
 ###flyd.isStream(stream)
 
 Returns `true` if the supplied argument is a Flyd stream and `false` otherwise.
+
+__Signature__
+
+`\* -> Boolean`
+
+__Example__
+
+```javascript
+var s = stream(1);
+var n = 1;
+flyd.isStream(s); //=> true
+flyd.isStream(n); //=> false
+```
 
 ###stream()
 
 Returns the last value of the stream.
 
+__Signature__
+
+`a`
+
 __Example__
+
 ```javascript
 var names = stream('Turing');
 names(); // 'Turing'
-names('Bohr');
-names(); // 'Bohr'
 ```
 
 ###stream(val)
 
 Pushes a value down the stream.
 
+__Signature__
+
+`a -> Stream a`
+
+__Example__
+
+```javascript
+names('Bohr');
+names(); // 'Bohr'
+```
+
 ###stream.map(f)
 
 Returns a new stream identical to the original exept every
 value will be passed through `f`.
+
+_Note:_ This function is included in order to support the fantasy land
+specification.
+
+__Signature__
+
+Called bound to `Stream a`: `(a -> b) -> Stream b`
+
+__Example__
+
+```javascript
+var numbers = stream(0);
+var squaredNumbers = numbers.map(function(n) { return n*n; });
+```
 
 ###stream1.ap(stream2)
 
@@ -346,15 +430,47 @@ value will be passed through `f`.
 Returns a new stream which is the result of applying the
 functions from `stream1` to the values in `stream2`.
 
+_Note:_ This function is included in order to support the fantasy land
+specification.
+
+__Signature__
+
+Called bound to `Stream (a -> b)`: `a -> Stream b`
+
+__Example__
+
+```javascript
+var add = flyd.curryN(2, function(x, y) { return x + y; });
+var numbers1 = stream();
+var numbers2 = stream();
+var addToNumbers1 = flyd.map(add, numbers);
+var added = addToNumbers1.ap(numbers2);
+```
+
 ###stream.of(value)
 
-Returns a new stream with `value` as its initial value.
+Returns a new stream with `value` as its initial value. It is identical to
+calling `flyd.stream` with one argument.
 
+__Signature__
+
+Called bound to `Stream (a)`: `b -> Stream b`
+
+__Example__
+```javascript
+var n = stream(1);
+var m = n.of(1);
+```
 
 ### Modules
 
-* [flyd-filter](https://github.com/paldepind/flyd-filter)
-* [flyd-lift](https://github.com/paldepind/flyd-lift)
-* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap)
-* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen)
-* [flyd-sampleon](https://github.com/paldepind/flyd-sampleon)
+* [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
+* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function takin multiple paramters over that amount of streams.
+* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams.
+* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keeps values from a stream when another stream is true.
+* [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
+* [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
+* [flyd-reducemerge](https://github.com/paldepind/flyd-reducemerge) – Merge and reduce several streams into one.
+* Time related
+  * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
+  * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
