@@ -11,6 +11,7 @@ The modular, KISS, functional reactive programming library for JavaScript.
 * [Tutorial](#tutorial)
 * [API](#api)
 * [Modules](#modules)
+* [Misc](#misc)
 
 ## Introduction
 
@@ -35,7 +36,7 @@ which new abstractions can be built modularly.
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
 * Elegant support for promises.
-* Atomic updates
+* [Atomic updates](#atomic-updates)
 * Easy to extend with custom [modules](#modules)
 
 ## Examples
@@ -43,9 +44,10 @@ which new abstractions can be built modularly.
 * [Sum](http://paldepind.github.io/flyd/examples/sum/) - very simple example
 * [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/) - a remake
   of the multiple clicks example from "The introduction to Reactive
-  Programming you've been missing". Compare it to the [Rx
-  implementation](http://jsfiddle.net/staltz/4gGgs/27/) not quite as elegant.
+  Programming you've been missing". Compare it to the not quite as elegant [Rx
+  implementation](http://jsfiddle.net/staltz/4gGgs/27/).
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
+* [Ramda transducer](http://paldepind.github.io/flyd/examples/ramda-transducer/)
 
 For other examples check the source code of the [modules](#modules).
 
@@ -484,3 +486,25 @@ var m = n.of(1);
 * Time related
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
   * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
+
+### Misc
+
+## Atomic updates
+
+Consider code like the following
+
+```javascript
+var a = stream(1);
+var b = stream([a], function() { return a() * 2; });
+var c = stream([a], function() { return a() + 4; });
+var d = stream([b, c], function(self, ch) {
+  result.push(b() + c());
+});
+```
+
+Now, when a value flows down `a`, both `b` and `c` will change because they
+depend on `a`. If you merely consider streams as being events you'd expect `d`
+to be updated twice. Because `a` triggers `b` triggers `d` after which `a` also
+twiggers `c` which again triggers `d`. But Flyd will handle this better.
+Since only one value entered the system `d` will only be updated once with the
+changed values of `b` and `c`. This avoids superfluous updates of your streams.

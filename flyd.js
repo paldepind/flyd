@@ -67,7 +67,7 @@ function ap(s2) {
 }
 
 function of(v) {
-  return stream()(v);
+  return stream(v);
 }
 
 function initialDepsNotMet(stream) {
