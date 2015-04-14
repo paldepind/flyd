@@ -41,9 +41,9 @@ which new abstractions can be built modularly.
 ## Examples
 
 * [Sum](http://paldepind.github.io/flyd/examples/sum/) - very simple example
-* [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/)
-  - a remake of the multiple clicks example from "The introduction to
-  Reactive Programming you've been missing". Compare it to the [Rx
+* [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/) - a remake
+  of the multiple clicks example from "The introduction to Reactive
+  Programming you've been missing". Compare it to the [Rx
   implementation](http://jsfiddle.net/staltz/4gGgs/27/) not quite as elegant.
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
 
@@ -51,11 +51,20 @@ For other examples check the source code of the [modules](#modules).
 
 ## Tutorial
 
+This is not general tutorial to functional reactive programming. For that take
+a look at [The introduction to Reactive Programming you've been
+missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) and/or [this Elm
+tutorial](http://elm-lang.org/learn/Using-Signals.elm) if you are comfortable
+with reading Haskell-like code.
+
+This tutorial will introduce you to the core of Flyd and show how to use it to
+build FRP abstractions.
+
 ### Creating streams
 
 Flyd gives you streams as the building block for creating reactive dataflows.
 The function `stream` creates a representation of a value that changes over time.
-A stream is a function and at first sight it works a bit like a getter-setter:
+A stream is a function. At first sight it works a bit like a getter-setter:
 
 ```javascript
 // Create a stream with initial value 5.
@@ -88,12 +97,12 @@ down the `messages` stream.
 
 Streams can depend on other streams. Instead of calling `stream` with a value
 as in the above examples we can pass it a list of dependencies and a function.
-The function should calculate a value based on its dependencies which results
-in a new stream. Flyd automatically updates the stream whenever a dependency
-changes.
+The function should produce a value based on its dependencies. This new value
+results in a new stream.
 
-This means that the `sum` function below will be called whenever `x` and `y` changes.
-You can think of dependent stream as streams that automatically
+Flyd automatically updates the stream whenever a dependency changes.  This
+means that the `sum` function below will be called whenever `x` and `y`
+changes.  You can think of dependent stream as streams that automatically
 listens/subscribes to their dependencies.
 
 ```javascript
@@ -163,7 +172,7 @@ stream([responses], function() {
 });
 ```
 
-Note that the stream above logging the responses from the server should only be called
+Note that the stream that logs the responses from the server should only be called
 after an actual response has been recieved (otherwise `responses()` whould return
 `undefined`). Fortunately a streams body will not be called before all of its declared
 streams has recieved a value.
@@ -227,7 +236,8 @@ Flyd includes a reduce function as part of its core.
 
 ### Fin
 
-You're done! Now, check out the [API](#api) and/or the [examples](#examples).
+You're done! To learn more check out the [API](#api), the [examples](#examples)
+and the source of the [modules](#modules).
 
 ## API
 
@@ -347,7 +357,7 @@ modules for Flyd.
 
 __Signature__
 
-`Integer -> (\* -> a) -> (\* -> a)`
+`Integer -> (* -> a) -> (* -> a)`
 
 __Example__
 
@@ -363,7 +373,7 @@ Returns `true` if the supplied argument is a Flyd stream and `false` otherwise.
 
 __Signature__
 
-`\* -> Boolean`
+`* -> Boolean`
 
 __Example__
 
