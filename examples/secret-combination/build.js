@@ -1,3 +1,47 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var flyd = require('flyd');
+
+module.exports = function(fn, s) {
+  return flyd.stream([s], function(self) {
+    if (fn(s())) self(s.val);
+  });
+};
+
+},{"flyd":5}],2:[function(require,module,exports){
+var flyd = require('flyd');
+
+module.exports = flyd.curryN(2, function(dur, s) {
+  var values = [];
+  return flyd.stream([s], function(self) {
+    setTimeout(function() {
+      self(values = values.slice(1));
+    }, dur);
+    return (values = values.concat([s()]));
+  });
+});
+
+},{"flyd":5}],3:[function(require,module,exports){
+var flyd = require('flyd');
+
+module.exports = function(f /* , streams */) {
+  var streams = Array.prototype.slice.call(arguments, 1);
+  var vals = [];
+  return flyd.stream(streams, function() {
+    for (var i = 0; i < streams.length; ++i) vals[i] = streams[i]();
+    return f.apply(null, vals);
+  });
+};
+
+},{"flyd":5}],4:[function(require,module,exports){
+var flyd = require('flyd');
+
+module.exports = flyd.curryN(2, function(s1, s2) {
+  return flyd.stream([s1], function() {
+    return s2();
+  });
+});
+
+},{"flyd":5}],5:[function(require,module,exports){
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     define([], factory); // AMD. Register as an anonymous module.
@@ -67,7 +111,7 @@ function ap(s2) {
 }
 
 function of(v) {
-  return stream(v);
+  return stream()(v);
 }
 
 function initialDepsNotMet(stream) {
@@ -287,3 +331,43 @@ return {
 };
 
 }));
+
+},{}],6:[function(require,module,exports){
+var flyd = require('flyd');
+var stream = flyd.stream;
+var filter = require('flyd-filter');
+var lift = require('flyd-lift');
+var inLast = require('flyd-inlast');
+var sampleOn = require('flyd-sampleon');
+
+var magicSeq = 'abbaba';
+var seqLen = magicSeq.length;
+var maxTime = 5000;
+
+var setMsg = function(msg) { message.innerHTML = msg; };
+
+document.addEventListener('DOMContentLoaded', function() {
+  var clicks = stream();
+  btnA.addEventListener('click', clicks.bind(null, 'a'));
+  btnB.addEventListener('click', clicks.bind(null, 'b'));
+
+  var correctClicks = flyd.reduce(function(n, c) {
+    return magicSeq[n] === c ? n + 1
+         : magicSeq[0] === c ? 1
+                             : 0;
+  }, 0, clicks);
+
+  var clicksInLast5s = inLast(maxTime, clicks);
+
+  lift(function(corrects, inLast5s) {
+    var complete = corrects === seqLen, inTime = inLast5s.length >= seqLen;
+    setMsg(complete && inTime  ? 'Combination unlocked'
+         : complete && !inTime ? "You're not fast enough, try again!"
+                               : corrects);
+  }, correctClicks, clicksInLast5s);
+
+  flyd.map(function(c) { console.log('cor', c); }, correctClicks);
+  flyd.map(function(c) { console.log('lst', c); }, clicksInLast5s);
+});
+
+},{"flyd":5,"flyd-filter":1,"flyd-inlast":2,"flyd-lift":3,"flyd-sampleon":4}]},{},[6]);

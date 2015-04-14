@@ -1,0 +1,15 @@
+{
+  "name": "multiple-clicks",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Simon Friis Vindum",
+  "license": "MIT",
+  "dependencies": {
+    "flyd": "0.0.x",
+    "flyd-aftersilence": "0.0.x"
+  }
+}

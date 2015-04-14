@@ -1,3 +1,22 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/home/simon/projects/flyd/examples/multiple-clicks/node_modules/flyd-aftersilence/aftersilence.js":[function(require,module,exports){
+var flyd = require('flyd');
+
+module.exports = function(dur, s) {
+  var scheduled;
+  var buffer = [];
+  var ns = flyd.stream();
+  flyd.map(function(v) {
+    buffer.push(v);
+    clearTimeout(scheduled);
+    scheduled = setTimeout(function() {
+      ns(buffer);
+      buffer = [];
+    }, dur);
+  }, s);
+  return ns;
+};
+
+},{"flyd":"/home/simon/projects/flyd/examples/multiple-clicks/node_modules/flyd/flyd.js"}],"/home/simon/projects/flyd/examples/multiple-clicks/node_modules/flyd/flyd.js":[function(require,module,exports){
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     define([], factory); // AMD. Register as an anonymous module.
@@ -19,88 +38,106 @@ function isUndefined(v) {
 }
 
 // Globals
+var curStream;
+var nextId = 0;
 var queue = [];
-var isFlushingQueue = false;
 
 function flushQueue() {
-  if (isFlushingQueue) return;
-  isFlushingQueue = true;
-  for (var s; s = queue.shift();) {
-    s.inQueue = false;
-    s.update();
+  for (var q; q = queue.pop();) {
+    for (var i = 0; i < q.l.length; ++i) {
+      q.l[i](q.v);
+    }
   }
-  isFlushingQueue = false;
 }
 
-function removeListener(listeners, s) {
-  var idx = listeners.indexOf(s);
+function addDependency(to, from) {
+  if (!(from.id in to.deps)) {
+    to.deps[from.id] = from.listeners;
+    from.listeners.push(to.update);
+  }
+}
+
+function checkCirc(stream, id) {
+  if (stream.deps[id]) {
+    throw new Error('Circular dependency detected');
+  }
+}
+
+function removeListener(listeners, cb) {
+  var idx = listeners.indexOf(cb);
   listeners[idx] = listeners[listeners.length - 1];
   listeners.length--;
 }
 
 function map(s, f) {
-  return stream([s], function() { return f(s()); });
+  return stream([s], function() { return f(s()); }, true);
 }
 
 var reduce = curryN(3, function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
-  });
+  }, true);
   if (!ns.hasVal) ns(acc);
   return ns;
 });
 
 var merge = curryN(2, function(s1, s2) {
-  return stream([s1, s2], function(n, changed) {
+  return stream(function(n, changed) {
     var v1, v2;
     if (changed) return changed();
     else {
      v1 = s1(); v2 = s2();
      return v1 === undefined ? v2 : v1;
     }
-  }, true);
+  });
 });
 
 function ap(s2) {
   var s1 = this;
-  return stream([s1, s2], function() { return s1()(s2()); }, true);
+  return stream(function() { return s1()(s2()); });
 }
 
 function of(v) {
-  return stream(v);
+  return stream()(v);
 }
 
 function initialDepsNotMet(stream) {
-  if (!stream.depsMet) {
-    stream.depsMet = stream.deps.every(function(s) {
-      return s.hasVal;
+  if (!isUndefined(stream.initialDeps)) {
+    var met = stream.initialDeps.every(function(stream) {
+      return stream.hasVal;
     });
+    if (met) stream.initialDeps = undefined;
   }
-  return !stream.depsMet;
+  return !isUndefined(stream.initialDeps);
 }
 
-function updateStream() {
-  if (initialDepsNotMet(this)) return;
-  var returnVal = this.fn(this, this.depChanged);
-  if (returnVal !== undefined) this(returnVal);
+function updateStream(stream, cb, changed) {
+  if (initialDepsNotMet(stream)) return;
+  curStream = stream;
+  var returnVal = cb(stream, changed);
+  curStream = undefined;
+  if (returnVal !== undefined) stream(returnVal);
+  flushQueue();
 }
 
 function destroy(stream) {
   if (stream.listeners.length !== 0) {
     throw new Error('Trying to destroy stream with listeners attached');
   }
-  stream.deps.forEach(function(dep) { removeListener(dep.listeners, stream); });
+  for (var id in stream.deps) {
+    if (stream.deps[id]) removeListener(stream.deps[id], stream.update);
+  }
 }
 
 function isStream(stream) {
-  return isFunction(stream) && 'depsMet' in stream;
+  return isFunction(stream) && 'id' in stream;
 }
 
 function streamToString() {
   return 'stream(' + this.val + ')';
 }
 
-function stream(arg, fn, waitForDeps) {
+function stream(arg) {
   function s(n) {
     if (arguments.length > 0) {
       if (!isUndefined(n) && n !== null && isFunction(n.then)) {
@@ -109,27 +146,28 @@ function stream(arg, fn, waitForDeps) {
       }
       s.val = n;
       s.hasVal = true;
-      s.listeners.forEach(function(st) {
-        st.depChanged = s;
-        if (!st.inQueue) {
-          st.inQueue = true;
-          queue.push(st);
-        }
-      });
-      flushQueue();
+      if (!isUndefined(curStream)) {
+        checkCirc(curStream, s.id);
+        queue.push({v: s, l: s.listeners});
+      } else {
+        s.listeners.forEach(function(f) { f(s); });
+      }
       return s;
     } else {
+      if (curStream && curStream.dynamicDeps) {
+        addDependency(curStream, s);
+      }
       return s.val;
     }
   }
   s.hasVal = false;
   s.val = undefined;
   s.listeners = [];
-  s.deps = [];
-  s.depsMet = isUndefined(waitForDeps) ? false : true;
-  s.depChanged = undefined;
-  s.inQueue = true;
-  s.fn = fn;
+  s.id = nextId++;
+  s.deps = {};
+  s.initialDeps = undefined;
+  s.deps[s.id] = false;
+  s.dynamicDeps = true;
 
   s.map = map.bind(null, s);
   s.ap = ap;
@@ -137,16 +175,25 @@ function stream(arg, fn, waitForDeps) {
   s.toString = streamToString;
 
   if (arguments.length > 1) {
-    s.update = updateStream;
-    s.deps = arg;
-    arg.forEach(function(dep) {
-      dep.listeners.push(s);
-    });
-    queue.push(s);
-    flushQueue();
-  } else if (arguments.length === 1) {
-    s.val = arg;
-    s.hasVal = true;
+    s.initialDeps = arg;
+    arg = arguments[1];
+    if (arguments[2] === true) {
+      s.dynamicDeps = false;
+    }
+  }
+  if (arguments.length > 0) {
+    if (isFunction(arg)) {
+      s.update = updateStream.bind(null, s, arg);
+      if (s.initialDeps) {
+        s.initialDeps.forEach(function(stream) {
+          addDependency(s, stream);
+        });
+      }
+      s.update();
+    } else {
+      s.val = arg;
+      s.hasVal = true;
+    }
   }
   return s;
 }
@@ -287,3 +334,28 @@ return {
 };
 
 }));
+
+},{}],"/home/simon/projects/flyd/examples/multiple-clicks/script.js":[function(require,module,exports){
+var flyd = require('flyd');
+var afterSilence = require('flyd-aftersilence');
+
+document.addEventListener('DOMContentLoaded', function() {
+  var btnElm = document.getElementById('btn');
+  var msgElm = document.getElementById('msg');
+
+  var clickStream = flyd.stream();
+  btnElm.addEventListener('click', clickStream);
+
+  var groupedClicks = afterSilence(250, clickStream);
+  var nrStream = flyd.map(function(clicks) { return clicks.length; }, groupedClicks);
+
+  flyd.map(function(nr) {
+    msgElm.textContent = nr === 1 ? 'click' : nr + ' clicks';
+  }, nrStream);
+
+  flyd.map(function(nr) {
+    msgElm.textContent = '';
+  }, afterSilence(1000, nrStream));
+});
+
+},{"flyd":"/home/simon/projects/flyd/examples/multiple-clicks/node_modules/flyd/flyd.js","flyd-aftersilence":"/home/simon/projects/flyd/examples/multiple-clicks/node_modules/flyd-aftersilence/aftersilence.js"}]},{},["/home/simon/projects/flyd/examples/multiple-clicks/script.js"]);
