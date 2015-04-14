@@ -47,7 +47,7 @@ which new abstractions can be built modularly.
   Programming you've been missing". Compare it to the not quite as elegant [Rx
   implementation](http://jsfiddle.net/staltz/4gGgs/27/).
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
-* [Ramda transducer](http://paldepind.github.io/flyd/examples/ramda-transducer/)
+* [Ramda transducer](https://github.com/paldepind/flyd/tree/master/examples/ramda-transducer)
 
 For other examples check the source code of the [modules](#modules).
 
@@ -487,9 +487,9 @@ var m = n.of(1);
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
   * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
 
-### Misc
+## Misc
 
-## Atomic updates
+### Atomic updates
 
 Consider code like the following
 
