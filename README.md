@@ -70,13 +70,13 @@ A stream is a function. At first sight it works a bit like a getter-setter:
 
 ```javascript
 // Create a stream with initial value 5.
-var number = stream(5);
+var number = flyd.stream(5);
 // Get the current value of the stream.
-number(); // returns 5
+console.log(number()); // logs 5
 // Update the value of the stream.
-number(7); // returns 7
+console.log(number(7)); // logs 7
 // The stream now returns the new value.
-number(); // returns 7
+console.log(number()); // logs 7
 ```
 
 Top level streams, that is streams without dependencies, should typically
@@ -86,9 +86,9 @@ Since streams are just functions you can easily plug them in whenever a
 function is expected.
 
 ```javascript
-var clicks = stream();
+var clicks = flyd.stream();
 document.getElementById('button').addEventListener('click', clicks);
-var messages = stream();
+var messages = flyd.stream();
 webSocket.onmessage = messages;
 ```
 
@@ -109,35 +109,35 @@ listens/subscribes to their dependencies.
 
 ```javascript
 // Create two streams of numbers
-var x = stream(4);
-var y = stream(6);
+var x = flyd.stream(4);
+var y = flyd.stream(6);
 // Create a stream that depends on the two previous streams
 // and with its value given by the two added together.
-var sum = stream([x, y], function() {
+var sum = flyd.stream([x, y], function() {
   return x() + y();
 });
 // `sum` is automatically recalculated whenever the streams it depends on changes.
 x(12);
-sum(); // returns 18
+console.log(sum()); // logs 18
 y(8);
-sum(); // returns 20
+console.log(sum()); // logs 20
 ```
 
 Naturally, a stream with dependencies can depend on other streams with dependencies.
 
 ```javascript
 // Create two streams of numbers
-var x = stream(4);
-var y = stream(6);
-var squareX = stream([x], function() {
+var x = flyd.stream(4);
+var y = flyd.stream(6);
+var squareX = flyd.stream([x], function() {
   return x() * x();
 });
-var squareXPlusY = stream([y, squareX], function() {
+var squareXPlusY = flyd.stream([y, squareX], function() {
   return y() + squareX();
 });
-squareXPlusY(); // returns 22
+console.log(squareXPlusY()); // logs 22
 x(2);
-squareXPlusY(); // returns 10
+console.log(squareXPlusY()); // logs 10
 ```
 
 The body of a dependent stream is called with two streams: itself and the last
@@ -145,9 +145,9 @@ changed stream on which it depends.
 
 ```javascript
 // Create two streams of numbers
-var x = stream(1);
-var y = stream(2);
-var sum = stream([x, y], function(sum, changed) {
+var x = flyd.stream(1);
+var y = flyd.stream(2);
+var sum = flyd.stream([x, y], function(sum, changed) {
   // The stream can read from itself
   console.log('Last sum was ' + sum());
   if (changed) { // On the initial call no stream has changed
@@ -164,11 +164,11 @@ Instead of returning a value a stream can update itself by calling itself. This
 is handy when working with APIs that takes callbacks.
 
 ```
-var urls = stream('/something.json');
-var responses = stream([urls], function(resp) {
+var urls = flyd.stream('/something.json');
+var responses = flyd.stream([urls], function(resp) {
   makeRequest(urls(), resp);
 });
-stream([responses], function() {
+flyd.stream([responses], function() {
   console.log('Received response!');
   console.log(responses());
 });
@@ -186,11 +186,11 @@ resolved with a promise, a promise can never flow down a stream. Instead the
 fulfilled value of the promise will be sent down the stream.
 
 ```javascript
-var urls = stream('/something.json');
-var responses = stream(function() {
+var urls = flyd.stream('/something.json');
+var responses = flyd.stream(function() {
   return requestPromise(urls());
 });
-stream([responses], function() {
+flyd.stream([responses], function() {
   console.log('Recieved response!');
   console.log(responses());
 });
@@ -205,7 +205,7 @@ stream. In short, a `map` function.
 
 ```javascript
 var mapStream = function(f, s) {
-  return stream([s], function() {
+  return flyd.stream([s], function() {
     return f(s());
   });
 };
@@ -223,7 +223,7 @@ Lets try something else: reducing a stream! It could look like this:
 
 ```javascript
 var reduceStream = function(f, acc, s) {
-  return stream([s], function() {
+  return flyd.stream([s], function() {
     acc = f(acc, s());
     return acc;
   });
@@ -269,7 +269,7 @@ __Signature__
 
 __Example__
 ```javascript
-var numbers = stream(0);
+var numbers = flyd.stream(0);
 var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 ```
 
@@ -284,7 +284,7 @@ __Signature__
 
 __Example__
 ```javascript
-var numbers = stream();
+var numbers = flyd.stream();
 var sum = flyd.reduce(function(sum, n) { return sum+n; }, 0, numbers);
 numbers(2)(3)(5);
 sum(); // 10
@@ -301,9 +301,9 @@ __Signature__
 
 __Example__
 ```javascript
-var btn1Clicks = stream();
+var btn1Clicks = flyd.stream();
 button1Elm.addEventListener(clicks);
-var btn2Clicks = stream();
+var btn2Clicks = flyd.stream();
 button2Elm.addEventListener(clicks);
 var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
 ```
@@ -322,13 +322,13 @@ __Example__
 var t = require('transducers.js');
 
 var results = [];
-var s1 = stream();
+var s1 = flyd.stream();
 var tx = t.compose(
   t.map(function(x) { return x * 2; }),
   t.dedupe()
 );
 var s2 = flyd.transduce(tx, s1);
-stream([s2], function() { results.push(s2()); });
+flyd.stream([s2], function() { results.push(s2()); });
 s1(1)(1)(2)(3)(3)(3)(4);
 results; // [2, 4, 6, 8]
 ```
@@ -380,7 +380,7 @@ __Signature__
 __Example__
 
 ```javascript
-var s = stream(1);
+var s = flyd.stream(1);
 var n = 1;
 flyd.isStream(s); //=> true
 flyd.isStream(n); //=> false
@@ -397,7 +397,7 @@ __Signature__
 __Example__
 
 ```javascript
-var names = stream('Turing');
+var names = flyd.stream('Turing');
 names(); // 'Turing'
 ```
 
@@ -431,7 +431,7 @@ Called bound to `Stream a`: `(a -> b) -> Stream b`
 __Example__
 
 ```javascript
-var numbers = stream(0);
+var numbers = flyd.stream(0);
 var squaredNumbers = numbers.map(function(n) { return n*n; });
 ```
 
@@ -453,8 +453,8 @@ __Example__
 
 ```javascript
 var add = flyd.curryN(2, function(x, y) { return x + y; });
-var numbers1 = stream();
-var numbers2 = stream();
+var numbers1 = flyd.stream();
+var numbers2 = flyd.stream();
 var addToNumbers1 = flyd.map(add, numbers1);
 var added = addToNumbers1.ap(numbers2);
 ```
@@ -470,7 +470,7 @@ Called bound to `Stream (a)`: `b -> Stream b`
 
 __Example__
 ```javascript
-var n = stream(1);
+var n = flyd.stream(1);
 var m = n.of(1);
 ```
 
@@ -494,10 +494,10 @@ var m = n.of(1);
 Consider code like the following
 
 ```javascript
-var a = stream(1);
-var b = stream([a], function() { return a() * 2; });
-var c = stream([a], function() { return a() + 4; });
-var d = stream([b, c], function(self, ch) {
+var a = flyd.stream(1);
+var b = flyd.stream([a], function() { return a() * 2; });
+var c = flyd.stream([a], function() { return a() + 4; });
+var d = flyd.stream([b, c], function(self, ch) {
   result.push(b() + c());
 });
 ```
