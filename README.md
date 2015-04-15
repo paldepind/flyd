@@ -29,7 +29,7 @@ which new abstractions can be built modularly.
   and FRP abstractions can easily be built on top of it.
 * __A more functional style__. Flyd is more functional and less object oriented.
   Instead of methods it gives you curried functions with arguments in the
-  correct order for partial aplication. This increases the expressive power and
+  correct order for partial application. This increases the expressive power and
   the extensibility of the library.
 * Supports the transducer protocol. You can for instance transduce streams with
   ([Ramda](http://ramdajs.com/).
@@ -132,12 +132,12 @@ var y = stream(6);
 var squareX = stream([x], function() {
   return x() * x();
 });
-var squareXPlusY([y, doubleX], function() {
-  return y() + doubleX();
+var squareXPlusY = stream([y, squareX], function() {
+  return y() + squareX();
 });
-squareXPlysY(); // returns 22
+squareXPlusY(); // returns 22
 x(2);
-squareXPlysY(); // returns 10
+squareXPlusY(); // returns 10
 ```
 
 The body of a dependent stream is called with two streams: itself and the last
@@ -158,7 +158,7 @@ var sum = stream([x, y], function(sum, changed) {
 });
 ```
 
-### Using calback APIs for asynchronous operations
+### Using callback APIs for asynchronous operations
 
 Instead of returning a value a stream can update itself by calling itself. This
 is handy when working with APIs that takes callbacks.
@@ -169,7 +169,7 @@ var responses = stream([urls], function(resp) {
   makeRequest(urls(), resp);
 });
 stream([responses], function() {
-  console.log('Recieved response!');
+  console.log('Received response!');
   console.log(responses());
 });
 ```
@@ -200,11 +200,11 @@ stream([responses], function() {
 
 You've now seen the basic building block which Flyd provides. Let's see what we
 can do with it. Lets write a function that takes a stream and a function and
-returns a new stream with the functin applied to every value emitted by the
+returns a new stream with the function applied to every value emitted by the
 stream. In short, a `map` function.
 
 ```javascript
-var mapStream = functin(f, s) {
+var mapStream = function(f, s) {
   return stream([s], function() {
     return f(s());
   });
@@ -212,10 +212,10 @@ var mapStream = functin(f, s) {
 ```
 
 We simply create a new stream dependent on the first stream. We declare
-the stream as a dependency so that our stream wont return values before
+the stream as a dependency so that our stream won't return values before
 the original stream produces its first value.
 
-Flyd includes a similair map function as part of its core.
+Flyd includes a similar map function as part of its core.
 
 ### Reducing a stream
 
@@ -330,7 +330,7 @@ var tx = t.compose(
 var s2 = flyd.transduce(tx, s1);
 stream([s2], function() { results.push(s2()); });
 s1(1)(1)(2)(3)(3)(3)(4);
-result; // [2, 4, 6, 8]
+results; // [2, 4, 6, 8]
 ```
 
 ###flyd.destroy(stream)
@@ -418,7 +418,7 @@ names(); // 'Bohr'
 
 ###stream.map(f)
 
-Returns a new stream identical to the original exept every
+Returns a new stream identical to the original except every
 value will be passed through `f`.
 
 _Note:_ This function is included in order to support the fantasy land
@@ -455,7 +455,7 @@ __Example__
 var add = flyd.curryN(2, function(x, y) { return x + y; });
 var numbers1 = stream();
 var numbers2 = stream();
-var addToNumbers1 = flyd.map(add, numbers);
+var addToNumbers1 = flyd.map(add, numbers1);
 var added = addToNumbers1.ap(numbers2);
 ```
 
