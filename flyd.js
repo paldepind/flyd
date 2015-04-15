@@ -63,7 +63,7 @@ var merge = curryN(2, function(s1, s2) {
 
 function ap(s2) {
   var s1 = this;
-  return stream([s1, s2], function() { return s1()(s2()); }, true);
+  return stream([s1, s2], function() { return s1()(s2()); });
 }
 
 function of(v) {

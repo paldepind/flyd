@@ -381,6 +381,17 @@ describe('stream', function() {
       s1(3); s2(2); s3(5);
       assert.deepEqual(result, [0, 3, 5, 10]);
     });
+    it('applies functions if streams have no initial value', function() {
+      var result = [];
+      var add = flyd.curryN(2, function(x, y) { return x + y; });
+      var numbers1 = stream();
+      var numbers2 = stream();
+      var addToNumbers1 = flyd.map(add, numbers1);
+      var added = addToNumbers1.ap(numbers2);
+      flyd.map(function (n) { result.push(n); }, added);
+      numbers1(3); numbers2(2); numbers1(4);
+      assert.deepEqual(result, [5, 6]);
+    });
   });
   describe('of', function() {
     it('returns a stream with the passed value', function() {
