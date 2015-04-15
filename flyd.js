@@ -42,7 +42,7 @@ function map(s, f) {
   return stream([s], function() { return f(s()); });
 }
 
-var reduce = curryN(3, function(f, acc, s) {
+var scan = curryN(3, function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
   });
@@ -279,7 +279,8 @@ return {
   isStream: isStream,
   transduce: transduce,
   merge: merge,
-  reduce: reduce,
+  reduce: scan, // Legacy
+  scan: scan,
   destroy: destroy,
   map: curryN(2, function(f, s) { return map(s, f); }),
   curryN: curryN,

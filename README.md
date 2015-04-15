@@ -219,10 +219,11 @@ Flyd includes a similar map function as part of its core.
 
 ### Reducing a stream
 
-Lets try something else: reducing a stream! It could look like this:
+Lets try something else: a scan function for accumulating a stream! It could
+look like this:
 
 ```javascript
-var reduceStream = function(f, acc, s) {
+var scanStream = function(f, acc, s) {
   return flyd.stream([s], function() {
     acc = f(acc, s());
     return acc;
@@ -230,11 +231,11 @@ var reduceStream = function(f, acc, s) {
 };
 ```
 
-Our reduce function takes a reducer function, in initial value and a stream.
-Every time the original stream emit a value we pass it to the reducer along
-with the accumulator.
+Our scan function takes a accumulator function, in initial value and a stream.
+Every time the original stream emit a value we pass it to the accumulator along
+with the accumulated value.
 
-Flyd includes a reduce function as part of its core.
+Flyd includes a scan function as part of its core.
 
 ### Fin
 
@@ -273,7 +274,7 @@ var numbers = flyd.stream(0);
 var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 ```
 
-###flyd.reduce(fn, acc, stream)
+###flyd.scan(fn, acc, stream)
 
 Creates a new stream with the results of calling the function on every incoming
 stream with and accumulator and the incoming value.
@@ -285,7 +286,7 @@ __Signature__
 __Example__
 ```javascript
 var numbers = flyd.stream();
-var sum = flyd.reduce(function(sum, n) { return sum+n; }, 0, numbers);
+var sum = flyd.scan(function(sum, n) { return sum+n; }, 0, numbers);
 numbers(2)(3)(5);
 sum(); // 10
 ```
