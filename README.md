@@ -32,7 +32,7 @@ which new abstractions can be built modularly.
   correct order for partial application. This increases the expressive power and
   the extensibility of the library.
 * Supports the transducer protocol. You can for instance transduce streams with
-  ([Ramda](http://ramdajs.com/).
+  [Ramda](http://ramdajs.com/).
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
 * Elegant support for promises.
@@ -477,13 +477,16 @@ var m = n.of(1);
 
 ### Modules
 
+If you're created a module for Flyd open an issue or send a pull request and it
+will be added to this list.
+
 * [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
-* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function takin multiple paramters over that amount of streams.
-* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams.
-* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keeps values from a stream when another stream is true.
+* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ paramters over _n_ streams.
+* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
+* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keep values from one stream only when another stream is true.
 * [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
 * [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
-* [flyd-reducemerge](https://github.com/paldepind/flyd-reducemerge) – Merge and reduce several streams into one.
+* [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
 * Time related
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
   * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
@@ -509,3 +512,9 @@ to be updated twice. Because `a` triggers `b` triggers `d` after which `a` also
 twiggers `c` which again triggers `d`. But Flyd will handle this better.
 Since only one value entered the system `d` will only be updated once with the
 changed values of `b` and `c`. This avoids superfluous updates of your streams.
+
+### Environment support
+
+Flyd should work in all JavaScript environments. Some of its modules may however
+assume ECMAScript 4.
+
