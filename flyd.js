@@ -18,19 +18,8 @@ function isUndefined(v) {
   return v === undefined;
 }
 
-// Globals
-var queue = [];
-var isFlushingQueue = false;
-
-function flushQueue() {
-  if (isFlushingQueue) return;
-  isFlushingQueue = true;
-  for (var s; s = queue.shift();) {
-    s.inQueue = false;
-    s.update();
-  }
-  isFlushingQueue = false;
-}
+var toUpdate = [];
+var inStream;
 
 function removeListener(listeners, s) {
   var idx = listeners.indexOf(s);
@@ -79,10 +68,45 @@ function initialDepsNotMet(stream) {
   return !stream.depsMet;
 }
 
-function updateStream() {
-  if (initialDepsNotMet(this)) return;
-  var returnVal = this.fn(this, this.depChanged);
-  if (returnVal !== undefined) this(returnVal);
+function updateStream(s) {
+  if (initialDepsNotMet(s)) return;
+  inStream = s;
+  var returnVal = s.fn(s, s.depChanged);
+  if (returnVal !== undefined) {
+    s(returnVal);
+  }
+  inStream = undefined;
+  s.depChanged = undefined;
+}
+
+function findDeps(order, s) {
+  if (!s.queued) {
+    s.queued = true;
+    for (var i = 0; i < s.listeners.length; ++i) {
+      findDeps(order, s.listeners[i]);
+    }
+    order.push(s);
+  }
+}
+
+function updateDeps(s) {
+  var i, order = [];
+  for (i = 0; i < s.listeners.length; ++i) {
+    s.listeners[i].depChanged = s;
+    findDeps(order, s.listeners[i]);
+  }
+  for (i = order.length - 1; i >= 0; --i) {
+    if (!isUndefined(order[i].depChanged)) {
+      updateStream(order[i]);
+    }
+    order[i].queued = false;
+  }
+}
+
+function flushUpdate() {
+  for (var s; s = toUpdate.shift();) {
+    updateDeps(s);
+  }
 }
 
 function destroy(stream) {
@@ -103,20 +127,20 @@ function streamToString() {
 function stream(arg, fn, waitForDeps) {
   function s(n) {
     if (arguments.length > 0) {
-      if (!isUndefined(n) && n !== null && isFunction(n.then)) {
+      if (n && isFunction(n.then)) {
         n.then(s);
         return;
       }
       s.val = n;
       s.hasVal = true;
-      s.listeners.forEach(function(st) {
-        st.depChanged = s;
-        if (!st.inQueue) {
-          st.inQueue = true;
-          queue.push(st);
+      if (inStream !== s) {
+        toUpdate.push(s);
+        if (!inStream) flushUpdate();
+      } else {
+        for (var j = 0; j < s.listeners.length; ++j) {
+          s.listeners[j].depChanged = s;
         }
-      });
-      flushQueue();
+      }
       return s;
     } else {
       return s.val;
@@ -126,9 +150,9 @@ function stream(arg, fn, waitForDeps) {
   s.val = undefined;
   s.listeners = [];
   s.deps = [];
-  s.depsMet = isUndefined(waitForDeps) ? false : true;
+  s.depsMet = isUndefined(waitForDeps) && arguments.length > 1 ? false : true;
   s.depChanged = undefined;
-  s.inQueue = true;
+  s.queued = false;
   s.fn = fn;
 
   s.map = map.bind(null, s);
@@ -137,16 +161,14 @@ function stream(arg, fn, waitForDeps) {
   s.toString = streamToString;
 
   if (arguments.length > 1) {
-    s.update = updateStream;
     s.deps = arg;
     arg.forEach(function(dep) {
       dep.listeners.push(s);
     });
-    queue.push(s);
-    flushQueue();
+    updateStream(s);
+    flushUpdate();
   } else if (arguments.length === 1) {
-    s.val = arg;
-    s.hasVal = true;
+    s(arg);
   }
   return s;
 }

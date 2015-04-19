@@ -22,14 +22,6 @@ describe('stream', function() {
     var s = stream();
     assert.equal(s, s(23));
   });
-  it('can set result by calling callback', function() {
-    var x = stream(3);
-    var y = stream(4);
-    var sum = stream([x, y], function(s) {
-      s(x() + y());
-    });
-    assert.equal(sum(), x() + y());
-  });
   it('can set result by returning value', function() {
     var x = stream(3);
     var y = stream(4);
@@ -42,13 +34,30 @@ describe('stream', function() {
     var x = stream(3);
     var y = stream(4);
     var sum = stream([x, y], function(s) {
-      s(x() + y());
+      return x() + y();
     });
     assert.equal(sum(), x() + y()); // 7
     x(12);
     assert.equal(sum(), x() + y()); // 16
     y(8);
     assert.equal(sum(), x() + y()); // 20
+  });
+  it('can set result by calling callback', function() {
+    var x = stream(3);
+    var y = stream(4);
+    var times = 0;
+    var sum = stream([x, y], function(s) {
+      s(x() + y());
+    });
+    stream([sum], function() {
+      times++;
+    });
+    assert.equal(sum(), x() + y()); // 7
+    x(12);
+    assert.equal(sum(), x() + y()); // 16
+    y(8);
+    assert.equal(sum(), x() + y()); // 20
+    assert.equal(times, 3);
   });
   it('can specify dependencies manually', function() {
     var x = stream(3);
@@ -165,11 +174,11 @@ describe('stream', function() {
     var order = [];
     var x = stream(4);
     var y = stream(3);
-    var doubleX = stream([x], function() {
+    var doubleX = stream([x], function dx() {
       if (x() === 3) order.push(2);
       return x() * 2;
     });
-    var setAndY = stream([y], function() {
+    var setAndY = stream([y], function sy() {
       x(3);
       order.push(1);
       return y();
@@ -219,6 +228,16 @@ describe('stream', function() {
     assert.deepEqual('' + ns, 'stream(1)');
     assert.deepEqual('' + ss, 'stream(hello)');
     assert.deepEqual('' + os, 'stream([object Object])');
+  });
+  it('can filter values', function() {
+    var result = [];
+    var n = stream(0);
+    var lrg5 = stream([n], function() {
+      if (n() > 5) return n();
+    });
+    flyd.map(function(v) { result.push(v); }, lrg5);
+    n(4)(6)(2)(8)(3)(4);
+    assert.deepEqual(result, [6, 8]);
   });
   describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {
@@ -289,7 +308,6 @@ describe('stream', function() {
     it('has initial acc as value when stream is undefined', function() {
       var numbers = stream();
       var sum = flyd.reduce(function(sum, n) {
-        console.log(sum, n);
         return sum + n;
       }, 0, numbers);
       assert.equal(sum(), 0);
@@ -518,6 +536,30 @@ describe('stream', function() {
       flyd.map(function(n) { result.push(n); }, s1x4);
       s1(2)(3)(4);
       assert.deepEqual(result, [4, 8, 12, 16]);
+    });
+    it('handles complex dependency graph', function() {
+      var result = [];
+      var a = flyd.stream();
+      var b = flyd.stream([a], function bs() { return a() + 1; });
+      var c = flyd.stream([a], function cs() { return a() + 2; });
+      var d = flyd.stream([c], function ds() { return c() + 3; });
+      var e = flyd.stream([b, d], function res(){
+        return b() + d();
+      });
+      flyd.map(function(v) { result.push(v); }, e);
+      a(1)(5)(11);
+      assert.deepEqual(result, [8, 16, 28]);
+    });
+    it('handles another complex dependency graph', function() {
+      var result = [];
+      var a = flyd.stream();
+      var b = flyd.stream([a], function() { return a() + 1; });
+      var c = flyd.stream([a], function() { return a() + 2; });
+      var d = flyd.stream([a], function() { return a() + 4; });
+      var e = flyd.stream([b, c, d], function() { return b() + c() + d(); });
+      flyd.map(function(v) { result.push(v); }, e);
+      a(1)(2)(3);
+      assert.deepEqual(result, [10, 13, 16]);
     });
   });
 });
