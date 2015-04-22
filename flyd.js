@@ -40,7 +40,8 @@ var scan = curryN(3, function(f, acc, s) {
 });
 
 var merge = curryN(2, function(s1, s2) {
-  return stream([s1, s2], function(n, changed) {
+  var deps = 2;
+  var s = stream([s1, s2], function(n, changed) {
     var v1, v2;
     if (changed) return changed();
     else {
@@ -48,6 +49,10 @@ var merge = curryN(2, function(s1, s2) {
      return v1 === undefined ? v2 : v1;
     }
   }, true);
+  s.onEnd = function(dep) {
+    if (--deps === 0) end(s);
+  };
+  return s;
 });
 
 function ap(s2) {
@@ -109,11 +114,10 @@ function flushUpdate() {
   }
 }
 
-function destroy(stream) {
-  if (stream.listeners.length !== 0) {
-    throw new Error('Trying to destroy stream with listeners attached');
-  }
-  stream.deps.forEach(function(dep) { removeListener(dep.listeners, stream); });
+function end(s) {
+  s.ended = true;
+  s.listeners.forEach(function(l) { l.onEnd(s); });
+  s.deps.forEach(function(dep) { removeListener(dep.listeners, s); });
 }
 
 function isStream(stream) {
@@ -154,6 +158,8 @@ function stream(arg, fn, waitForDeps) {
   s.depChanged = undefined;
   s.queued = false;
   s.fn = fn;
+  s.ended = false;
+  s.onEnd = end.bind(null, s);
 
   s.map = map.bind(null, s);
   s.ap = ap;
@@ -303,7 +309,7 @@ return {
   merge: merge,
   reduce: scan, // Legacy
   scan: scan,
-  destroy: destroy,
+  end: end,
   map: curryN(2, function(f, s) { return map(s, f); }),
   curryN: curryN,
   _: _,

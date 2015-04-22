@@ -104,33 +104,52 @@ describe('stream', function() {
     assert.equal(sumPlusDoubleSum(), sum() * 3);
     assert.equal(sumPlusDoubleSum(), (2 + 3) * 3);
   });
-  it('can destroy stream', function() {
-    var x = stream(3);
-    var y = stream(2);
-    var sum = stream([y, x], function() {
-      return y() * x();
+  describe('ending streams', function() {
+    it('can end stream', function() {
+      var x = stream(3);
+      var y = stream(2);
+      var sum = stream([y, x], function() {
+        return y() * x();
+      });
+      assert.equal(y.listeners.length, 1);
+      assert.equal(x.listeners.length, 1);
+      flyd.end(sum);
+      assert.equal(y.listeners.length, 0);
+      assert.equal(x.listeners.length, 0);
+      assert(sum.ended);
     });
-    assert.equal(y.listeners.length, 1);
-    assert.equal(x.listeners.length, 1);
-    flyd.destroy(sum);
-    assert.equal(y.listeners.length, 0);
-    assert.equal(x.listeners.length, 0);
-  });
-  it('can not destroy stream with listeners', function() {
-    var x = stream(3), thrown;
-    var x2 = stream([x], function() {
-      return x() * 2;
+    it('ending a stream ends its children', function() {
+      var x = stream(3);
+      var y = stream([x], function() {
+        return 2 * x();
+      });
+      var z = stream([y], function() {
+        return 2 * y();
+      });
+      assert.equal(z(), x() * 2 * 2);
+      flyd.end(x);
+      assert(x.ended);
+      assert(y.ended);
+      assert(z.ended);
     });
-    var x4 = stream([x2], function() {
-      return x2() * 2;
+    it('updates children if stream ends itself after emitting value', function() {
+      var x = stream(3);
+      var y = stream([x], function(self) {
+        if (x() === 0) { self(0); flyd.end(self); }
+        else { return x(); }
+      });
+      var z = stream([y], function() { return y(); });
+      assert.equal(y(), z());
+      x(2);
+      assert.equal(y(), z());
+      assert(!y.ended);
+      assert(!z.ended);
+      x(0);
+      assert(y.ended);
+      assert(z.ended);
+      assert.equal(0, y());
+      assert.equal(0, z());
     });
-    assert.equal(x4(), 12);
-    try {
-      x2.destroy();
-    } catch(e) {
-      thrown = true;
-    }
-    assert(thrown);
   });
   it('can get its own value', function() {
     var num = stream(0);
@@ -350,6 +369,20 @@ describe('stream', function() {
       s1and2 = mergeWithS1(s2);
       flyd.map(function(v) { result.push(v); }, s1and2);
       s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
+      assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
+    });
+    it('ends only when both merged streams have ended', function() {
+      var result = [];
+      var s1 = stream();
+      var s2 = stream();
+      s1and2 = flyd.merge(s1, s2);
+      flyd.map(function(v) { result.push(v); }, s1and2);
+      s1(12)(2); s2(4)(44); s1(1);
+      flyd.end(s1);
+      assert(!s1and2.ended);
+      s2(12)(2);
+      flyd.end(s2);
+      assert(s1and2.ended);
       assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
     });
   });
