@@ -197,8 +197,13 @@ describe('stream', function() {
     n(4)(6)(2)(8)(3)(4);
     assert.deepEqual(result, [6, 8]);
   });
-  describe('ending streams', function() {
-    it('can end stream', function() {
+  describe('ending a stream', function() {
+    it('works for streams without dependencies', function() {
+      var s = stream(1);
+      s.end(true);
+      assert(s.end());
+    });
+    it('detaches it from dependencies', function() {
       var x = stream(3);
       var y = stream(2);
       var sum = stream([y, x], function() {
@@ -206,12 +211,12 @@ describe('stream', function() {
       });
       assert.equal(y.listeners.length, 1);
       assert.equal(x.listeners.length, 1);
-      flyd.end(sum);
+      sum.end(true);
       assert.equal(y.listeners.length, 0);
       assert.equal(x.listeners.length, 0);
-      assert(sum.ended);
+      assert(sum.end());
     });
-    it('ending a stream ends its children', function() {
+    it('ends its dependents', function() {
       var x = stream(3);
       var y = stream([x], function() {
         return 2 * x();
@@ -220,28 +225,34 @@ describe('stream', function() {
         return 2 * y();
       });
       assert.equal(z(), x() * 2 * 2);
-      flyd.end(x);
-      assert(x.ended);
-      assert(y.ended);
-      assert(z.ended);
+      x.end(true);
+      assert(x.end());
+      assert.equal(x.listeners.length, 0);
+      assert(y.end());
+      assert.equal(y.listeners.length, 0);
+      assert(z.end());
     });
-    it('updates children if stream ends itself after emitting value', function() {
+    it('updates children if stream ends after recieving value', function() {
       var x = stream(3);
+      var whenX2 = stream([x], function() { if (x() === 0) return true; });
       var y = stream([x], function(self) {
-        if (x() === 0) { self(0); flyd.end(self); }
-        else { return x(); }
+        return x();
       });
+      flyd.endsOn(whenX2, y);
+      //flyd.endsOn(stream([x], function() { if (x() === 0) return true; }), y);
       var z = stream([y], function() { return y(); });
       assert.equal(y(), z());
       x(2);
       assert.equal(y(), z());
-      assert(!y.ended);
-      assert(!z.ended);
+      assert(!y.end());
+      assert(!z.end());
       x(0);
-      assert(y.ended);
-      assert(z.ended);
-      assert.equal(0, y());
-      assert.equal(0, z());
+      assert.equal(x.listeners.length, 1);
+      assert(y.end());
+      assert.equal(y.listeners.length, 0);
+      assert(z.end());
+      assert.equal(2, y());
+      assert.equal(2, z());
     });
   });
   describe('promise integration', function() {
@@ -364,11 +375,11 @@ describe('stream', function() {
       s1and2 = flyd.merge(s1, s2);
       flyd.map(function(v) { result.push(v); }, s1and2);
       s1(12)(2); s2(4)(44); s1(1);
-      flyd.end(s1);
-      assert(!s1and2.ended);
+      s1.end(true);
+      assert(!s1and2.end());
       s2(12)(2);
-      flyd.end(s2);
-      assert(s1and2.ended);
+      s2.end(true);
+      assert(s1and2.end());
       assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
     });
   });

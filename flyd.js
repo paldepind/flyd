@@ -40,15 +40,14 @@ var scan = curryN(3, function(f, acc, s) {
 });
 
 var merge = curryN(2, function(s1, s2) {
-  var deps = 2;
   var s = stream([s1, s2], function(n, changed) {
     return changed[0] ? changed[0]()
          : s1.hasVal  ? s1()
                       : s2();
   }, true);
-  s.onEnd = function(dep) {
-    if (--deps === 0) end(s);
-  };
+  endsOn(stream([s1.end, s2.end], function(self, changed) {
+    return true;
+  }), s);
   return s;
 });
 
@@ -71,7 +70,7 @@ function initialDepsNotMet(stream) {
 }
 
 function updateStream(s) {
-  if (initialDepsNotMet(s)) return;
+  if (initialDepsNotMet(s) || (s.end && s.end.hasVal)) return;
   inStream = s;
   var returnVal = s.fn(s, s.depsChanged);
   if (returnVal !== undefined) {
@@ -94,8 +93,12 @@ function findDeps(order, s) {
 function updateDeps(s) {
   var i, order = [];
   for (i = 0; i < s.listeners.length; ++i) {
-    s.listeners[i].depsChanged.push(s);
-    findDeps(order, s.listeners[i]);
+    if (s.listeners[i].end === s) {
+      end(s.listeners[i]);
+    } else {
+      s.listeners[i].depsChanged.push(s);
+      findDeps(order, s.listeners[i]);
+    }
   }
   for (i = order.length - 1; i >= 0; --i) {
     if (order[i].depsChanged.length > 0) {
@@ -112,20 +115,27 @@ function flushUpdate() {
 }
 
 function end(s) {
-  s.ended = true;
-  s.listeners.forEach(function(l) { l.onEnd(s); });
-  s.deps.forEach(function(dep) { removeListener(dep.listeners, s); });
+  if (s.deps) s.deps.forEach(function(dep) { removeListener(dep.listeners, s); });
+}
+
+function endsOn(endS, s) {
+  if (s.end) {
+    removeListener(s.end.listeners, s);
+    if (isUndefined(s.end.end)) end(s.end);
+  }
+  s.end = endS;
+  endS.listeners.push(s);
 }
 
 function isStream(stream) {
-  return isFunction(stream) && 'depsMet' in stream;
+  return isFunction(stream) && 'hasVal' in stream;
 }
 
 function streamToString() {
   return 'stream(' + this.val + ')';
 }
 
-function stream(arg, fn, waitForDeps) {
+function createStream() {
   function s(n) {
     if (arguments.length > 0) {
       if (n && isFunction(n.then)) {
@@ -139,7 +149,11 @@ function stream(arg, fn, waitForDeps) {
         if (!inStream) flushUpdate();
       } else {
         for (var j = 0; j < s.listeners.length; ++j) {
-          s.listeners[j].depsChanged.push(s);
+          if (s.listeners[j].end === s) {
+            end(s.listeners[j]);
+          } else {
+            s.listeners[j].depsChanged.push(s);
+          }
         }
       }
       return s;
@@ -150,28 +164,42 @@ function stream(arg, fn, waitForDeps) {
   s.hasVal = false;
   s.val = undefined;
   s.listeners = [];
-  s.deps = [];
-  s.depsMet = isUndefined(waitForDeps) && arguments.length > 1 ? false : true;
-  s.depsChanged = [];
   s.queued = false;
-  s.fn = fn;
-  s.ended = false;
-  s.onEnd = end.bind(null, s);
+  s.end = undefined;
 
   s.map = map.bind(null, s);
   s.ap = ap;
   s.of = of;
   s.toString = streamToString;
 
+  return s;
+}
+
+function createDependentStream(deps, fn, dontWaitForDeps) {
+  var s = createStream();
+  s.fn = fn;
+  s.deps = deps;
+  s.depsMet = dontWaitForDeps;
+  s.depsChanged = [];
+  deps.forEach(function(dep) {
+    dep.listeners.push(s);
+  });
+  return s;
+}
+
+function stream(arg, fn, dontWaitForDeps) {
+  var s;
   if (arguments.length > 1) {
-    s.deps = arg;
-    arg.forEach(function(dep) {
-      dep.listeners.push(s);
-    });
+    s = createDependentStream(arg, fn, isUndefined(dontWaitForDeps) ? false : true);
+    var depEndStreams = arg.filter(function(d) { return !isUndefined(d.end); })
+                           .map(function(d) { return d.end; });
+    endsOn(createDependentStream(depEndStreams, function() { return true; }, true), s);
     updateStream(s);
     flushUpdate();
-  } else if (arguments.length === 1) {
-    s(arg);
+  } else {
+    s = createStream();
+    endsOn(createStream(), s);
+    if (arguments.length === 1) s(arg);
   }
   return s;
 }
@@ -306,7 +334,7 @@ return {
   merge: merge,
   reduce: scan, // Legacy
   scan: scan,
-  end: end,
+  endsOn: endsOn,
   map: curryN(2, function(f, s) { return map(s, f); }),
   curryN: curryN,
   _: _,
