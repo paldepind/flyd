@@ -42,12 +42,9 @@ var scan = curryN(3, function(f, acc, s) {
 var merge = curryN(2, function(s1, s2) {
   var deps = 2;
   var s = stream([s1, s2], function(n, changed) {
-    var v1, v2;
-    if (changed) return changed();
-    else {
-     v1 = s1(); v2 = s2();
-     return v1 === undefined ? v2 : v1;
-    }
+    return changed[0] ? changed[0]()
+         : s1.hasVal  ? s1()
+                      : s2();
   }, true);
   s.onEnd = function(dep) {
     if (--deps === 0) end(s);
@@ -76,12 +73,12 @@ function initialDepsNotMet(stream) {
 function updateStream(s) {
   if (initialDepsNotMet(s)) return;
   inStream = s;
-  var returnVal = s.fn(s, s.depChanged);
+  var returnVal = s.fn(s, s.depsChanged);
   if (returnVal !== undefined) {
     s(returnVal);
   }
   inStream = undefined;
-  s.depChanged = undefined;
+  s.depsChanged = [];
 }
 
 function findDeps(order, s) {
@@ -97,11 +94,11 @@ function findDeps(order, s) {
 function updateDeps(s) {
   var i, order = [];
   for (i = 0; i < s.listeners.length; ++i) {
-    s.listeners[i].depChanged = s;
+    s.listeners[i].depsChanged.push(s);
     findDeps(order, s.listeners[i]);
   }
   for (i = order.length - 1; i >= 0; --i) {
-    if (!isUndefined(order[i].depChanged)) {
+    if (order[i].depsChanged.length > 0) {
       updateStream(order[i]);
     }
     order[i].queued = false;
@@ -142,7 +139,7 @@ function stream(arg, fn, waitForDeps) {
         if (!inStream) flushUpdate();
       } else {
         for (var j = 0; j < s.listeners.length; ++j) {
-          s.listeners[j].depChanged = s;
+          s.listeners[j].depsChanged.push(s);
         }
       }
       return s;
@@ -155,7 +152,7 @@ function stream(arg, fn, waitForDeps) {
   s.listeners = [];
   s.deps = [];
   s.depsMet = isUndefined(waitForDeps) && arguments.length > 1 ? false : true;
-  s.depChanged = undefined;
+  s.depsChanged = [];
   s.queued = false;
   s.fn = fn;
   s.ended = false;
