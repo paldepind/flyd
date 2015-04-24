@@ -191,11 +191,12 @@ function createDependentStream(deps, fn, dontWaitForDeps) {
 }
 
 function stream(arg, fn, dontWaitForDeps) {
-  var s;
+  var s, deps;
   if (arguments.length > 1) {
-    s = createDependentStream(arg, fn, isUndefined(dontWaitForDeps) ? false : true);
-    var depEndStreams = arg.filter(function(d) { return !isUndefined(d.end); })
-                           .map(function(d) { return d.end; });
+    deps = arg.filter(function(d) { return d !== undefined; });
+    s = createDependentStream(deps, fn, isUndefined(dontWaitForDeps) ? false : true);
+    var depEndStreams = deps.filter(function(d) { return !isUndefined(d.end); })
+                            .map(function(d) { return d.end; });
     endsOn(createDependentStream(depEndStreams, function() { return true; }, true), s);
     updateStream(s);
     flushUpdate();
