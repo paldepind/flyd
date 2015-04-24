@@ -18,6 +18,10 @@ function isUndefined(v) {
   return v === undefined;
 }
 
+function each(fn, list) {
+  for (var i = 0; i < list.length; ++i) fn(list[i]);
+}
+
 var toUpdate = [];
 var inStream;
 
@@ -83,23 +87,17 @@ function updateStream(s) {
 function findDeps(order, s) {
   if (!s.queued) {
     s.queued = true;
-    for (var i = 0; i < s.listeners.length; ++i) {
-      findDeps(order, s.listeners[i]);
-    }
+    each(findDeps.bind(null, order), s.listeners);
     order.push(s);
   }
 }
 
 function updateDeps(s) {
   var i, order = [];
-  for (i = 0; i < s.listeners.length; ++i) {
-    if (s.listeners[i].end === s) {
-      end(s.listeners[i]);
-    } else {
-      s.listeners[i].depsChanged.push(s);
-      findDeps(order, s.listeners[i]);
-    }
-  }
+  each(function(list) {
+    list.end === s ? end(list)
+                   : (list.depsChanged.push(s), findDeps(order, list));
+  }, s.listeners);
   for (i = order.length - 1; i >= 0; --i) {
     if (order[i].depsChanged.length > 0) {
       updateStream(order[i]);
@@ -135,13 +133,9 @@ function createStream() {
         toUpdate.push(s);
         if (!inStream) flushUpdate();
       } else {
-        for (var j = 0; j < s.listeners.length; ++j) {
-          if (s.listeners[j].end === s) {
-            end(s.listeners[j]);
-          } else {
-            s.listeners[j].depsChanged.push(s);
-          }
-        }
+        each(function(list) {
+          list.end === s ? end(list) : list.depsChanged.push(s);
+        }, s.listeners);
       }
       return s;
     } else {
