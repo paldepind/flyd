@@ -201,7 +201,7 @@ describe('stream', function() {
     it('works for streams without dependencies', function() {
       var s = stream(1);
       s.end(true);
-      assert(s.end());
+      assert(s.ended);
     });
     it('detaches it from dependencies', function() {
       var x = stream(3);
@@ -214,7 +214,7 @@ describe('stream', function() {
       sum.end(true);
       assert.equal(y.listeners.length, 0);
       assert.equal(x.listeners.length, 0);
-      assert(sum.end());
+      assert(sum.ended);
     });
     it('ends its dependents', function() {
       var x = stream(3);
@@ -226,11 +226,11 @@ describe('stream', function() {
       });
       assert.equal(z(), x() * 2 * 2);
       x.end(true);
-      assert(x.end());
+      assert(x.ended);
       assert.equal(x.listeners.length, 0);
-      assert(y.end());
+      assert(y.ended);
       assert.equal(y.listeners.length, 0);
-      assert(z.end());
+      assert(z.ended);
     });
     it('updates children if stream ends after recieving value', function() {
       var x = stream(3);
@@ -239,20 +239,28 @@ describe('stream', function() {
         return x();
       });
       flyd.endsOn(whenX2, y);
-      //flyd.endsOn(stream([x], function() { if (x() === 0) return true; }), y);
       var z = stream([y], function() { return y(); });
       assert.equal(y(), z());
       x(2);
       assert.equal(y(), z());
-      assert(!y.end());
-      assert(!z.end());
+      assert(!y.ended);
+      assert(!z.ended);
       x(0);
       assert.equal(x.listeners.length, 1);
-      assert(y.end());
+      assert(y.ended);
       assert.equal(y.listeners.length, 0);
-      assert(z.end());
+      assert(z.ended);
       assert.equal(2, y());
       assert.equal(2, z());
+    });
+    it('works if end stream has initial value', function() {
+      var killer = stream(true);
+      var x = stream(1);
+      var y = flyd.endsOn(killer, stream([x], function(self) {
+        return 2 * x();
+      }));
+      x(2);
+      assert.equal(2 * x(), y());
     });
   });
   describe('promise integration', function() {
@@ -376,10 +384,10 @@ describe('stream', function() {
       flyd.map(function(v) { result.push(v); }, s1and2);
       s1(12)(2); s2(4)(44); s1(1);
       s1.end(true);
-      assert(!s1and2.end());
+      assert(!s1and2.ended);
       s2(12)(2);
       s2.end(true);
-      assert(s1and2.end());
+      assert(s1and2.ended);
       assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
     });
   });

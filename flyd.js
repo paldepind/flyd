@@ -70,7 +70,7 @@ function initialDepsNotMet(stream) {
 }
 
 function updateStream(s) {
-  if (initialDepsNotMet(s) || (s.end && s.end.hasVal)) return;
+  if (initialDepsNotMet(s) || s.ended) return;
   inStream = s;
   var returnVal = s.fn(s, s.depsChanged);
   if (returnVal !== undefined) {
@@ -115,6 +115,7 @@ function flushUpdate() {
 }
 
 function end(s) {
+  s.ended = true;
   if (s.deps) s.deps.forEach(function(dep) { removeListener(dep.listeners, s); });
 }
 
@@ -125,6 +126,7 @@ function endsOn(endS, s) {
   }
   s.end = endS;
   endS.listeners.push(s);
+  return s;
 }
 
 function isStream(stream) {
@@ -166,6 +168,7 @@ function createStream() {
   s.listeners = [];
   s.queued = false;
   s.end = undefined;
+  s.ended = false;
 
   s.map = map.bind(null, s);
   s.ap = ap;
