@@ -114,21 +114,6 @@ function flushUpdate() {
   }
 }
 
-function end(s) {
-  s.ended = true;
-  if (s.deps) s.deps.forEach(function(dep) { removeListener(dep.listeners, s); });
-}
-
-function endsOn(endS, s) {
-  if (s.end) {
-    removeListener(s.end.listeners, s);
-    if (isUndefined(s.end.end)) end(s.end);
-  }
-  s.end = endS;
-  endS.listeners.push(s);
-  return s;
-}
-
 function isStream(stream) {
   return isFunction(stream) && 'hasVal' in stream;
 }
@@ -190,11 +175,32 @@ function createDependentStream(deps, fn, dontWaitForDeps) {
   return s;
 }
 
+function detachDeps(s) {
+  s.deps.forEach(function(dep) { removeListener(dep.listeners, s); });
+  s.deps.length = 0;
+}
+
+function end(s) {
+  s.ended = true;
+  if (s.deps) detachDeps(s);
+  if (s.end) detachDeps(s.end);
+}
+
+function endsOn(endS, s) {
+  detachDeps(s.end);
+  endS.listeners.push(s.end);
+  s.end.deps.push(endS);
+  return s;
+}
+
 function stream(arg, fn, dontWaitForDeps) {
   var s, deps;
+  var endStream = createDependentStream([], function() { return true; });
   if (arguments.length > 1) {
     deps = arg.filter(function(d) { return d !== undefined; });
     s = createDependentStream(deps, fn, isUndefined(dontWaitForDeps) ? false : true);
+    s.end = endStream;
+    endStream.listeners.push(s);
     var depEndStreams = deps.filter(function(d) { return !isUndefined(d.end); })
                             .map(function(d) { return d.end; });
     endsOn(createDependentStream(depEndStreams, function() { return true; }, true), s);
@@ -202,9 +208,12 @@ function stream(arg, fn, dontWaitForDeps) {
     flushUpdate();
   } else {
     s = createStream();
-    endsOn(createStream(), s);
+    s.end = endStream;
+    endStream.listeners.push(s);
     if (arguments.length === 1) s(arg);
   }
+  s.end = endStream;
+  endStream.listeners.push(s);
   return s;
 }
 

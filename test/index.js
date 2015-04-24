@@ -201,6 +201,7 @@ describe('stream', function() {
     it('works for streams without dependencies', function() {
       var s = stream(1);
       s.end(true);
+      assert(s.end());
       assert(s.ended);
     });
     it('detaches it from dependencies', function() {
@@ -260,7 +261,29 @@ describe('stream', function() {
         return 2 * x();
       }));
       x(2);
+      assert.equal(false, y.ended);
       assert.equal(2 * x(), y());
+    });
+    it('end stream does not have value even if base stream has initial value', function() {
+      var killer = stream(true);
+      var x = stream(1);
+      var y = flyd.endsOn(killer, stream([x], function(self) {
+        return 2 * x();
+      }));
+      assert.equal(false, y.end.hasVal);
+    });
+    it('ends stream can be changed without affecting listeners', function() {
+      var killer1 = stream();
+      var killer2 = stream();
+      var ended = false;
+      var x = stream(1);
+      var y = flyd.endsOn(killer1, stream([x], function(self) {
+        return 2 * x();
+      }));
+      flyd.map(function() { ended = true; }, y.end);
+      flyd.endsOn(killer2, y);
+      killer2(true);
+      assert(ended);
     });
   });
   describe('promise integration', function() {
