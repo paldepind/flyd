@@ -202,7 +202,7 @@ describe('stream', function() {
       var s = stream(1);
       s.end(true);
       assert(s.end());
-      assert(s.ended);
+      assert(s.end());
     });
     it('detaches it from dependencies', function() {
       var x = stream(3);
@@ -215,7 +215,7 @@ describe('stream', function() {
       sum.end(true);
       assert.equal(y.listeners.length, 0);
       assert.equal(x.listeners.length, 0);
-      assert(sum.ended);
+      assert(sum.end());
     });
     it('ends its dependents', function() {
       var x = stream(3);
@@ -227,11 +227,11 @@ describe('stream', function() {
       });
       assert.equal(z(), x() * 2 * 2);
       x.end(true);
-      assert(x.ended);
+      assert(x.end());
       assert.equal(x.listeners.length, 0);
-      assert(y.ended);
+      assert(y.end());
       assert.equal(y.listeners.length, 0);
-      assert(z.ended);
+      assert(z.end());
     });
     it('updates children if stream ends after recieving value', function() {
       var x = stream(3);
@@ -244,13 +244,13 @@ describe('stream', function() {
       assert.equal(y(), z());
       x(2);
       assert.equal(y(), z());
-      assert(!y.ended);
-      assert(!z.ended);
+      assert(!y.end());
+      assert(!z.end());
       x(0);
       assert.equal(x.listeners.length, 1);
-      assert(y.ended);
+      assert(y.end());
       assert.equal(y.listeners.length, 0);
-      assert(z.ended);
+      assert(z.end());
       assert.equal(2, y());
       assert.equal(2, z());
     });
@@ -261,7 +261,7 @@ describe('stream', function() {
         return 2 * x();
       }));
       x(2);
-      assert.equal(false, y.ended);
+      assert.equal(undefined, y.end());
       assert.equal(2 * x(), y());
     });
     it('end stream does not have value even if base stream has initial value', function() {
@@ -407,10 +407,10 @@ describe('stream', function() {
       flyd.map(function(v) { result.push(v); }, s1and2);
       s1(12)(2); s2(4)(44); s1(1);
       s1.end(true);
-      assert(!s1and2.ended);
+      assert(!s1and2.end());
       s2(12)(2);
       s2.end(true);
-      assert(s1and2.ended);
+      assert(s1and2.end());
       assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
     });
   });

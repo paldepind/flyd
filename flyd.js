@@ -14,8 +14,8 @@ function isFunction(obj) {
   return !!(obj && obj.constructor && obj.call && obj.apply);
 }
 
-function isUndefined(v) {
-  return v === undefined;
+function notUndef(v) {
+  return v !== undefined;
 }
 
 function each(fn, list) {
@@ -24,12 +24,6 @@ function each(fn, list) {
 
 var toUpdate = [];
 var inStream;
-
-function removeListener(listeners, s) {
-  var idx = listeners.indexOf(s);
-  listeners[idx] = listeners[listeners.length - 1];
-  listeners.length--;
-}
 
 function map(s, f) {
   return stream([s], function() { return f(s()); });
@@ -60,10 +54,6 @@ function ap(s2) {
   return stream([s1, s2], function() { return s1()(s2()); });
 }
 
-function of(v) {
-  return stream(v);
-}
-
 function initialDepsNotMet(stream) {
   if (!stream.depsMet) {
     stream.depsMet = stream.deps.every(function(s) {
@@ -74,10 +64,10 @@ function initialDepsNotMet(stream) {
 }
 
 function updateStream(s) {
-  if (initialDepsNotMet(s) || s.ended) return;
+  if (initialDepsNotMet(s) || (s.end && s.end())) return;
   inStream = s;
   var returnVal = s.fn(s, s.depsChanged);
-  if (returnVal !== undefined) {
+  if (notUndef(returnVal)) {
     s(returnVal);
   }
   inStream = undefined;
@@ -95,7 +85,7 @@ function findDeps(order, s) {
 function updateDeps(s) {
   var i, order = [];
   each(function(list) {
-    list.end === s ? end(list)
+    list.end === s ? endStream(list)
                    : (list.depsChanged.push(s), findDeps(order, list));
   }, s.listeners);
   for (i = order.length - 1; i >= 0; --i) {
@@ -107,9 +97,7 @@ function updateDeps(s) {
 }
 
 function flushUpdate() {
-  for (var s; s = toUpdate.shift();) {
-    updateDeps(s);
-  }
+  while (toUpdate.length > 0) updateDeps(toUpdate.shift());
 }
 
 function isStream(stream) {
@@ -134,7 +122,7 @@ function createStream() {
         if (!inStream) flushUpdate();
       } else {
         each(function(list) {
-          list.end === s ? end(list) : list.depsChanged.push(s);
+          list.end === s ? endStream(list) : list.depsChanged.push(s);
         }, s.listeners);
       }
       return s;
@@ -147,11 +135,10 @@ function createStream() {
   s.listeners = [];
   s.queued = false;
   s.end = undefined;
-  s.ended = false;
 
   s.map = map.bind(null, s);
   s.ap = ap;
-  s.of = of;
+  s.of = stream;
   s.toString = streamToString;
 
   return s;
@@ -163,19 +150,22 @@ function createDependentStream(deps, fn, dontWaitForDeps) {
   s.deps = deps;
   s.depsMet = dontWaitForDeps;
   s.depsChanged = [];
-  deps.forEach(function(dep) {
-    dep.listeners.push(s);
-  });
+  each(function(dep) { dep.listeners.push(s); }, deps);
   return s;
 }
 
+function removeListener(s, listeners) {
+  var idx = listeners.indexOf(s);
+  listeners[idx] = listeners[listeners.length - 1];
+  listeners.length--;
+}
+
 function detachDeps(s) {
-  s.deps.forEach(function(dep) { removeListener(dep.listeners, s); });
+  each(function(dep) { removeListener(s, dep.listeners); }, s.deps);
   s.deps.length = 0;
 }
 
-function end(s) {
-  s.ended = true;
+function endStream(s) {
   if (s.deps) detachDeps(s);
   if (s.end) detachDeps(s.end);
 }
@@ -191,12 +181,11 @@ function stream(arg, fn, dontWaitForDeps) {
   var s, deps;
   var endStream = createDependentStream([], function() { return true; });
   if (arguments.length > 1) {
-    deps = arg.filter(function(d) { return d !== undefined; });
-    s = createDependentStream(deps, fn, isUndefined(dontWaitForDeps) ? false : true);
+    deps = arg.filter(notUndef);
+    s = createDependentStream(deps, fn, notUndef(dontWaitForDeps) ? dontWaitForDeps : false);
     s.end = endStream;
     endStream.listeners.push(s);
-    var depEndStreams = deps.filter(function(d) { return !isUndefined(d.end); })
-                            .map(function(d) { return d.end; });
+    var depEndStreams = deps.map(function(d) { return d.end; }).filter(notUndef);
     endsOn(createDependentStream(depEndStreams, function() { return true; }, true), s);
     updateStream(s);
     flushUpdate();
@@ -206,8 +195,6 @@ function stream(arg, fn, dontWaitForDeps) {
     endStream.listeners.push(s);
     if (arguments.length === 1) s(arg);
   }
-  s.end = endStream;
-  endStream.listeners.push(s);
   return s;
 }
 
