@@ -14,7 +14,7 @@
     "lodash": "^3.3.1",
     "mocha": "^2.2.1",
     "ramda": "^0.13.0",
-    "transducers.js": "^0.2.3"
+    "transducers.js": "0.3.x"
   },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha"

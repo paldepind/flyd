@@ -199,16 +199,21 @@ function stream(arg, fn, dontWaitForDeps) {
 }
 
 var transduce = curryN(2, function(xform, source) {
-  xform = xform(new StreamTransformer(stream));
+  xform = xform(new StreamTransformer());
+  // Latest Ramda release still uses old transducer protocol
+  var stepName = xform['@@transducer/step'] ? '@@transducer/step' : 'step';
   return stream([source], function() {
-    return xform.step(undefined, source());
+    return xform[stepName](undefined, source());
   });
 });
 
-function StreamTransformer(res) { }
+function StreamTransformer() { }
 StreamTransformer.prototype.init = function() { };
 StreamTransformer.prototype.result = function() { };
 StreamTransformer.prototype.step = function(s, v) { return v; };
+StreamTransformer.prototype['@@transducer/init'] = function() { };
+StreamTransformer.prototype['@@transducer/result'] = function() { };
+StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };
 
 // Own curry implementation snatched from Ramda
 // Figure out something nicer later on
