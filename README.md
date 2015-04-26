@@ -141,7 +141,7 @@ console.log(squareXPlusY()); // logs 10
 ```
 
 The body of a dependent stream is called with two streams: itself and the last
-changed stream on which it depends.
+changed streams on which it depends.
 
 ```javascript
 // Create two streams of numbers
@@ -244,20 +244,22 @@ and the source of the [modules](#modules).
 
 ## API
 
-### flyd.stream(dependencies, body[, doesNotRequireDeps])
+### flyd.stream(dependencies, body)
 
 Creates a new stream.
 
 __Signature__
 
-  * `dependencies` (array) – The streams on which this stream depends.
-  * `body` (function) – The function body of the stream.
-  * \[`doesNotRequireDeps`\] (boolean) – If `true` the function body can be
-    invoked even before all dependencies have a value.
+`[Stream *] -> (Stream b -> [Stream *] -> b) -> Stream b`
 
-__Returns__
-
-The created stream.
+__Example__
+```javascript
+var n1 = flyd.stream(0);
+var n2 = flyd.stream(0);
+var max = flyd.stream([n1, n2], function(self, changed) {
+  return n1() > n2() ? n1() : n2();
+});
+```
 
 ###flyd.map(fn, s)
 

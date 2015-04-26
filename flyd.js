@@ -38,11 +38,11 @@ var scan = curryN(3, function(f, acc, s) {
 });
 
 var merge = curryN(2, function(s1, s2) {
-  var s = stream([s1, s2], function(n, changed) {
+  var s = immediate(stream([s1, s2], function(n, changed) {
     return changed[0] ? changed[0]()
          : s1.hasVal  ? s1()
                       : s2();
-  }, true);
+  }));
   endsOn(stream([s1.end, s2.end], function(self, changed) {
     return true;
   }), s);
@@ -144,13 +144,22 @@ function createStream() {
   return s;
 }
 
-function createDependentStream(deps, fn, dontWaitForDeps) {
+function createDependentStream(deps, fn) {
   var s = createStream();
   s.fn = fn;
   s.deps = deps;
-  s.depsMet = dontWaitForDeps;
+  s.depsMet = false;
   s.depsChanged = [];
   each(function(dep) { dep.listeners.push(s); }, deps);
+  return s;
+}
+
+function immediate(s) {
+  if (s.depsMet === false) {
+    s.depsMet = true;
+    updateStream(s);
+    flushUpdate();
+  }
   return s;
 }
 
@@ -177,12 +186,12 @@ function endsOn(endS, s) {
   return s;
 }
 
-function stream(arg, fn, dontWaitForDeps) {
+function stream(arg, fn) {
   var s, deps;
   var endStream = createDependentStream([], function() { return true; });
   if (arguments.length > 1) {
     deps = arg.filter(notUndef);
-    s = createDependentStream(deps, fn, notUndef(dontWaitForDeps) ? dontWaitForDeps : false);
+    s = createDependentStream(deps, fn);
     s.end = endStream;
     endStream.listeners.push(s);
     var depEndStreams = deps.map(function(d) { return d.end; }).filter(notUndef);
@@ -337,6 +346,7 @@ return {
   map: curryN(2, function(f, s) { return map(s, f); }),
   curryN: curryN,
   _: _,
+  immediate: immediate,
 };
 
 }));
