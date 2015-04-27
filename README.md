@@ -140,8 +140,8 @@ x(2);
 console.log(squareXPlusY()); // logs 10
 ```
 
-The body of a dependent stream is called with two streams: itself and the last
-changed streams on which it depends.
+The body of a dependent stream is called with two parameters: itself and the
+dependencies that has changed since its last invocation.
 
 ```javascript
 // Create two streams of numbers
@@ -150,8 +150,8 @@ var y = flyd.stream(2);
 var sum = flyd.stream([x, y], function(sum, changed) {
   // The stream can read from itself
   console.log('Last sum was ' + sum());
-  if (changed) { // On the initial call no stream has changed
-    var changedName = (changed === y ? 'y' : 'x');
+  if (changed.length === 0) { // On the initial call no stream has changed
+    var changedName = (changed[0] === y ? 'y' : 'x');
     console.log(changedName + ' changed to ' + changed());
   }
   return x() + y();
@@ -237,6 +237,54 @@ with the accumulated value.
 
 Flyd includes a scan function as part of its core.
 
+### Stream endings
+
+When you create a stream with `flyd.stream` it will have an `ending` property
+which is also a stream. That is an _end stream_:
+
+```javascript
+var s = flyd.stream();
+console.log(flyd.isStream(s.end)); // logs `true`
+```
+
+You can end a stream by pushing `true` into its end stream:
+
+```javascript
+var s = flyd.stream();
+s.end(true); // this ends `s`
+```
+
+When you create a dependent stream it's end stream will initially depend on all
+the ends streams of its dependencies:
+
+```javascript
+var n1 = flyd.stream();
+var n2 = flyd.stream();
+var sum = flyd.stream([n1, n2], function() {
+  return n1() + n2();
+});
+```
+
+`sum.end` now depends on `n1.end` and `n2.end`. This means that whenever one of
+the `sum`s dependencies end `sum` will end as well.
+
+You can change what a streams end stream depends on with `flyd.endsOn`:
+
+```javascript
+var n1 = flyd.stream();
+var n2 = flyd.stream();
+var killer = flyd.stream();
+var sum = flyd.endsOn([n1.end, n2.end, killer], flyd.stream([n1, n2], function() {
+  return n1() + n2();
+}));
+```
+
+Now `sum` will end if either `n1` ends, `n2` ends or if `killer` emits a value.
+
+The fact that a streams ending is itself a stream is a very powerful concept.
+It means that we can use the full expresivenes of Flyd to control when a stream
+ends. For instance, take a look at the implementation of [`takeUntil`](https://github.com/paldepind/flyd-takeuntil).
+
 ### Fin
 
 You're done! To learn more check out the [API](#api), the [examples](#examples)
@@ -244,9 +292,23 @@ and the source of the [modules](#modules).
 
 ## API
 
+### flyd.stream()
+
+Creates a new top level stream.
+
+__Signature__
+
+`a -> Stream a`
+
+__Example__
+```javascript
+var n = stream(1); // Stream with initial value `1`
+var s = stream(); // Stream with no initial value
+```
+
 ### flyd.stream(dependencies, body)
 
-Creates a new stream.
+Creates a new dependent stream.
 
 __Signature__
 
@@ -336,25 +398,6 @@ s1(1)(1)(2)(3)(3)(3)(4);
 results; // [2, 4, 6, 8]
 ```
 
-###flyd.destroy(stream)
-
-If the stream has no dependencies this will detach it from any streams it
-depends on. This makes it available for garbage collection if there are no
-additional references to it.
-
-__Signature__
-
-`Stream -> undefined`
-
-__Example__
-
-```javascript
-var s = flyd.map(function() { /* something */ }, someStream);
-flyd.destroy(s);
-s = undefined;
-// `s` can be garbage collected
-```
-
 ###flyd.curryN(n, fn)
 
 Returns `fn` curried to `n`. Use this function to curry functions exposed by
@@ -418,6 +461,11 @@ __Example__
 names('Bohr');
 names(); // 'Bohr'
 ```
+
+###stream.end
+
+A stream that emits `true` when the stream ends. If `true` is pushed down the
+stream the parent stream ends.
 
 ###stream.map(f)
 
@@ -489,6 +537,7 @@ will be added to this list.
 * [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
 * [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
 * [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
+* [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
 * Time related
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
   * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
@@ -497,7 +546,7 @@ will be added to this list.
 
 ### Atomic updates
 
-Consider code like the following
+Consider the following example:
 
 ```javascript
 var a = flyd.stream(1);
@@ -508,12 +557,29 @@ var d = flyd.stream([b, c], function(self, ch) {
 });
 ```
 
+The dependency graph looks like this.
+
+```
+    a
+  /   \
+ b     c
+  \   /
+    d
+```
+
 Now, when a value flows down `a`, both `b` and `c` will change because they
-depend on `a`. If you merely consider streams as being events you'd expect `d`
+depend on `a`. If you merely consider streams as being event emitters you'd expect `d`
 to be updated twice. Because `a` triggers `b` triggers `d` after which `a` also
-twiggers `c` which again triggers `d`. But Flyd will handle this better.
-Since only one value entered the system `d` will only be updated once with the
-changed values of `b` and `c`. This avoids superfluous updates of your streams.
+twiggers `c` which _again_ triggers `d`.
+
+But Flyd handles such cases optimally. Since only one value entered the
+system `d` will only be updated once with the changed values of `b` and `c`.
+
+Flyd gurantees that when a single value enters the system every stream will
+only be updated once and with all it's dependencies in their most recent state.
+
+This avoids superfluous updates of your streams and intermediate states when
+several stream change at the same time.
 
 ### Environment support
 
