@@ -24,27 +24,27 @@ which new abstractions can be built modularly.
 
 ## Features
 
-* __Simple and powerful__. Less is more! Flyd provides combineable observable
+* __Simple but powerful__. Less is more! Flyd provides combineable observable
   streams as the basic building block. This minimal core is less than 200 SLOC
-  and FRP abstractions can easily be built on top of it.
+  and FRP abstractions can concisely be built on top of it.
 * __A more functional style__. Flyd is more functional and less object oriented.
   Instead of methods it gives you curried functions with arguments in the
   correct order for partial application. This increases the expressive power and
   the extensibility of the library.
 * Supports the transducer protocol. You can for instance transduce streams with
-  [Ramda](http://ramdajs.com/).
+  [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
 * Elegant support for promises.
-* [Atomic updates](#atomic-updates)
-* Easy to extend with custom [modules](#modules)
+* [Atomic updates](#atomic-updates).
+* Easy to extend with custom [modules](#modules).
 
 ## Examples
 
-* [Sum](http://paldepind.github.io/flyd/examples/sum/) - very simple example
-* [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/) - a remake
+* [Sum](http://paldepind.github.io/flyd/examples/sum/) - A very simple example
+* [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/) - A remake
   of the multiple clicks example from "The introduction to Reactive
-  Programming you've been missing". Compare it to the not quite as elegant [Rx
+  Programming you've been missing". Compare it to the [RxJs
   implementation](http://jsfiddle.net/staltz/4gGgs/27/).
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
 * [Ramda transducer](https://github.com/paldepind/flyd/tree/master/examples/ramda-transducer)
