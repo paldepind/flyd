@@ -532,6 +532,22 @@ describe('stream', function() {
       s1(1)(1)(2)(3)(3)(3)(4);
       assert.deepEqual(result, [2, 4, 6, 8]);
     });
+    it('handles reduced stream and ends', function() {
+      var result = [];
+      var s1 = stream();
+      var tx = t.compose(
+        t.map(function(x) { return x * 2; }),
+        t.take(3)
+      );
+      var s2 = flyd.transduce(tx, s1);
+      stream([s2], function() { result.push(s2()); });
+      s1(1)(2);
+      assert.notEqual(true, s2.end());
+      s1(3);
+      assert.equal(true, s2.end());
+      s1(4);
+      assert.deepEqual(result, [2, 4, 6]);
+    });
   });
   describe('Ramda transducer support', function() {
     it('creates new stream with map applied', function() {
