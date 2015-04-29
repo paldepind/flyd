@@ -1,9 +1,9 @@
-[![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
-
 # Flyd
 
-[![Join the chat at https://gitter.im/paldepind/flyd](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/paldepind/flyd?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 The modular, KISS, functional reactive programming library for JavaScript.
+
+[![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
+[![Join the chat at https://gitter.im/paldepind/flyd](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/paldepind/flyd?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Table of contents
 
