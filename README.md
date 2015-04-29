@@ -638,6 +638,5 @@ several stream change at the same time.
 
 ### Environment support
 
-Flyd should work in all JavaScript environments. Some of its modules may however
-assume ECMAScript 4.
-
+Flyd works in all ECMAScript 5 environments. It works in older environments
+with polyfills for `Array.prototype.filter` and `Array.prototype.map`.
