@@ -26,7 +26,7 @@ var toUpdate = [];
 var inStream;
 
 function map(s, f) {
-  return stream([s], function() { return f(s()); });
+  return stream([s], function(self) { self(f(s())); });
 }
 
 var scan = curryN(3, function(f, acc, s) {

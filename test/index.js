@@ -325,6 +325,16 @@ describe('stream', function() {
       x(1);
       assert.equal(doubleX(), 2);
     });
+    it('handles function returning undefined', function() {
+      var x = stream(1);
+      var maybeDoubleX = flyd.map(function(x) {
+        return x > 3 ? 2*x : undefined;
+      }, x);
+      assert.equal(undefined, maybeDoubleX());
+      assert.equal(true, maybeDoubleX.hasVal);
+      x(4);
+      assert.equal(8, maybeDoubleX());
+    });
     it('is curried', function() {
       var x = stream(3);
       var doubler = flyd.map(function(x) { return 2*x; });
