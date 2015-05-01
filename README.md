@@ -55,8 +55,8 @@ __Other features__
 * [Sum](http://paldepind.github.io/flyd/examples/sum/) - A very simple example
 * [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/) - A remake
   of the multiple clicks example from "The introduction to Reactive
-  Programming you've been missing". Compare it to the [RxJs
-  implementation](http://jsfiddle.net/staltz/4gGgs/27/).
+  Programming you've been missing". Compare it to this [RxJs
+  implementation](http://jsfiddle.net/ksj51q5k/).
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
 * [Ramda transducer](https://github.com/paldepind/flyd/tree/master/examples/ramda-transducer)
 
