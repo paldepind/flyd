@@ -26,20 +26,29 @@ which new abstractions can be built modularly.
 
 ## Features
 
+__Main features__
+
 * __Simple but powerful__. Less is more! Flyd provides combineable observable
   streams as the basic building block. This minimal core is less than 200 SLOC
-  and FRP abstractions can concisely be built on top of it.
-* __A more functional style__. Flyd is more functional and less object oriented.
-  Instead of methods it gives you curried functions with arguments in the
-  correct order for partial application. This increases the expressive power and
-  the extensibility of the library.
+  which makes the library transparent – end users can realistically get a full
+  understanding of how the library works.
+* __More functional in style__. Flyd is more functional than existing FRP
+  libraries. Instead of methods it gives you curried functions with arguments
+  in the order suitable for partial application. This gives more expressive
+  power and modularity.
+* __Modularity__. The core of the Flyd is powerful and documented. This makes
+  it easy for users of the library to create new FRP abstractions if existing ones
+  do not exist. This in turn makes it viable to capture more patterns than
+  otherwise because they can exist as seperate modules. [List of existing modules](#modules).
+
+__Other features__
+
 * Supports the transducer protocol. You can for instance transduce streams with
   [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
-* Elegant support for promises.
+* [Elegant support for promises](#using-promises-for-asynchronous-operations).
 * [Atomic updates](#atomic-updates).
-* Easy to extend with custom [modules](#modules).
 
 ## Examples
 
@@ -596,6 +605,7 @@ will be added to this list.
 * [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
 * [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
 * Time related
+  * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
   * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
 
