@@ -28,7 +28,7 @@ which new abstractions can be built modularly.
 
 __Main features__
 
-* __Simple but powerful__. Less is more! Flyd provides combineable observable
+* __Simple but powerful__. Less is more! Flyd provides combinable observable
   streams as the basic building block. This minimal core is less than 200 SLOC
   which makes the library transparent – end users can realistically get a full
   understanding of how the library works.
@@ -39,7 +39,7 @@ __Main features__
 * __Modularity__. The core of the Flyd is powerful and documented. This makes
   it easy for users of the library to create new FRP abstractions if existing ones
   do not exist. This in turn makes it viable to capture more patterns than
-  otherwise because they can exist as seperate modules. [List of existing modules](#modules).
+  otherwise because they can exist as separate modules. [List of existing modules](#modules).
 
 __Other features__
 
@@ -195,14 +195,14 @@ flyd.stream([responses], function() {
 ```
 
 Note that the stream that logs the responses from the server should only be called
-after an actual response has been recieved (otherwise `responses()` whould return
-`undefined`). Fortunately a streams body will not be called before all of its declared
-streams has recieved a value (this behaviour can be cirumvented with
+after an actual response has been received (otherwise `responses()` would return
+`undefined`). Fortunately a stream's body will not be called before all of its declared
+streams has received a value (this behaviour can be circumvented with
 [flyd.immediate](#flydimmediatestream)).
 
 ### Using promises for asynchronous operations
 
-Flyd has inbuilt support for promises. Similairly to how a promise can never be
+Flyd has inbuilt support for promises. Similarly to how a promise can never be
 resolved with a promise, a promise can never flow down a stream. Instead the
 fulfilled value of the promise will be sent down the stream.
 
@@ -303,7 +303,7 @@ var sum = flyd.endsOn([n1.end, n2.end, killer], flyd.stream([n1, n2], function()
 Now `sum` will end if either `n1` ends, `n2` ends or if `killer` emits a value.
 
 The fact that a streams ending is itself a stream is a very powerful concept.
-It means that we can use the full expresivenes of Flyd to control when a stream
+It means that we can use the full expressiveness of Flyd to control when a stream
 ends. For an example, take a look at the implementation of
 [`takeUntil`](https://github.com/paldepind/flyd-takeuntil).
 
@@ -597,7 +597,7 @@ If you're created a module for Flyd open an issue or send a pull request and it
 will be added to this list.
 
 * [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
-* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ paramters over _n_ streams.
+* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ parameters over _n_ streams.
 * [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
 * [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keep values from one stream only when another stream is true.
 * [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
@@ -606,8 +606,8 @@ will be added to this list.
 * [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
 * Time related
   * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
-  * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
-  * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
+  * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
+  * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
 
 ## Misc
 
@@ -637,16 +637,16 @@ The dependency graph looks like this.
 Now, when a value flows down `a`, both `b` and `c` will change because they
 depend on `a`. If you merely consider streams as being event emitters you'd expect `d`
 to be updated twice. Because `a` triggers `b` triggers `d` after which `a` also
-twiggers `c` which _again_ triggers `d`.
+triggers `c` which _again_ triggers `d`.
 
 But Flyd handles such cases optimally. Since only one value entered the
 system `d` will only be updated once with the changed values of `b` and `c`.
 
-Flyd gurantees that when a single value enters the system every stream will
-only be updated once and with all it's dependencies in their most recent state.
+Flyd guarantees that when a single value enters the system every stream will
+only be updated once, along with their dependencies in their most recent state.
 
 This avoids superfluous updates of your streams and intermediate states when
-several stream change at the same time.
+several streams change at the same time.
 
 ### Environment support
 
