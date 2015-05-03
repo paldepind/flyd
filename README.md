@@ -173,7 +173,7 @@ var sum = flyd.stream([x, y], function(sum, changed) {
   changed.map(function(s) {
     var changedName = (s === y ? 'y' : 'x');
     console.log(changedName + ' changed to ' + s());
-  }
+  });
   return x() + y();
 });
 ```
@@ -611,6 +611,18 @@ will be added to this list.
 
 ## Misc
 
+
+### The name
+
+The name Flyd was chosen since the author of Flyd is danish and Flyd is a
+danish word meaning float, afloat or flow. It is furthermore short and not too
+bad for searching.
+
+For most native English speakers "flyd" is impossible to pronounce like a
+dane would do it. The "d" is soft like "th" in "the". The "y" is a vocal sound
+unknown to the English language. [If you're curious Google Translates listening feature
+provides an accurate pronounciation.](https://translate.google.com/#da/en/flyd).
+
 ### Atomic updates
 
 Consider the following example:
@@ -647,6 +659,10 @@ only be updated once, along with their dependencies in their most recent state.
 
 This avoids superfluous updates of your streams and intermediate states when
 several streams change at the same time.
+
+Flyd implements atomic updates with a _O(n)_ topological sort where _n_
+is number of streams that directly or indirectly depends on the updated
+stream. 
 
 ### Environment support
 
