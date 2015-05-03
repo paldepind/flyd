@@ -9,7 +9,7 @@ The modular, KISS, functional reactive programming library for JavaScript.
 
 * [Introduction](#introduction)
 * [Features](#features)
-* [Examples](#example)
+* [Examples](#examples)
 * [Tutorial](#tutorial)
 * [API](#api)
 * [Modules](#modules)
