@@ -599,7 +599,7 @@ will be added to this list.
 * [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
 * [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ parameters over _n_ streams.
 * [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
-* [flyd-switchlatest](https://github.com/paldepind/flyd-switchlatest) – Maps a function that return a streams over a stream. The result stream reflects changes from the last returned stream only.
+* [flyd-switchlatest](https://github.com/paldepind/flyd-switchlatest) – Flattens a stream of streams. The result stream reflects changes from the last stream only.
 * [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keep values from one stream only when another stream is true.
 * [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
 * [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
