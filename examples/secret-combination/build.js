@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setMsg(complete && inTime  ? 'Combination unlocked'
          : complete && !inTime ? "You're not fast enough, try again!"
                                : corrects);
-  }, correctClicks, clicksInLast5s);
+  }, correctClicks, sampleOn(clicks, clicksInLast5s));
 
   flyd.map(function(c) { console.log('cor', c); }, correctClicks);
   flyd.map(function(c) { console.log('lst', c); }, clicksInLast5s);

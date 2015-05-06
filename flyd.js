@@ -14,35 +14,22 @@ function isFunction(obj) {
   return !!(obj && obj.constructor && obj.call && obj.apply);
 }
 
-function isUndefined(v) {
-  return v === undefined;
+function notUndef(v) {
+  return v !== undefined;
 }
 
-// Globals
-var queue = [];
-var isFlushingQueue = false;
-
-function flushQueue() {
-  if (isFlushingQueue) return;
-  isFlushingQueue = true;
-  for (var s; s = queue.shift();) {
-    s.inQueue = false;
-    s.update();
-  }
-  isFlushingQueue = false;
+function each(fn, list) {
+  for (var i = 0; i < list.length; ++i) fn(list[i]);
 }
 
-function removeListener(listeners, s) {
-  var idx = listeners.indexOf(s);
-  listeners[idx] = listeners[listeners.length - 1];
-  listeners.length--;
-}
+var toUpdate = [];
+var inStream;
 
 function map(s, f) {
-  return stream([s], function() { return f(s()); });
+  return stream([s], function(self) { self(f(s())); });
 }
 
-var reduce = curryN(3, function(f, acc, s) {
+var scan = curryN(3, function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
   });
@@ -51,23 +38,20 @@ var reduce = curryN(3, function(f, acc, s) {
 });
 
 var merge = curryN(2, function(s1, s2) {
-  return stream([s1, s2], function(n, changed) {
-    var v1, v2;
-    if (changed) return changed();
-    else {
-     v1 = s1(); v2 = s2();
-     return v1 === undefined ? v2 : v1;
-    }
-  }, true);
+  var s = immediate(stream([s1, s2], function(n, changed) {
+    return changed[0] ? changed[0]()
+         : s1.hasVal  ? s1()
+                      : s2();
+  }));
+  endsOn(stream([s1.end, s2.end], function(self, changed) {
+    return true;
+  }), s);
+  return s;
 });
 
 function ap(s2) {
   var s1 = this;
   return stream([s1, s2], function() { return s1()(s2()); });
-}
-
-function of(v) {
-  return stream(v);
 }
 
 function initialDepsNotMet(stream) {
@@ -79,44 +63,68 @@ function initialDepsNotMet(stream) {
   return !stream.depsMet;
 }
 
-function updateStream() {
-  if (initialDepsNotMet(this)) return;
-  var returnVal = this.fn(this, this.depChanged);
-  if (returnVal !== undefined) this(returnVal);
+function updateStream(s) {
+  if (initialDepsNotMet(s) || (s.end && s.end())) return;
+  inStream = s;
+  var returnVal = s.fn(s, s.depsChanged);
+  if (notUndef(returnVal)) {
+    s(returnVal);
+  }
+  inStream = undefined;
+  s.depsChanged = [];
 }
 
-function destroy(stream) {
-  if (stream.listeners.length !== 0) {
-    throw new Error('Trying to destroy stream with listeners attached');
+function findDeps(order, s) {
+  if (!s.queued) {
+    s.queued = true;
+    each(findDeps.bind(null, order), s.listeners);
+    order.push(s);
   }
-  stream.deps.forEach(function(dep) { removeListener(dep.listeners, stream); });
+}
+
+function updateDeps(s) {
+  var i, order = [];
+  each(function(list) {
+    list.end === s ? endStream(list)
+                   : (list.depsChanged.push(s), findDeps(order, list));
+  }, s.listeners);
+  for (i = order.length - 1; i >= 0; --i) {
+    if (order[i].depsChanged.length > 0) {
+      updateStream(order[i]);
+    }
+    order[i].queued = false;
+  }
+}
+
+function flushUpdate() {
+  while (toUpdate.length > 0) updateDeps(toUpdate.shift());
 }
 
 function isStream(stream) {
-  return isFunction(stream) && 'depsMet' in stream;
+  return isFunction(stream) && 'hasVal' in stream;
 }
 
 function streamToString() {
   return 'stream(' + this.val + ')';
 }
 
-function stream(arg, fn, waitForDeps) {
+function createStream() {
   function s(n) {
     if (arguments.length > 0) {
-      if (!isUndefined(n) && n !== null && isFunction(n.then)) {
+      if (n && isFunction(n.then)) {
         n.then(s);
         return;
       }
       s.val = n;
       s.hasVal = true;
-      s.listeners.forEach(function(st) {
-        st.depChanged = s;
-        if (!st.inQueue) {
-          st.inQueue = true;
-          queue.push(st);
-        }
-      });
-      flushQueue();
+      if (inStream !== s) {
+        toUpdate.push(s);
+        if (!inStream) flushUpdate();
+      } else {
+        each(function(list) {
+          list.end === s ? endStream(list) : list.depsChanged.push(s);
+        }, s.listeners);
+      }
       return s;
     } else {
       return s.val;
@@ -125,43 +133,102 @@ function stream(arg, fn, waitForDeps) {
   s.hasVal = false;
   s.val = undefined;
   s.listeners = [];
-  s.deps = [];
-  s.depsMet = isUndefined(waitForDeps) ? false : true;
-  s.depChanged = undefined;
-  s.inQueue = true;
-  s.fn = fn;
+  s.queued = false;
+  s.end = undefined;
 
   s.map = map.bind(null, s);
   s.ap = ap;
-  s.of = of;
+  s.of = stream;
   s.toString = streamToString;
 
+  return s;
+}
+
+function createDependentStream(deps, fn) {
+  var s = createStream();
+  s.fn = fn;
+  s.deps = deps;
+  s.depsMet = false;
+  s.depsChanged = [];
+  each(function(dep) { dep.listeners.push(s); }, deps);
+  return s;
+}
+
+function immediate(s) {
+  if (s.depsMet === false) {
+    s.depsMet = true;
+    updateStream(s);
+    flushUpdate();
+  }
+  return s;
+}
+
+function removeListener(s, listeners) {
+  var idx = listeners.indexOf(s);
+  listeners[idx] = listeners[listeners.length - 1];
+  listeners.length--;
+}
+
+function detachDeps(s) {
+  each(function(dep) { removeListener(s, dep.listeners); }, s.deps);
+  s.deps.length = 0;
+}
+
+function endStream(s) {
+  if (s.deps) detachDeps(s);
+  if (s.end) detachDeps(s.end);
+}
+
+function endsOn(endS, s) {
+  detachDeps(s.end);
+  endS.listeners.push(s.end);
+  s.end.deps.push(endS);
+  return s;
+}
+
+function stream(arg, fn) {
+  var s, deps;
+  var endStream = createDependentStream([], function() { return true; });
   if (arguments.length > 1) {
-    s.update = updateStream;
-    s.deps = arg;
-    arg.forEach(function(dep) {
-      dep.listeners.push(s);
-    });
-    queue.push(s);
-    flushQueue();
-  } else if (arguments.length === 1) {
-    s.val = arg;
-    s.hasVal = true;
+    deps = arg.filter(notUndef);
+    s = createDependentStream(deps, fn);
+    s.end = endStream;
+    endStream.listeners.push(s);
+    var depEndStreams = deps.map(function(d) { return d.end; }).filter(notUndef);
+    endsOn(createDependentStream(depEndStreams, function() { return true; }, true), s);
+    updateStream(s);
+    flushUpdate();
+  } else {
+    s = createStream();
+    s.end = endStream;
+    endStream.listeners.push(s);
+    if (arguments.length === 1) s(arg);
   }
   return s;
 }
 
 var transduce = curryN(2, function(xform, source) {
-  xform = xform(new StreamTransformer(stream));
-  return stream([source], function() {
-    return xform.step(undefined, source());
+  xform = xform(new StreamTransformer());
+  // Latest Ramda release still uses old transducer protocol
+  var stepName = xform['@@transducer/step'] ? '@@transducer/step' : 'step';
+  return stream([source], function(self) {
+    var res = xform[stepName](undefined, source());
+    if (res && res['@@transducer/reduced'] === true) {
+      self.end(true);
+      return res['@@transducer/value'];
+    } else {
+      return res;
+    }
   });
 });
 
-function StreamTransformer(res) { }
+function StreamTransformer() { }
 StreamTransformer.prototype.init = function() { };
 StreamTransformer.prototype.result = function() { };
 StreamTransformer.prototype.step = function(s, v) { return v; };
+StreamTransformer.prototype['@@transducer/init'] = function() { };
+StreamTransformer.prototype['@@transducer/result'] = function() { };
+StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };
 
 // Own curry implementation snatched from Ramda
 // Figure out something nicer later on
@@ -279,11 +346,13 @@ return {
   isStream: isStream,
   transduce: transduce,
   merge: merge,
-  reduce: reduce,
-  destroy: destroy,
+  reduce: scan, // Legacy
+  scan: scan,
+  endsOn: endsOn,
   map: curryN(2, function(f, s) { return map(s, f); }),
   curryN: curryN,
   _: _,
+  immediate: immediate,
 };
 
 }));

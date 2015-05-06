@@ -22,14 +22,6 @@ describe('stream', function() {
     var s = stream();
     assert.equal(s, s(23));
   });
-  it('can set result by calling callback', function() {
-    var x = stream(3);
-    var y = stream(4);
-    var sum = stream([x, y], function(s) {
-      s(x() + y());
-    });
-    assert.equal(sum(), x() + y());
-  });
   it('can set result by returning value', function() {
     var x = stream(3);
     var y = stream(4);
@@ -42,7 +34,7 @@ describe('stream', function() {
     var x = stream(3);
     var y = stream(4);
     var sum = stream([x, y], function(s) {
-      s(x() + y());
+      return x() + y();
     });
     assert.equal(sum(), x() + y()); // 7
     x(12);
@@ -50,19 +42,22 @@ describe('stream', function() {
     y(8);
     assert.equal(sum(), x() + y()); // 20
   });
-  it('can specify dependencies manually', function() {
+  it('can set result by calling callback', function() {
     var x = stream(3);
     var y = stream(4);
-    var called = 0;
-    var sum = stream([x], function(s) {
-      called++;
-      return x() + y.val;
+    var times = 0;
+    var sum = stream([x, y], function(s) {
+      s(x() + y());
     });
-    x(1)(2)(3);
-    y(1)(2)(3);
-    x(4)(5);
-    assert.equal(called, 6);
-    assert.equal(sum(), 8);
+    stream([sum], function() {
+      times++;
+    });
+    assert.equal(sum(), x() + y()); // 7
+    x(12);
+    assert.equal(sum(), x() + y()); // 16
+    y(8);
+    assert.equal(sum(), x() + y()); // 20
+    assert.equal(times, 3);
   });
   it('is not called until dependencies have value', function() {
     var x = stream();
@@ -95,34 +90,6 @@ describe('stream', function() {
     assert.equal(sumPlusDoubleSum(), sum() * 3);
     assert.equal(sumPlusDoubleSum(), (2 + 3) * 3);
   });
-  it('can destroy stream', function() {
-    var x = stream(3);
-    var y = stream(2);
-    var sum = stream([y, x], function() {
-      return y() * x();
-    });
-    assert.equal(y.listeners.length, 1);
-    assert.equal(x.listeners.length, 1);
-    flyd.destroy(sum);
-    assert.equal(y.listeners.length, 0);
-    assert.equal(x.listeners.length, 0);
-  });
-  it('can not destroy stream with listeners', function() {
-    var x = stream(3), thrown;
-    var x2 = stream([x], function() {
-      return x() * 2;
-    });
-    var x4 = stream([x2], function() {
-      return x2() * 2;
-    });
-    assert.equal(x4(), 12);
-    try {
-      x2.destroy();
-    } catch(e) {
-      thrown = true;
-    }
-    assert(thrown);
-  });
   it('can get its own value', function() {
     var num = stream(0);
     var sum = stream([num], function(sum) {
@@ -131,13 +98,13 @@ describe('stream', function() {
     num(2)(3)(8)(7);
     assert.equal(sum(), 20);
   });
-  it('is called with changed stream', function() {
+  it('is called with changed streams', function() {
     var s1 = stream(0);
     var s2 = stream(0);
     var result = [];
     var dependend = stream([s1, s2], function(d, changed) {
-      if (changed === s1) result.push(1);
-      if (changed === s2) result.push(2);
+      if (changed[0] === s1) result.push(1);
+      if (changed[0] === s2) result.push(2);
     });
     s1(1);
     s2(1);
@@ -165,11 +132,11 @@ describe('stream', function() {
     var order = [];
     var x = stream(4);
     var y = stream(3);
-    var doubleX = stream([x], function() {
+    var doubleX = stream([x], function dx() {
       if (x() === 3) order.push(2);
       return x() * 2;
     });
-    var setAndY = stream([y], function() {
+    var setAndY = stream([y], function sy() {
       x(3);
       order.push(1);
       return y();
@@ -220,6 +187,105 @@ describe('stream', function() {
     assert.deepEqual('' + ss, 'stream(hello)');
     assert.deepEqual('' + os, 'stream([object Object])');
   });
+  it('can filter values', function() {
+    var result = [];
+    var n = stream(0);
+    var lrg5 = stream([n], function() {
+      if (n() > 5) return n();
+    });
+    flyd.map(function(v) { result.push(v); }, lrg5);
+    n(4)(6)(2)(8)(3)(4);
+    assert.deepEqual(result, [6, 8]);
+  });
+  describe('ending a stream', function() {
+    it('works for streams without dependencies', function() {
+      var s = stream(1);
+      s.end(true);
+      assert(s.end());
+      assert(s.end());
+    });
+    it('detaches it from dependencies', function() {
+      var x = stream(3);
+      var y = stream(2);
+      var sum = stream([y, x], function() {
+        return y() * x();
+      });
+      assert.equal(y.listeners.length, 1);
+      assert.equal(x.listeners.length, 1);
+      sum.end(true);
+      assert.equal(y.listeners.length, 0);
+      assert.equal(x.listeners.length, 0);
+      assert(sum.end());
+    });
+    it('ends its dependents', function() {
+      var x = stream(3);
+      var y = stream([x], function() {
+        return 2 * x();
+      });
+      var z = stream([y], function() {
+        return 2 * y();
+      });
+      assert.equal(z(), x() * 2 * 2);
+      x.end(true);
+      assert(x.end());
+      assert.equal(x.listeners.length, 0);
+      assert(y.end());
+      assert.equal(y.listeners.length, 0);
+      assert(z.end());
+    });
+    it('updates children if stream ends after recieving value', function() {
+      var x = stream(3);
+      var whenX2 = stream([x], function() { if (x() === 0) return true; });
+      var y = stream([x], function(self) {
+        return x();
+      });
+      flyd.endsOn(whenX2, y);
+      var z = stream([y], function() { return y(); });
+      assert.equal(y(), z());
+      x(2);
+      assert.equal(y(), z());
+      assert(!y.end());
+      assert(!z.end());
+      x(0);
+      assert.equal(x.listeners.length, 1);
+      assert(y.end());
+      assert.equal(y.listeners.length, 0);
+      assert(z.end());
+      assert.equal(2, y());
+      assert.equal(2, z());
+    });
+    it('works if end stream has initial value', function() {
+      var killer = stream(true);
+      var x = stream(1);
+      var y = flyd.endsOn(killer, stream([x], function(self) {
+        return 2 * x();
+      }));
+      x(2);
+      assert.equal(undefined, y.end());
+      assert.equal(2 * x(), y());
+    });
+    it('end stream does not have value even if base stream has initial value', function() {
+      var killer = stream(true);
+      var x = stream(1);
+      var y = flyd.endsOn(killer, stream([x], function(self) {
+        return 2 * x();
+      }));
+      assert.equal(false, y.end.hasVal);
+    });
+    it('ends stream can be changed without affecting listeners', function() {
+      var killer1 = stream();
+      var killer2 = stream();
+      var ended = false;
+      var x = stream(1);
+      var y = flyd.endsOn(killer1, stream([x], function(self) {
+        return 2 * x();
+      }));
+      flyd.map(function() { ended = true; }, y.end);
+      flyd.endsOn(killer2, y);
+      killer2(true);
+      assert(ended);
+    });
+  });
   describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {
       var s = stream();
@@ -259,6 +325,16 @@ describe('stream', function() {
       x(1);
       assert.equal(doubleX(), 2);
     });
+    it('handles function returning undefined', function() {
+      var x = stream(1);
+      var maybeDoubleX = flyd.map(function(x) {
+        return x > 3 ? 2*x : undefined;
+      }, x);
+      assert.equal(undefined, maybeDoubleX());
+      assert.equal(true, maybeDoubleX.hasVal);
+      x(4);
+      assert.equal(8, maybeDoubleX());
+    });
     it('is curried', function() {
       var x = stream(3);
       var doubler = flyd.map(function(x) { return 2*x; });
@@ -289,7 +365,6 @@ describe('stream', function() {
     it('has initial acc as value when stream is undefined', function() {
       var numbers = stream();
       var sum = flyd.reduce(function(sum, n) {
-        console.log(sum, n);
         return sum + n;
       }, 0, numbers);
       assert.equal(sum(), 0);
@@ -332,6 +407,20 @@ describe('stream', function() {
       s1and2 = mergeWithS1(s2);
       flyd.map(function(v) { result.push(v); }, s1and2);
       s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
+      assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
+    });
+    it('ends only when both merged streams have ended', function() {
+      var result = [];
+      var s1 = stream();
+      var s2 = stream();
+      s1and2 = flyd.merge(s1, s2);
+      flyd.map(function(v) { result.push(v); }, s1and2);
+      s1(12)(2); s2(4)(44); s1(1);
+      s1.end(true);
+      assert(!s1and2.end());
+      s2(12)(2);
+      s2.end(true);
+      assert(s1and2.end());
       assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
     });
   });
@@ -453,6 +542,22 @@ describe('stream', function() {
       s1(1)(1)(2)(3)(3)(3)(4);
       assert.deepEqual(result, [2, 4, 6, 8]);
     });
+    it('handles reduced stream and ends', function() {
+      var result = [];
+      var s1 = stream();
+      var tx = t.compose(
+        t.map(function(x) { return x * 2; }),
+        t.take(3)
+      );
+      var s2 = flyd.transduce(tx, s1);
+      stream([s2], function() { result.push(s2()); });
+      s1(1)(2);
+      assert.notEqual(true, s2.end());
+      s1(3);
+      assert.equal(true, s2.end());
+      s1(4);
+      assert.deepEqual(result, [2, 4, 6]);
+    });
   });
   describe('Ramda transducer support', function() {
     it('creates new stream with map applied', function() {
@@ -518,6 +623,51 @@ describe('stream', function() {
       flyd.map(function(n) { result.push(n); }, s1x4);
       s1(2)(3)(4);
       assert.deepEqual(result, [4, 8, 12, 16]);
+    });
+    it('handles complex dependency graph', function() {
+      var result = [];
+      var a = flyd.stream();
+      var b = flyd.stream([a], function bs() { return a() + 1; });
+      var c = flyd.stream([a], function cs() { return a() + 2; });
+      var d = flyd.stream([c], function ds() { return c() + 3; });
+      var e = flyd.stream([b, d], function res(){
+        return b() + d();
+      });
+      flyd.map(function(v) { result.push(v); }, e);
+      a(1)(5)(11);
+      assert.deepEqual(result, [8, 16, 28]);
+    });
+    it('handles another complex dependency graph', function() {
+      var result = [];
+      var a = flyd.stream();
+      var b = flyd.stream([a], function() { return a() + 1; });
+      var c = flyd.stream([a], function() { return a() + 2; });
+      var d = flyd.stream([a], function() { return a() + 4; });
+      var e = flyd.stream([b, c, d], function() { return b() + c() + d(); });
+      flyd.map(function(v) { result.push(v); }, e);
+      a(1)(2)(3);
+      assert.deepEqual(result, [10, 13, 16]);
+    });
+    it('is called with all changed dependencies', function() {
+      var result = [];
+      var a = flyd.stream(0);
+      var b = flyd.stream([a], function() { return a() + 1; });
+      var c = flyd.stream([a], function() { return a() + 2; });
+
+      var d = flyd.stream(0);
+      var e = flyd.stream([d], function() { return d() + 4; });
+      var f = flyd.stream([d], function() { return d() + 5; });
+      var g = flyd.stream([d], function() { return d() + 6; });
+
+      var h = flyd.stream([a, b, c, d, e, f, g], function(self, changed) {
+        var vals = changed.map(function(s) { return s(); });
+        result.push(vals);
+        return 1;
+      });
+      a(1); d(2); a(3);
+      assert.deepEqual(result, [
+        [], [1, 3, 2], [2, 8, 7, 6], [3, 5, 4]
+      ]);
     });
   });
 });

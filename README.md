@@ -1,13 +1,15 @@
-[![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
-
 # Flyd
+
 The modular, KISS, functional reactive programming library for JavaScript.
+
+[![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
+[![Join the chat at https://gitter.im/paldepind/flyd](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/paldepind/flyd?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Table of contents
 
 * [Introduction](#introduction)
 * [Features](#features)
-* [Examples](#example)
+* [Examples](#examples)
 * [Tutorial](#tutorial)
 * [API](#api)
 * [Modules](#modules)
@@ -24,28 +26,37 @@ which new abstractions can be built modularly.
 
 ## Features
 
-* __Simple and powerful__. Less is more! Flyd provides combineable observable
+__Main features__
+
+* __Simple but powerful__. Less is more! Flyd provides combinable observable
   streams as the basic building block. This minimal core is less than 200 SLOC
-  and FRP abstractions can easily be built on top of it.
-* __A more functional style__. Flyd is more functional and less object oriented.
-  Instead of methods it gives you curried functions with arguments in the
-  correct order for partial application. This increases the expressive power and
-  the extensibility of the library.
+  which makes the library transparent – end users can realistically get a full
+  understanding of how the library works.
+* __More functional in style__. Flyd is more functional than existing FRP
+  libraries. Instead of methods it gives you curried functions with arguments
+  in the order suitable for partial application. This gives more expressive
+  power and modularity.
+* __Modularity__. The core of the Flyd is powerful and documented. This makes
+  it easy for users of the library to create new FRP abstractions if existing ones
+  do not exist. This in turn makes it viable to capture more patterns than
+  otherwise because they can exist as separate modules. [List of existing modules](#modules).
+
+__Other features__
+
 * Supports the transducer protocol. You can for instance transduce streams with
-  ([Ramda](http://ramdajs.com/).
+  [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
 * Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
   applicative specification.
-* Elegant support for promises.
-* [Atomic updates](#atomic-updates)
-* Easy to extend with custom [modules](#modules)
+* [Elegant support for promises](#using-promises-for-asynchronous-operations).
+* [Atomic updates](#atomic-updates).
 
 ## Examples
 
-* [Sum](http://paldepind.github.io/flyd/examples/sum/) - very simple example
-* [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/) - a remake
+* [Sum](http://paldepind.github.io/flyd/examples/sum/) - A very simple example
+* [Multiple clicks](http://paldepind.github.io/flyd/examples/multiple-clicks/) - A remake
   of the multiple clicks example from "The introduction to Reactive
-  Programming you've been missing". Compare it to the not quite as elegant [Rx
-  implementation](http://jsfiddle.net/staltz/4gGgs/27/).
+  Programming you've been missing". Compare it to this [RxJs
+  implementation](http://jsfiddle.net/ksj51q5k/).
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
 * [Ramda transducer](https://github.com/paldepind/flyd/tree/master/examples/ramda-transducer)
 
@@ -53,20 +64,27 @@ For other examples check the source code of the [modules](#modules).
 
 ## Tutorial
 
-This is not general tutorial to functional reactive programming. For that take
+This is not general introduction to functional reactive programming. For that take
 a look at [The introduction to Reactive Programming you've been
 missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) and/or [this Elm
 tutorial](http://elm-lang.org/learn/Using-Signals.elm) if you are comfortable
 with reading Haskell-like code.
 
-This tutorial will introduce you to the core of Flyd and show how to use it to
-build FRP abstractions.
+This is not a demonstration of how you would write code with Flyd on a day to
+day basis. For that take a look at the [examples](#examples).
+
+This tutorial will however introduce you to the minimal but powerful core that
+Flyd provides and show you how it can be used to build FRP abstractions.
 
 ### Creating streams
 
 Flyd gives you streams as the building block for creating reactive dataflows.
-The function `stream` creates a representation of a value that changes over time.
-A stream is a function. At first sight it works a bit like a getter-setter:
+They serve the same purpose as what other FRP libraries call Signals, Observables,
+Properties and EventEmitters.
+
+The function `flyd.stream` creates a representation of a value that changes
+over time. The resulting stream is a function. At first sight it works a bit
+like a getter-setter:
 
 ```javascript
 // Create a stream with initial value 5.
@@ -99,13 +117,13 @@ down the `messages` stream.
 
 Streams can depend on other streams. Instead of calling `stream` with a value
 as in the above examples we can pass it a list of dependencies and a function.
-The function should produce a value based on its dependencies. This new value
-results in a new stream.
+The function should produce a value based on its dependencies. This new
+returned value results in a new stream.
 
 Flyd automatically updates the stream whenever a dependency changes.  This
 means that the `sum` function below will be called whenever `x` and `y`
 changes.  You can think of dependent stream as streams that automatically
-listens/subscribes to their dependencies.
+listens to or subscribes to their dependencies.
 
 ```javascript
 // Create two streams of numbers
@@ -140,8 +158,9 @@ x(2);
 console.log(squareXPlusY()); // logs 10
 ```
 
-The body of a dependent stream is called with two streams: itself and the last
-changed stream on which it depends.
+The body of a dependent stream is called with two parameters: itself and a list
+of the dependencies that has changed since its last invocation (due to [atomic
+updates](#atomic-updates) several streams could have changed).
 
 ```javascript
 // Create two streams of numbers
@@ -150,10 +169,11 @@ var y = flyd.stream(2);
 var sum = flyd.stream([x, y], function(sum, changed) {
   // The stream can read from itself
   console.log('Last sum was ' + sum());
-  if (changed) { // On the initial call no stream has changed
-    var changedName = (changed === y ? 'y' : 'x');
-    console.log(changedName + ' changed to ' + changed());
-  }
+  // On the initial call no streams has changed and `changed` will be []
+  changed.map(function(s) {
+    var changedName = (s === y ? 'y' : 'x');
+    console.log(changedName + ' changed to ' + s());
+  });
   return x() + y();
 });
 ```
@@ -175,13 +195,14 @@ flyd.stream([responses], function() {
 ```
 
 Note that the stream that logs the responses from the server should only be called
-after an actual response has been recieved (otherwise `responses()` whould return
-`undefined`). Fortunately a streams body will not be called before all of its declared
-streams has recieved a value.
+after an actual response has been received (otherwise `responses()` would return
+`undefined`). Fortunately a stream's body will not be called before all of its declared
+streams has received a value (this behaviour can be circumvented with
+[flyd.immediate](#flydimmediatestream)).
 
 ### Using promises for asynchronous operations
 
-Flyd has inbuilt support for promises. Similairly to how a promise can never be
+Flyd has inbuilt support for promises. Similarly to how a promise can never be
 resolved with a promise, a promise can never flow down a stream. Instead the
 fulfilled value of the promise will be sent down the stream.
 
@@ -198,10 +219,10 @@ flyd.stream([responses], function() {
 
 ### Mapping over a stream
 
-You've now seen the basic building block which Flyd provides. Let's see what we
-can do with it. Lets write a function that takes a stream and a function and
-returns a new stream with the function applied to every value emitted by the
-stream. In short, a `map` function.
+You've now seen most of the basic building block which Flyd provides. Let's see
+what we can do with them. Lets write a function that takes a stream and a
+function and returns a new stream with the function applied to every value
+emitted by the stream. In short, a `map` function.
 
 ```javascript
 var mapStream = function(f, s) {
@@ -215,14 +236,15 @@ We simply create a new stream dependent on the first stream. We declare
 the stream as a dependency so that our stream won't return values before
 the original stream produces its first value.
 
-Flyd includes a similar map function as part of its core.
+Flyd includes a similar `map` function as part of its core.
 
-### Reducing a stream
+### Scaning a stream
 
-Lets try something else: reducing a stream! It could look like this:
+Lets try something else: a scan function for accumulating a stream! It could
+look like this:
 
 ```javascript
-var reduceStream = function(f, acc, s) {
+var scanStream = function(f, acc, s) {
   return flyd.stream([s], function() {
     acc = f(acc, s());
     return acc;
@@ -230,11 +252,60 @@ var reduceStream = function(f, acc, s) {
 };
 ```
 
-Our reduce function takes a reducer function, in initial value and a stream.
-Every time the original stream emit a value we pass it to the reducer along
-with the accumulator.
+Our scan function takes an accumulator function, in initial value and a stream.
+Every time the original stream emit a value we pass it to the accumulator
+function along with the accumulated value.
 
-Flyd includes a reduce function as part of its core.
+Flyd includes a `scan` function as part of its core.
+
+### Stream endings
+
+When you create a stream with `flyd.stream` it will have an `end` property
+which is also a stream. That is an _end stream_:
+
+```javascript
+var s = flyd.stream();
+console.log(flyd.isStream(s.end)); // logs `true`
+```
+
+You can end a stream by pushing `true` into its end stream:
+
+```javascript
+var s = flyd.stream();
+s.end(true); // this ends `s`
+```
+
+When you create a dependent stream it's end stream will initially depend on all
+the ends streams of its dependencies:
+
+```javascript
+var n1 = flyd.stream();
+var n2 = flyd.stream();
+var sum = flyd.stream([n1, n2], function() {
+  return n1() + n2();
+});
+```
+
+`sum.end` now depends on `n1.end` and `n2.end`. This means that whenever one of
+the `sum`s dependencies end `sum` will end as well.
+
+You can change what a streams end stream depends on with `flyd.endsOn`:
+
+```javascript
+var n1 = flyd.stream();
+var n2 = flyd.stream();
+var killer = flyd.stream();
+var sum = flyd.endsOn([n1.end, n2.end, killer], flyd.stream([n1, n2], function() {
+  return n1() + n2();
+}));
+```
+
+Now `sum` will end if either `n1` ends, `n2` ends or if `killer` emits a value.
+
+The fact that a streams ending is itself a stream is a very powerful concept.
+It means that we can use the full expressiveness of Flyd to control when a stream
+ends. For an example, take a look at the implementation of
+[`takeUntil`](https://github.com/paldepind/flyd-takeuntil).
 
 ### Fin
 
@@ -243,20 +314,97 @@ and the source of the [modules](#modules).
 
 ## API
 
-### flyd.stream(dependencies, body[, doesNotRequireDeps])
+### flyd.stream()
 
-Creates a new stream.
+Creates a new top level stream.
 
 __Signature__
 
-  * `dependencies` (array) – The streams on which this stream depends.
-  * `body` (function) – The function body of the stream.
-  * \[`doesNotRequireDeps`\] (boolean) – If `true` the function body can be
-    invoked even before all dependencies have a value.
+`a -> Stream a`
 
-__Returns__
+__Example__
+```javascript
+var n = stream(1); // Stream with initial value `1`
+var s = stream(); // Stream with no initial value
+```
 
-The created stream.
+### flyd.stream(dependencies, body)
+
+Creates a new dependent stream.
+
+__Signature__
+
+`[Stream *] -> (Stream b -> [Stream *] -> b) -> Stream b`
+
+__Example__
+```javascript
+var n1 = flyd.stream(0);
+var n2 = flyd.stream(0);
+var max = flyd.stream([n1, n2], function(self, changed) {
+  return n1() > n2() ? n1() : n2();
+});
+```
+
+###flyd.isStream(stream)
+
+Returns `true` if the supplied argument is a Flyd stream and `false` otherwise.
+
+__Signature__
+
+`* -> Boolean`
+
+__Example__
+
+```javascript
+var s = flyd.stream(1);
+var n = 1;
+flyd.isStream(s); //=> true
+flyd.isStream(n); //=> false
+```
+
+###flyd.immediate(stream)
+
+By default the body of a dependent stream is only called when all the streams
+upon which it depends has a value. `immediate` can circumvent this behaviour.
+It immediately invokes the body of a dependent stream.
+
+__Signature__
+
+`Stream a -> Stream a`
+
+__Example__
+
+```javascript
+var s = flyd.stream();
+var hasItems = flyd.immediate(flyd.stream([s], function() {
+  return s() !== undefined && s().length > 0;
+});
+console.log(hasItems()); // logs `false`. Had `immediate` not been
+                         // used `hasItems()` would've returned `undefined`
+s([1]);
+console.log(hasItems()); // logs `true`.
+s([]);
+console.log(hasItems()); // logs `false`.
+```
+
+###flyd.endsOn(endStream, s)
+
+Changes which `endsStream` should trigger the ending of `s`.
+
+__Signature__
+
+`Stream a -> Stream b -> Stream b`
+
+__Example__
+
+```javascript
+var n = flyd.stream(1);
+var killer = flyd.stream();
+// `double` ends when `n` ends or when `killer` emits any value
+var double = flyd.endsOn(flyd.merge(n.end, killer), flyd.stream([n], function() {
+  return 2 * n();
+});
+```
 
 ###flyd.map(fn, s)
 
@@ -273,7 +421,7 @@ var numbers = flyd.stream(0);
 var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 ```
 
-###flyd.reduce(fn, acc, stream)
+###flyd.scan(fn, acc, stream)
 
 Creates a new stream with the results of calling the function on every incoming
 stream with and accumulator and the incoming value.
@@ -285,7 +433,7 @@ __Signature__
 __Example__
 ```javascript
 var numbers = flyd.stream();
-var sum = flyd.reduce(function(sum, n) { return sum+n; }, 0, numbers);
+var sum = flyd.scan(function(sum, n) { return sum+n; }, 0, numbers);
 numbers(2)(3)(5);
 sum(); // 10
 ```
@@ -333,25 +481,6 @@ s1(1)(1)(2)(3)(3)(3)(4);
 results; // [2, 4, 6, 8]
 ```
 
-###flyd.destroy(stream)
-
-If the stream has no dependencies this will detach it from any streams it
-depends on. This makes it available for garbage collection if there are no
-additional references to it.
-
-__Signature__
-
-`Stream -> undefined`
-
-__Example__
-
-```javascript
-var s = flyd.map(function() { /* something */ }, someStream);
-flyd.destroy(s);
-s = undefined;
-// `s` can be garbage collected
-```
-
 ###flyd.curryN(n, fn)
 
 Returns `fn` curried to `n`. Use this function to curry functions exposed by
@@ -367,23 +496,6 @@ __Example__
 function add(x, y) { return x + y; };
 flyd.curryN(2, add);
 var add
-```
-
-###flyd.isStream(stream)
-
-Returns `true` if the supplied argument is a Flyd stream and `false` otherwise.
-
-__Signature__
-
-`* -> Boolean`
-
-__Example__
-
-```javascript
-var s = flyd.stream(1);
-var n = 1;
-flyd.isStream(s); //=> true
-flyd.isStream(n); //=> false
 ```
 
 ###stream()
@@ -415,6 +527,11 @@ __Example__
 names('Bohr');
 names(); // 'Bohr'
 ```
+
+###stream.end
+
+A stream that emits `true` when the stream ends. If `true` is pushed down the
+stream the parent stream ends.
 
 ###stream.map(f)
 
@@ -476,22 +593,39 @@ var m = n.of(1);
 
 ### Modules
 
+If you're created a module for Flyd open an issue or send a pull request and it
+will be added to this list.
+
 * [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
-* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function takin multiple paramters over that amount of streams.
-* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams.
-* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keeps values from a stream when another stream is true.
+* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ parameters over _n_ streams.
+* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
+* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keep values from one stream only when another stream is true.
 * [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
 * [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
-* [flyd-reducemerge](https://github.com/paldepind/flyd-reducemerge) – Merge and reduce several streams into one.
+* [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
+* [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
 * Time related
-  * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silience from the source stream.
-  * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream with emits a list of all values from the source stream that where emitted in a specified duration.
+  * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
+  * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
+  * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
 
 ## Misc
 
+
+### The name
+
+The name Flyd was chosen since the author of Flyd is danish and Flyd is a
+danish word meaning float, afloat or flow. It is furthermore short and not too
+bad for searching.
+
+For most native English speakers "flyd" is impossible to pronounce like a
+dane would do it. The "d" is soft like "th" in "the". The "y" is a vocal sound
+unknown to the English language. [If you're curious Google Translates listening feature
+provides an accurate pronounciation.](https://translate.google.com/#da/en/flyd).
+
 ### Atomic updates
 
-Consider code like the following
+Consider the following example:
 
 ```javascript
 var a = flyd.stream(1);
@@ -502,9 +636,35 @@ var d = flyd.stream([b, c], function(self, ch) {
 });
 ```
 
+The dependency graph looks like this.
+
+```
+    a
+  /   \
+ b     c
+  \   /
+    d
+```
+
 Now, when a value flows down `a`, both `b` and `c` will change because they
-depend on `a`. If you merely consider streams as being events you'd expect `d`
+depend on `a`. If you merely consider streams as being event emitters you'd expect `d`
 to be updated twice. Because `a` triggers `b` triggers `d` after which `a` also
-twiggers `c` which again triggers `d`. But Flyd will handle this better.
-Since only one value entered the system `d` will only be updated once with the
-changed values of `b` and `c`. This avoids superfluous updates of your streams.
+triggers `c` which _again_ triggers `d`.
+
+But Flyd handles such cases optimally. Since only one value entered the
+system `d` will only be updated once with the changed values of `b` and `c`.
+
+Flyd guarantees that when a single value enters the system every stream will
+only be updated once, along with their dependencies in their most recent state.
+
+This avoids superfluous updates of your streams and intermediate states when
+several streams change at the same time.
+
+Flyd implements atomic updates with a _O(n)_ topological sort where _n_
+is number of streams that directly or indirectly depends on the updated
+stream. 
+
+### Environment support
+
+Flyd works in all ECMAScript 5 environments. It works in older environments
+with polyfills for `Array.prototype.filter` and `Array.prototype.map`.
