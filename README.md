@@ -324,8 +324,8 @@ __Signature__
 
 __Example__
 ```javascript
-var n = stream(1); // Stream with initial value `1`
-var s = stream(); // Stream with no initial value
+var n = flyd.stream(1); // Stream with initial value `1`
+var s = flyd.stream(); // Stream with no initial value
 ```
 
 ### flyd.stream(dependencies, body)
@@ -450,9 +450,9 @@ __Signature__
 __Example__
 ```javascript
 var btn1Clicks = flyd.stream();
-button1Elm.addEventListener(clicks);
+button1Elm.addEventListener(btn1Clicks);
 var btn2Clicks = flyd.stream();
-button2Elm.addEventListener(clicks);
+button2Elm.addEventListener(btn2Clicks);
 var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
 ```
 
