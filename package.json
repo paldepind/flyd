@@ -13,7 +13,7 @@
     "bluebird": "^2.9.13",
     "lodash": "^3.3.1",
     "mocha": "^2.2.1",
-    "ramda": "^0.13.0",
+    "ramda": "^0.14.0",
     "transducers.js": "0.3.x"
   },
   "scripts": {

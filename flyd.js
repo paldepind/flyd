@@ -209,10 +209,8 @@ function stream(arg, fn) {
 
 var transduce = curryN(2, function(xform, source) {
   xform = xform(new StreamTransformer());
-  // Latest Ramda release still uses old transducer protocol
-  var stepName = xform['@@transducer/step'] ? '@@transducer/step' : 'step';
   return stream([source], function(self) {
-    var res = xform[stepName](undefined, source());
+    var res = xform['@@transducer/step'](undefined, source());
     if (res && res['@@transducer/reduced'] === true) {
       self.end(true);
       return res['@@transducer/value'];
@@ -223,9 +221,6 @@ var transduce = curryN(2, function(xform, source) {
 });
 
 function StreamTransformer() { }
-StreamTransformer.prototype.init = function() { };
-StreamTransformer.prototype.result = function() { };
-StreamTransformer.prototype.step = function(s, v) { return v; };
 StreamTransformer.prototype['@@transducer/init'] = function() { };
 StreamTransformer.prototype['@@transducer/result'] = function() { };
 StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };

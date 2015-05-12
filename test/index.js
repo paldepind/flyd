@@ -589,12 +589,12 @@ describe('stream', function() {
       s1('foo')('')('bar')('')('')('!');
       assert.deepEqual(result, ['foo', 'bar', '!']);
     });
-    it.skip('supports dedupe', function() {
+    it('supports dedupe', function() {
       var result = [];
       var s1 = stream();
       var tx = R.compose(
-        R.map(function(x) { return x * 2; }),
-        R.dedupe() // Ramda has no dedupe function
+        R.map(R.multiply(2)),
+        R.dropRepeats()
       );
       var s2 = flyd.transduce(tx, s1);
       stream([s2], function() { result.push(s2()); });
