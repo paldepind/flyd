@@ -285,6 +285,13 @@ describe('stream', function() {
       killer2(true);
       assert(ended);
     });
+    it('end stream can be set on top level stream', function() {
+      var killer = stream();
+      var s = flyd.endsOn(killer, stream(1));
+      assert.notEqual(s.end(), true);
+      killer(true);
+      assert.equal(s.end(), true);
+    });
   });
   describe('promise integration', function() {
     it('pushes result of promise down the stream', function(done) {

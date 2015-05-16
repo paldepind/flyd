@@ -89,7 +89,7 @@ function updateDeps(s) {
                    : (list.depsChanged.push(s), findDeps(order, list));
   }, s.listeners);
   for (i = order.length - 1; i >= 0; --i) {
-    if (order[i].depsChanged.length > 0) {
+    if (notUndef(order[i].depsChanged) && order[i].depsChanged.length > 0) {
       updateStream(order[i]);
     }
     order[i].queued = false;
