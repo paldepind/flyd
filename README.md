@@ -294,7 +294,7 @@ You can change what a streams end stream depends on with `flyd.endsOn`:
 ```javascript
 var number = flyd.stream(2);
 var killer = flyd.stream();
-var square = flyd.endsOn(flyd.merge(number, killer), flyd.stream([number], function() {
+var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream([number], function() {
   return number() * number();
 }));
 ```
