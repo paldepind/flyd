@@ -765,6 +765,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(function(res) { return res.json(); })
       .then(function(data) { action$({type: 'loaded', data: data}); });
   }
+  makeRequest();
   function sendRemoveAction(idx) {
     action$({type: 'remove', nr: idx});
   }
