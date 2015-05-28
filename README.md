@@ -292,15 +292,14 @@ the `sum`s dependencies end `sum` will end as well.
 You can change what a streams end stream depends on with `flyd.endsOn`:
 
 ```javascript
-var n1 = flyd.stream();
-var n2 = flyd.stream();
+var number = flyd.stream(2);
 var killer = flyd.stream();
-var sum = flyd.endsOn([n1.end, n2.end, killer], flyd.stream([n1, n2], function() {
-  return n1() + n2();
+var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream([number], function() {
+  return number() * number();
 }));
 ```
 
-Now `sum` will end if either `n1` ends, `n2` ends or if `killer` emits a value.
+Now `square` will end if either `number` ends or if `killer` emits a value.
 
 The fact that a streams ending is itself a stream is a very powerful concept.
 It means that we can use the full expressiveness of Flyd to control when a stream
@@ -324,8 +323,8 @@ __Signature__
 
 __Example__
 ```javascript
-var n = stream(1); // Stream with initial value `1`
-var s = stream(); // Stream with no initial value
+var n = flyd.stream(1); // Stream with initial value `1`
+var s = flyd.stream(); // Stream with no initial value
 ```
 
 ### flyd.stream(dependencies, body)
@@ -450,9 +449,9 @@ __Signature__
 __Example__
 ```javascript
 var btn1Clicks = flyd.stream();
-button1Elm.addEventListener(clicks);
+button1Elm.addEventListener(btn1Clicks);
 var btn2Clicks = flyd.stream();
-button2Elm.addEventListener(clicks);
+button2Elm.addEventListener(btn2Clicks);
 var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
 ```
 
@@ -599,11 +598,13 @@ will be added to this list.
 * [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
 * [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ parameters over _n_ streams.
 * [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
+* [flyd-switchlatest](https://github.com/paldepind/flyd-switchlatest) – Flattens a stream of streams. The result stream reflects changes from the last stream only.
 * [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keep values from one stream only when another stream is true.
 * [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
 * [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
 * [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
 * [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
+* [flyd-forwardto](https://github.com/paldepind/flyd-forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
 * Time related
   * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.

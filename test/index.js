@@ -22,6 +22,13 @@ describe('stream', function() {
     var s = stream();
     assert.equal(s, s(23));
   });
+  it('updates dependencies', function() {
+    var x = stream(3);
+    var x2 = stream([x], function() {
+      return x() * 2;
+    });
+    assert.equal(x2(), x() * 2);
+  });
   it('can set result by returning value', function() {
     var x = stream(3);
     var y = stream(4);
@@ -280,10 +287,31 @@ describe('stream', function() {
       var y = flyd.endsOn(killer1, stream([x], function(self) {
         return 2 * x();
       }));
+function fastUpdate(s, n) {
+  var i, list;
+  if (n !== undefined && n !== null && isFunction(n.then)) {
+    n.then(function(n) { fastUpdate(s, n); });
+  } else {
+    s.val = n;
+    s.hasVal = true;
+    for (i = 0; i < s.listeners.length; ++i) {
+      list = s.listeners[i];
+      if (list.end !== s) list.depsChanged[0] = s;
+      else endStream(list);
+    }
+  }
+}
       flyd.map(function() { ended = true; }, y.end);
       flyd.endsOn(killer2, y);
       killer2(true);
       assert(ended);
+    });
+    it('end stream can be set on top level stream', function() {
+      var killer = stream();
+      var s = flyd.endsOn(killer, stream(1));
+      assert.notEqual(s.end(), true);
+      killer(true);
+      assert.equal(s.end(), true);
     });
   });
   describe('promise integration', function() {
@@ -589,12 +617,12 @@ describe('stream', function() {
       s1('foo')('')('bar')('')('')('!');
       assert.deepEqual(result, ['foo', 'bar', '!']);
     });
-    it.skip('supports dedupe', function() {
+    it('supports dedupe', function() {
       var result = [];
       var s1 = stream();
       var tx = R.compose(
-        R.map(function(x) { return x * 2; }),
-        R.dedupe() // Ramda has no dedupe function
+        R.map(R.multiply(2)),
+        R.dropRepeats()
       );
       var s2 = flyd.transduce(tx, s1);
       stream([s2], function() { result.push(s2()); });

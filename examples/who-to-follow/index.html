@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Who to follow</title>
+    <link href='http://fonts.googleapis.com/css?family=Inconsolata|Josefin+Sans:400,300' rel='stylesheet' type='text/css'>
+    <script type="text/javascript" src="build.js"></script>
+    <style>
+      * {
+        font-family: 'Josefin Sans', sans-serif;
+      }
+      body {
+        font-family: Josefin Sans;
+        font-family: sans-serif;
+        padding: 10px;
+      }
+      h2 {
+        margin: 0;
+        font-weight: bold;
+        display: inline-block;
+      }
+      #refresh {
+        font-size: 80%;
+        margin-left: 10px;
+      }
+      .container {
+        border: 2px solid #ECECEC;
+      }
+      .header {
+        background: #ECECEC;
+        padding: 5px;
+      }
+      .suggestions {
+        border: 2px solid #ECECEC;
+      }
+      ul {
+        margin: 0;
+        padding: 0;
+      }
+      li {
+        list-style: outside none none;
+        padding: 5px;
+        height: 40px;
+      }
+      li img {
+        width: 40px;
+        height: 40px;
+        border-radius: 20px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+         <h2>Who to follow</h2><a href="#" id="refresh">Refresh</a>
+      </div>
+      <ul class="suggestions">
+        <li>
+          <img />
+          <a href="#" target="_blank" class="username">this will not be displayed</a>
+          <a href="#" id="remove0" class="close">x</a>
+        </li>
+        <li>
+          <img />
+          <a href="#" target="_blank" class="username">neither this</a>
+          <a href="#" id="remove1" class="close">x</a>
+        </li>
+        <li>
+          <img />
+          <a href="#" target="_blank" class="username">nor this</a>
+          <a href="#" id="remove2" class="close">x</a>
+        </li>
+      </ul>
+    </div>
+    <p>
+      <a href="https://github.com/paldepind/flyd/blob/master/examples/who-to-follow/script.js">See the source code</a>
+    </p>
+  </body>
+</html>

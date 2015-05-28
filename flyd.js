@@ -14,20 +14,15 @@ function isFunction(obj) {
   return !!(obj && obj.constructor && obj.call && obj.apply);
 }
 
-function notUndef(v) {
-  return v !== undefined;
-}
-
-function each(fn, list) {
-  for (var i = 0; i < list.length; ++i) fn(list[i]);
-}
-
+// Globals
 var toUpdate = [];
 var inStream;
 
-function map(s, f) {
+function map(f, s) {
   return stream([s], function(self) { self(f(s())); });
 }
+
+function boundMap(f) { return map(f, this); }
 
 var scan = curryN(3, function(f, acc, s) {
   var ns = stream([s], function() {
@@ -55,44 +50,57 @@ function ap(s2) {
 }
 
 function initialDepsNotMet(stream) {
-  if (!stream.depsMet) {
-    stream.depsMet = stream.deps.every(function(s) {
-      return s.hasVal;
-    });
-  }
+  stream.depsMet = stream.deps.every(function(s) {
+    return s.hasVal;
+  });
   return !stream.depsMet;
 }
 
 function updateStream(s) {
-  if (initialDepsNotMet(s) || (s.end && s.end())) return;
+  if ((s.depsMet !== true && initialDepsNotMet(s)) ||
+      (s.end !== undefined && s.end.val === true)) return;
   inStream = s;
   var returnVal = s.fn(s, s.depsChanged);
-  if (notUndef(returnVal)) {
+  if (returnVal !== undefined) {
     s(returnVal);
   }
   inStream = undefined;
-  s.depsChanged = [];
+  if (s.depsChanged !== undefined) {
+    while (s.depsChanged.length > 0) s.depsChanged.shift();
+  }
+  s.shouldUpdate = false;
 }
 
-function findDeps(order, s) {
-  if (!s.queued) {
+var order = [];
+var orderNextIdx = -1;
+
+function findDeps(s) {
+  var i, listeners = s.listeners;
+  if (s.queued === false) {
     s.queued = true;
-    each(findDeps.bind(null, order), s.listeners);
-    order.push(s);
+    for (i = 0; i < listeners.length; ++i) {
+      findDeps(listeners[i]);
+    }
+    order[++orderNextIdx] = s;
   }
 }
 
 function updateDeps(s) {
-  var i, order = [];
-  each(function(list) {
-    list.end === s ? endStream(list)
-                   : (list.depsChanged.push(s), findDeps(order, list));
-  }, s.listeners);
-  for (i = order.length - 1; i >= 0; --i) {
-    if (order[i].depsChanged.length > 0) {
-      updateStream(order[i]);
+  var i, o, list, listeners = s.listeners;
+  for (i = 0; i < listeners.length; ++i) {
+    list = listeners[i];
+    if (list.end === s) {
+      endStream(list);
+    } else {
+      if (list.depsChanged !== undefined) list.depsChanged.push(s);
+      list.shouldUpdate = true;
+      findDeps(list);
     }
-    order[i].queued = false;
+  }
+  for (; orderNextIdx >= 0; --orderNextIdx) {
+    o = order[orderNextIdx];
+    if (o.shouldUpdate === true) updateStream(o);
+    o.queued = false;
   }
 }
 
@@ -110,24 +118,35 @@ function streamToString() {
 
 function createStream() {
   function s(n) {
-    if (arguments.length > 0) {
-      if (n && isFunction(n.then)) {
+    var i, list;
+    if (arguments.length === 0) {
+      return s.val;
+    } else {
+      if (n !== undefined && n !== null && isFunction(n.then)) {
         n.then(s);
         return;
       }
       s.val = n;
       s.hasVal = true;
-      if (inStream !== s) {
-        toUpdate.push(s);
-        if (!inStream) flushUpdate();
+      if (inStream === undefined) {
+        updateDeps(s);
+        if (toUpdate.length > 0) flushUpdate();
+      } else if (inStream === s) {
+        for (i = 0; i < s.listeners.length; ++i) {
+          list = s.listeners[i];
+          if (list.end !== s) {
+            if (list.depsChanged !== undefined) {
+              list.depsChanged.push(s);
+            }
+            list.shouldUpdate = true;
+          } else {
+            endStream(list);
+          }
+        }
       } else {
-        each(function(list) {
-          list.end === s ? endStream(list) : list.depsChanged.push(s);
-        }, s.listeners);
+        toUpdate.push(s);
       }
       return s;
-    } else {
-      return s.val;
     }
   }
   s.hasVal = false;
@@ -136,7 +155,7 @@ function createStream() {
   s.queued = false;
   s.end = undefined;
 
-  s.map = map.bind(null, s);
+  s.map = boundMap;
   s.ap = ap;
   s.of = stream;
   s.toString = streamToString;
@@ -145,12 +164,15 @@ function createStream() {
 }
 
 function createDependentStream(deps, fn) {
-  var s = createStream();
+  var i, s = createStream();
   s.fn = fn;
   s.deps = deps;
   s.depsMet = false;
-  s.depsChanged = [];
-  each(function(dep) { dep.listeners.push(s); }, deps);
+  s.depsChanged = fn.length > 1 ? [] : undefined;
+  s.shouldUpdate = false;
+  for (i = 0; i < deps.length; ++i) {
+    deps[i].listeners.push(s);
+  }
   return s;
 }
 
@@ -158,7 +180,7 @@ function immediate(s) {
   if (s.depsMet === false) {
     s.depsMet = true;
     updateStream(s);
-    flushUpdate();
+    if (toUpdate.length > 0) flushUpdate();
   }
   return s;
 }
@@ -170,13 +192,15 @@ function removeListener(s, listeners) {
 }
 
 function detachDeps(s) {
-  each(function(dep) { removeListener(s, dep.listeners); }, s.deps);
+  for (var i = 0; i < s.deps.length; ++i) {
+    removeListener(s, s.deps[i].listeners);
+  }
   s.deps.length = 0;
 }
 
 function endStream(s) {
-  if (s.deps) detachDeps(s);
-  if (s.end) detachDeps(s.end);
+  if (s.deps !== undefined) detachDeps(s);
+  if (s.end !== undefined) detachDeps(s.end);
 }
 
 function endsOn(endS, s) {
@@ -187,17 +211,22 @@ function endsOn(endS, s) {
 }
 
 function stream(arg, fn) {
-  var s, deps;
+  var i, s, deps, depEndStreams;
   var endStream = createDependentStream([], function() { return true; });
   if (arguments.length > 1) {
-    deps = arg.filter(notUndef);
+    deps = []; depEndStreams = [];
+    for (i = 0; i < arg.length; ++i) {
+      if (arg[i] !== undefined) {
+        deps.push(arg[i]);
+        if (arg[i].end !== undefined) depEndStreams.push(arg[i].end);
+      }
+    }
     s = createDependentStream(deps, fn);
     s.end = endStream;
     endStream.listeners.push(s);
-    var depEndStreams = deps.map(function(d) { return d.end; }).filter(notUndef);
     endsOn(createDependentStream(depEndStreams, function() { return true; }, true), s);
     updateStream(s);
-    flushUpdate();
+    if (toUpdate.length > 0) flushUpdate();
   } else {
     s = createStream();
     s.end = endStream;
@@ -209,10 +238,8 @@ function stream(arg, fn) {
 
 var transduce = curryN(2, function(xform, source) {
   xform = xform(new StreamTransformer());
-  // Latest Ramda release still uses old transducer protocol
-  var stepName = xform['@@transducer/step'] ? '@@transducer/step' : 'step';
   return stream([source], function(self) {
-    var res = xform[stepName](undefined, source());
+    var res = xform['@@transducer/step'](undefined, source());
     if (res && res['@@transducer/reduced'] === true) {
       self.end(true);
       return res['@@transducer/value'];
@@ -223,9 +250,6 @@ var transduce = curryN(2, function(xform, source) {
 });
 
 function StreamTransformer() { }
-StreamTransformer.prototype.init = function() { };
-StreamTransformer.prototype.result = function() { };
-StreamTransformer.prototype.step = function(s, v) { return v; };
 StreamTransformer.prototype['@@transducer/init'] = function() { };
 StreamTransformer.prototype['@@transducer/result'] = function() { };
 StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };
@@ -349,7 +373,7 @@ return {
   reduce: scan, // Legacy
   scan: scan,
   endsOn: endsOn,
-  map: curryN(2, function(f, s) { return map(s, f); }),
+  map: curryN(2, map),
   curryN: curryN,
   _: _,
   immediate: immediate,
