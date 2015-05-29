@@ -19,7 +19,7 @@ var toUpdate = [];
 var inStream;
 
 function map(f, s) {
-  return stream([s], function(self) { self(f(s())); });
+  return stream([s], function(self) { self(f(s.val)); });
 }
 
 function boundMap(f) { return map(f, this); }
@@ -116,36 +116,45 @@ function streamToString() {
   return 'stream(' + this.val + ')';
 }
 
+function updateStreamValue(s, n) {
+  if (n !== undefined && n !== null && isFunction(n.then)) {
+    n.then(s);
+    return;
+  }
+  s.val = n;
+  s.hasVal = true;
+  if (inStream === undefined) {
+    updateDeps(s);
+    if (toUpdate.length > 0) flushUpdate();
+  } else if (inStream === s) {
+    markListeners(s, s.listeners);
+  } else {
+    toUpdate.push(s);
+  }
+}
+
+function markListeners(s, lists) {
+  var i, list;
+  for (i = 0; i < lists.length; ++i) {
+    list = lists[i];
+    if (list.end !== s) {
+      if (list.depsChanged !== undefined) {
+        list.depsChanged.push(s);
+      }
+      list.shouldUpdate = true;
+    } else {
+      endStream(list);
+    }
+  }
+}
+
 function createStream() {
   function s(n) {
     var i, list;
     if (arguments.length === 0) {
       return s.val;
     } else {
-      if (n !== undefined && n !== null && isFunction(n.then)) {
-        n.then(s);
-        return;
-      }
-      s.val = n;
-      s.hasVal = true;
-      if (inStream === undefined) {
-        updateDeps(s);
-        if (toUpdate.length > 0) flushUpdate();
-      } else if (inStream === s) {
-        for (i = 0; i < s.listeners.length; ++i) {
-          list = s.listeners[i];
-          if (list.end !== s) {
-            if (list.depsChanged !== undefined) {
-              list.depsChanged.push(s);
-            }
-            list.shouldUpdate = true;
-          } else {
-            endStream(list);
-          }
-        }
-      } else {
-        toUpdate.push(s);
-      }
+      updateStreamValue(s, n);
       return s;
     }
   }
@@ -163,6 +172,12 @@ function createStream() {
   return s;
 }
 
+function addListeners(deps, s) {
+  for (var i = 0; i < deps.length; ++i) {
+    deps[i].listeners.push(s);
+  }
+}
+
 function createDependentStream(deps, fn) {
   var i, s = createStream();
   s.fn = fn;
@@ -170,9 +185,7 @@ function createDependentStream(deps, fn) {
   s.depsMet = false;
   s.depsChanged = fn.length > 1 ? [] : undefined;
   s.shouldUpdate = false;
-  for (i = 0; i < deps.length; ++i) {
-    deps[i].listeners.push(s);
-  }
+  addListeners(deps, s);
   return s;
 }
 
@@ -210,9 +223,11 @@ function endsOn(endS, s) {
   return s;
 }
 
+function trueFn() { return true; }
+
 function stream(arg, fn) {
   var i, s, deps, depEndStreams;
-  var endStream = createDependentStream([], function() { return true; });
+  var endStream = createDependentStream([], trueFn);
   if (arguments.length > 1) {
     deps = []; depEndStreams = [];
     for (i = 0; i < arg.length; ++i) {
@@ -224,7 +239,8 @@ function stream(arg, fn) {
     s = createDependentStream(deps, fn);
     s.end = endStream;
     endStream.listeners.push(s);
-    endsOn(createDependentStream(depEndStreams, function() { return true; }, true), s);
+    addListeners(depEndStreams, endStream);
+    endStream.deps = depEndStreams;
     updateStream(s);
     if (toUpdate.length > 0) flushUpdate();
   } else {
