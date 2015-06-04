@@ -59,6 +59,10 @@ function initialDepsNotMet(stream) {
 function updateStream(s) {
   if ((s.depsMet !== true && initialDepsNotMet(s)) ||
       (s.end !== undefined && s.end.val === true)) return;
+  if (inStream !== undefined) {
+    toUpdate.push(s);
+    return;
+  }
   inStream = s;
   var returnVal = s.fn(s, s.depsChanged);
   if (returnVal !== undefined) {
@@ -241,12 +245,8 @@ function stream(arg, fn) {
     endStream.listeners.push(s);
     addListeners(depEndStreams, endStream);
     endStream.deps = depEndStreams;
-    if (inStream === undefined) {
-      updateStream(s);
-      if (toUpdate.length > 0) flushUpdate();
-    } else {
-      toUpdate.push(s);
-    }
+    updateStream(s);
+    if (toUpdate.length > 0) flushUpdate();
   } else {
     s = createStream();
     s.end = endStream;
