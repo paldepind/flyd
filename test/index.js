@@ -535,6 +535,13 @@ function fastUpdate(s, n) {
       assert.equal(u.ap(a.of(y))(),
                    a.of(function(f) { return f(y); }).ap(u)());
     });
+    it('can create dependent stream inside stream', function() {
+      var one = flyd.stream();
+      stream([one], function(self) {
+       self(flyd.stream([], function() { }));
+      });
+      one(1);
+    });
   });
   describe('transducer.js transducer support', function() {
     it('creates new stream with map applied', function() {

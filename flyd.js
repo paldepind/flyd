@@ -241,8 +241,12 @@ function stream(arg, fn) {
     endStream.listeners.push(s);
     addListeners(depEndStreams, endStream);
     endStream.deps = depEndStreams;
-    updateStream(s);
-    if (toUpdate.length > 0) flushUpdate();
+    if (inStream === undefined) {
+      updateStream(s);
+      if (toUpdate.length > 0) flushUpdate();
+    } else {
+      toUpdate.push(s);
+    }
   } else {
     s = createStream();
     s.end = endStream;
