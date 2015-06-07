@@ -159,7 +159,7 @@ console.log(squareXPlusY()); // logs 10
 ```
 
 The body of a dependent stream is called with two parameters: itself and a list
-of the dependencies that has changed since its last invocation (due to [atomic
+of the dependencies that have changed since its last invocation (due to [atomic
 updates](#atomic-updates) several streams could have changed).
 
 ```javascript
@@ -212,7 +212,7 @@ var responses = flyd.stream(function() {
   return requestPromise(urls());
 });
 flyd.stream([responses], function() {
-  console.log('Recieved response!');
+  console.log('Received response!');
   console.log(responses());
 });
 ```
@@ -220,8 +220,8 @@ flyd.stream([responses], function() {
 ### Mapping over a stream
 
 You've now seen most of the basic building block which Flyd provides. Let's see
-what we can do with them. Lets write a function that takes a stream and a
-function and returns a new stream with the function applied to every value
+what we can do with them. Let's write a function that takes a function and a
+stream and returns a new stream with the function applied to every value
 emitted by the stream. In short, a `map` function.
 
 ```javascript
@@ -252,8 +252,8 @@ var scanStream = function(f, acc, s) {
 };
 ```
 
-Our scan function takes an accumulator function, in initial value and a stream.
-Every time the original stream emit a value we pass it to the accumulator
+Our scan function takes an accumulator function, an initial value and a stream.
+Every time the original stream emits a value we pass it to the accumulator
 function along with the accumulated value.
 
 Flyd includes a `scan` function as part of its core.
@@ -275,8 +275,8 @@ var s = flyd.stream();
 s.end(true); // this ends `s`
 ```
 
-When you create a dependent stream it's end stream will initially depend on all
-the ends streams of its dependencies:
+When you create a dependent stream its end stream will initially depend on all
+the end streams of its dependencies:
 
 ```javascript
 var n1 = flyd.stream();
@@ -289,7 +289,7 @@ var sum = flyd.stream([n1, n2], function() {
 `sum.end` now depends on `n1.end` and `n2.end`. This means that whenever one of
 the `sum`s dependencies end `sum` will end as well.
 
-You can change what a streams end stream depends on with `flyd.endsOn`:
+You can change what a stream's end stream depends on with `flyd.endsOn`:
 
 ```javascript
 var number = flyd.stream(2);
@@ -301,7 +301,7 @@ var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream([number], f
 
 Now `square` will end if either `number` ends or if `killer` emits a value.
 
-The fact that a streams ending is itself a stream is a very powerful concept.
+The fact that a stream's ending is itself a stream is a very powerful concept.
 It means that we can use the full expressiveness of Flyd to control when a stream
 ends. For an example, take a look at the implementation of
 [`takeUntil`](https://github.com/paldepind/flyd-takeuntil).
@@ -444,7 +444,7 @@ will be sent.
 
 __Signature__
 
-`Stream a -> Stream a - Stream a`
+`Stream a -> Stream a -> Stream a`
 
 __Example__
 ```javascript
