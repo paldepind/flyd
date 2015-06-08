@@ -549,6 +549,21 @@ function fastUpdate(s, n) {
       });
       one(1);
     });
+    it('creating a stream inside a stream all dependencies are updated', function() {
+      var result = [];
+      var str = flyd.stream();
+      flyd.map(function(x) {
+        result.push(x);
+      }, str);
+      flyd.map(function(x) {
+        // create a stream, the first dependant on `str` should still be updated
+        flyd.stream([], function(self) {});
+      }, str);
+      str(1);
+      str(2);
+      str(3);
+      assert.deepEqual(result, [1, 2, 3]);
+    });
   });
   describe('transducer.js transducer support', function() {
     it('creates new stream with map applied', function() {
