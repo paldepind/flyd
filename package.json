@@ -17,7 +17,8 @@
     "transducers.js": "0.3.x"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "perf": "./perf/run-benchmarks"
   },
   "repository": {
     "type": "git",
