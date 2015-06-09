@@ -7,9 +7,9 @@
     "example": "examples",
     "test": "test"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
+    "benchmark": "^1.0.0",
     "bluebird": "^2.9.13",
     "lodash": "^3.3.1",
     "mocha": "^2.2.1",
