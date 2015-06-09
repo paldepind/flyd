@@ -1,4 +1,3 @@
-var _ = require('lodash');
 var Benchmark = require('benchmark');
 
 var flyd = require('../flyd');
