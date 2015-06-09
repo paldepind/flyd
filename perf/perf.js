@@ -1,14 +1,11 @@
 var Benchmark = require('benchmark');
 
-var flyd = require('../flyd');
-var oldFlyd = require('../flyd-old');
 
-var stream = flyd.stream;
-
-global.stream = flyd.stream;
-global.flyd = flyd;
-global.oldFlyd = oldFlyd;
-global.oldStream = oldFlyd.stream;
+// Attach benchmarks' dependencies to the global
+// scope, since the current version of benchmark.js
+// doesn't allow for anything simpler
+global.stream    = require('../flyd').stream;
+global.oldStream = require('../flyd-old').stream;
 
 // ************************************************
 // Util functions
@@ -104,8 +101,6 @@ suites.push(Benchmark.Suite('static dependencies').add('New', {
 
 suites.push(Benchmark.Suite('map').add('First', {
   setup: function() {
-    var flyd = global.flyd;
-    var stream = global.flyd.stream;
     function f(x) { return x; }
     var s1 = stream();
     var s2 = s1.map(f);
@@ -118,8 +113,6 @@ suites.push(Benchmark.Suite('map').add('First', {
   },
 }).add('Second', {
   setup: function() {
-    var flyd = global.flyd;
-    var stream = global.flyd.stream;
     function f(x) { return x; }
     var s1 = stream();
     var s2 = s1.map(f);
