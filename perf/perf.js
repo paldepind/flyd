@@ -1,5 +1,5 @@
 var _ = require('lodash');
-var Benchmark = require('benchmark.js');
+var Benchmark = require('benchmark');
 
 var flyd = require('../flyd');
 var oldFlyd = require('../flyd-old');
