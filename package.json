@@ -17,7 +17,7 @@
     "transducers.js": "0.3.x"
   },
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
