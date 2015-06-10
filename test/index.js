@@ -3,7 +3,7 @@ var Promise = require('bluebird');
 var R = require('ramda');
 var t = require('transducers.js');
 
-var flyd = require('../flyd.js');
+var flyd = require('../lib');
 var stream = flyd.stream;
 
 describe('stream', function() {
