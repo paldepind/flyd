@@ -275,21 +275,11 @@ StreamTransformer.prototype['@@transducer/init'] = function() { };
 StreamTransformer.prototype['@@transducer/result'] = function() { };
 StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };
 
-// Own curry implementation snatched from Ramda
-// Figure out something nicer later on
-var _ = {placeholder: true};
-
-// Detect both own and Ramda placeholder
-function isPlaceholder(p) {
-  return p === _ || (p && p.ramda === 'placeholder');
-}
-
 module.exports = {
   stream: stream,
   isStream: isStream,
   transduce: transduce,
   merge: merge,
-  reduce: scan, // Legacy
   scan: scan,
   endsOn: endsOn,
   map: curryN(2, map),
