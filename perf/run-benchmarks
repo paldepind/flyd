@@ -15,7 +15,7 @@ OLD_VERSION_FILENAME_WITH_EXTENSION="$OLD_VERSION_FILENAME.js"
 
 
 # The first passed argument is the number of commits (in the
-# current branch)you want to 'undo' in order to get
+# current branch) you want to 'undo' in order to get
 # to the desired old version.
 # It defaults to 1.
 if [ "$1" -eq "$1" ] 2>/dev/null  &&  [ "$1" -gt "0" ] 2>/dev/null
