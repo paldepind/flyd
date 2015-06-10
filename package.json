@@ -7,9 +7,9 @@
     "example": "examples",
     "test": "test"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
+    "browserify": "^10.2.4",
     "bluebird": "^2.9.13",
     "lodash": "^3.3.1",
     "mocha": "^2.2.1",
@@ -17,6 +17,7 @@
     "transducers.js": "0.3.x"
   },
   "scripts": {
+    "build": "browserify -s flyd lib/index.js > flyd.js",
     "test": "./node_modules/mocha/bin/mocha"
   },
   "repository": {
