@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+## Retrieve older version of the source, to be compared
+## in performance against the current version.
+
+DIRECTORY_CONTAINING_THIS_SCRIPT=$( cd $(dirname $0) ; pwd -P )
+REPOSITORY_ROOT="$DIRECTORY_CONTAINING_THIS_SCRIPT/.."
+
+
+SOURCE_FILENAME="flyd"
+SOURCE_FILENAME_WITH_EXTENSION="$SOURCE_FILENAME.js"
+
+OLD_VERSION_FILENAME="$SOURCE_FILENAME-old"
+OLD_VERSION_FILENAME_WITH_EXTENSION="$OLD_VERSION_FILENAME.js"
+
+
+# The first passed argument is the number of commits (in the
+# current branch) you want to 'undo' in order to get
+# to the desired old version.
+# It defaults to 1.
+if [ "$1" -eq "$1" ] 2>/dev/null  &&  [ "$1" -gt "0" ] 2>/dev/null
+then
+    how_many_commits_back="$1"
+else
+    how_many_commits_back="1"
+fi
+
+
+# Leave a copy of the old version's source
+# in the root of the repository
+
+cd "$REPOSITORY_ROOT"
+
+git checkout HEAD~$how_many_commits_back -- $SOURCE_FILENAME_WITH_EXTENSION
+
+cp $SOURCE_FILENAME_WITH_EXTENSION $OLD_VERSION_FILENAME_WITH_EXTENSION
+
+git checkout HEAD -- $SOURCE_FILENAME_WITH_EXTENSION
+
+
+
+## Run the benchmarks
+cd "$DIRECTORY_CONTAINING_THIS_SCRIPT"
+
+node perf.js
+
+
+
+## Remove the old version of the source
+cd "$REPOSITORY_ROOT"
+
+rm $OLD_VERSION_FILENAME_WITH_EXTENSION
