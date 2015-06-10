@@ -389,17 +389,17 @@ function fastUpdate(s, n) {
       assert.equal(s1(), s2());
     });
   });
-  describe('reduce', function() {
+  describe('scan', function() {
     it('has initial acc as value when stream is undefined', function() {
       var numbers = stream();
-      var sum = flyd.reduce(function(sum, n) {
+      var sum = flyd.scan(function(sum, n) {
         return sum + n;
       }, 0, numbers);
       assert.equal(sum(), 0);
     });
     it('can sum streams of integers', function() {
       var numbers = stream();
-      var sum = flyd.reduce(function(sum, n) {
+      var sum = flyd.scan(function(sum, n) {
         return sum + n;
       }, 0, numbers);
       numbers(3)(2)(4)(10);
@@ -407,7 +407,7 @@ function fastUpdate(s, n) {
     });
     it('is curried', function() {
       var numbers = stream();
-      var sumStream = flyd.reduce(function(sum, n) {
+      var sumStream = flyd.scan(function(sum, n) {
         return sum + n;
       }, 0);
       var sum = sumStream(numbers);
