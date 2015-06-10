@@ -2,7 +2,7 @@
   "name": "flyd",
   "version": "0.1.10",
   "description": "The less is more, modular, functional reactive programming library",
-  "main": "flyd.js",
+  "main": "lib/index.js",
   "directories": {
     "example": "examples",
     "test": "test"
@@ -10,6 +10,7 @@
   "dependencies": {},
   "devDependencies": {
     "benchmark": "^1.0.0",
+    "browserify": "^10.2.4",
     "bluebird": "^2.9.13",
     "coveralls": "^2.11.2",
     "istanbul": "^0.3.15",
@@ -20,8 +21,9 @@
   },
   "scripts": {
     "test": "mocha",
-    "perf": "./perf/run-benchmarks"
-    "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage"
+    "perf": "./perf/run-benchmarks",
+    "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
+    "build": "browserify -s flyd lib/index.js > flyd.js"
   },
   "repository": {
     "type": "git",
