@@ -287,20 +287,6 @@ describe('stream', function() {
       var y = flyd.endsOn(killer1, stream([x], function(self) {
         return 2 * x();
       }));
-function fastUpdate(s, n) {
-  var i, list;
-  if (n !== undefined && n !== null && isFunction(n.then)) {
-    n.then(function(n) { fastUpdate(s, n); });
-  } else {
-    s.val = n;
-    s.hasVal = true;
-    for (i = 0; i < s.listeners.length; ++i) {
-      list = s.listeners[i];
-      if (list.end !== s) list.depsChanged[0] = s;
-      else endStream(list);
-    }
-  }
-}
       flyd.map(function() { ended = true; }, y.end);
       flyd.endsOn(killer2, y);
       killer2(true);
@@ -336,6 +322,21 @@ function fastUpdate(s, n) {
           }));
         }, 20);
       }));
+    });
+  });
+  describe('on', function() {
+    it('does not return stream', function() {
+      var s = flyd.stream();
+      var f = function() {};
+      assert.strictEqual(undefined, flyd.on(f, s));
+    });
+    it('is invoked when stream changes', function() {
+      var s = flyd.stream();
+      var result = [];
+      var f = function(val) { result.push(val); };
+      flyd.on(f, s);
+      s(1)(2);
+      assert.deepEqual(result, [1, 2]);
     });
   });
   describe('map', function() {

@@ -15,6 +15,10 @@ function map(f, s) {
   return stream([s], function(self) { self(f(s.val)); });
 }
 
+function on(f, s) {
+  stream([s], function() { f(s.val); });
+}
+
 function boundMap(f) { return map(f, this); }
 
 var scan = curryN(3, function(f, acc, s) {
@@ -283,6 +287,7 @@ module.exports = {
   scan: scan,
   endsOn: endsOn,
   map: curryN(2, map),
+  on: curryN(2, on),
   curryN: curryN,
   immediate: immediate,
 };
