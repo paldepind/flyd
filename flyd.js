@@ -66,10 +66,9 @@ function updateStream(s) {
     s(returnVal);
   }
   inStream = undefined;
-  if (s.depsChanged !== undefined) {
-    while (s.depsChanged.length > 0) s.depsChanged.shift();
-  }
+  if (s.depsChanged !== undefined) s.depsChanged = [];
   s.shouldUpdate = false;
+  if (flushing === false) flushUpdate();
 }
 
 var order = [];
@@ -87,8 +86,6 @@ function findDeps(s) {
 }
 
 function updateDeps(s) {
-  var wasFlushing = flushing;
-  flushing = true;
   var i, o, list, listeners = s.listeners;
   for (i = 0; i < listeners.length; ++i) {
     list = listeners[i];
@@ -105,14 +102,11 @@ function updateDeps(s) {
     if (o.shouldUpdate === true) updateStream(o);
     o.queued = false;
   }
-  flushing = wasFlushing;
-  if (wasFlushing === false) flushUpdate();
 }
 
 var flushing = false;
 
 function flushUpdate() {
-  if (flushing === true) return;
   flushing = true;
   while (toUpdate.length > 0) updateDeps(toUpdate.shift());
   flushing = false;
@@ -134,7 +128,9 @@ function updateStreamValue(s, n) {
   s.val = n;
   s.hasVal = true;
   if (inStream === undefined) {
+    flushing = true;
     updateDeps(s);
+    if (toUpdate.length > 0) flushUpdate(); else flushing = false;
   } else if (inStream === s) {
     markListeners(s, s.listeners);
   } else {
@@ -202,7 +198,6 @@ function immediate(s) {
   if (s.depsMet === false) {
     s.depsMet = true;
     updateStream(s);
-    flushUpdate();
   }
   return s;
 }
@@ -251,7 +246,6 @@ function stream(arg, fn) {
     addListeners(depEndStreams, endStream);
     endStream.deps = depEndStreams;
     updateStream(s);
-    flushUpdate();
   } else {
     s = createStream();
     s.end = endStream;
