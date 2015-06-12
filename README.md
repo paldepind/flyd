@@ -421,6 +421,21 @@ var numbers = flyd.stream(0);
 var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 ```
 
+###flyd.on(fn, s)
+
+Similair to `map` except is doesn't return a new stream. Use `on` for doing
+side effects in reaction to stream changes.
+
+__Signature__
+
+`(a -> result) -> Stream a -> undefined`
+
+__Example__
+```javascript
+var numbers = flyd.stream(0);
+flyd.on(function(n) { console.log('numbers changed to', n); }, numbers);
+```
+
 ###flyd.scan(fn, acc, stream)
 
 Creates a new stream with the results of calling the function on every incoming
