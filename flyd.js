@@ -121,6 +121,7 @@ function streamToString() {
 }
 
 function updateStreamValue(s, n) {
+  console.log('update');
   if (n !== undefined && n !== null && isFunction(n.then)) {
     n.then(s);
     return;
@@ -133,7 +134,9 @@ function updateStreamValue(s, n) {
     if (toUpdate.length > 0) flushUpdate(); else flushing = false;
   } else if (inStream === s) {
     markListeners(s, s.listeners);
-  } else {
+  } else if (s.queued === false) {
+    console.log('queue');
+    s.queued = true;
     toUpdate.push(s);
   }
 }
@@ -155,6 +158,7 @@ function markListeners(s, lists) {
 
 function createStream() {
   function s(n) {
+    console.log('holo');
     var i, list;
     if (arguments.length === 0) {
       return s.val;

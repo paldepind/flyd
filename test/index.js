@@ -672,6 +672,20 @@ describe('stream', function() {
       a(2);
       assert.deepEqual(result, [7, 10]);
     });
+    it('only queues one update', function() {
+      var result = [];
+      var a = stream();
+      var b = stream();
+      stream([b], function() { 
+        a(b());
+        a(b() + 1);
+      });
+      stream([a], function(self) {
+        result.push(a());
+      });
+      b(1);
+      assert.deepEqual(result, [2]);
+    });
     it('does not glitch', function() {
       var result = [];
       var s1 = stream(1);
