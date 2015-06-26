@@ -60,6 +60,7 @@ __Other features__
   implementation](http://jsfiddle.net/ksj51q5k/).
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
 * [Ramda transducer](https://github.com/paldepind/flyd/tree/master/examples/ramda-transducer)
+* [Who to follow](http://paldepind.github.io/flyd/examples/who-to-follow/)
 
 For other examples check the source code of the [modules](#modules).
 
