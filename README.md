@@ -626,6 +626,7 @@ will be added to this list.
   * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
   * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
+  * [flyd-onAnimationFrame](https://github.com/ThomWright/flyd-onAnimationFrame) - Emits values from a source stream on successive animation frames.
 
 ## Misc
 
