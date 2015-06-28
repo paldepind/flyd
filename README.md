@@ -622,11 +622,13 @@ will be added to this list.
 * [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
 * [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
 * [flyd-forwardto](https://github.com/paldepind/flyd-forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
+* [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
 * Time related
   * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
   * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
   * [flyd-onAnimationFrame](https://github.com/ThomWright/flyd-onAnimationFrame) - Emits values from a source stream on successive animation frames.
+  * [flyd-timeInterval](https://github.com/ThomWright/flyd-timeInterval) - Records the time interval between consecutive values emitted from a stream.
 
 ## Misc
 
