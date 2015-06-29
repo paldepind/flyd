@@ -1,7 +1,7 @@
 {
   "name": "flyd",
   "main": "flyd.js",
-  "version": "0.0.1",
+  "version": "0.1.14",
   "homepage": "https://github.com/paldepind/flyd",
   "authors": [
     "Simon Friis Vindum"
