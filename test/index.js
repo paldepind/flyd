@@ -204,6 +204,22 @@ describe('stream', function() {
     n(4)(6)(2)(8)(3)(4);
     assert.deepEqual(result, [6, 8]);
   });
+  it('can set another stream\'s value multiple times from inside a stream', function() {
+    var result = [];
+    var a = stream();
+    var b = stream();
+    stream([b], function() {
+      a(b());
+      a();
+      a(b() + 1);
+      assert.equal(a(), 2);
+    });
+    stream([a], function(self) {
+      result.push(a());
+    });
+    b(1);
+    assert.deepEqual(result, [1, 2]);
+  });
   describe('ending a stream', function() {
     it('works for streams without dependencies', function() {
       var s = stream(1);
@@ -671,20 +687,6 @@ describe('stream', function() {
       });
       a(2);
       assert.deepEqual(result, [7, 10]);
-    });
-    it('only queues one update', function() {
-      var result = [];
-      var a = stream();
-      var b = stream();
-      stream([b], function() { 
-        a(b());
-        a(b() + 1);
-      });
-      stream([a], function(self) {
-        result.push(a());
-      });
-      b(1);
-      assert.deepEqual(result, [2]);
     });
     it('does not glitch', function() {
       var result = [];
