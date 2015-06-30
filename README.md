@@ -624,6 +624,7 @@ will be added to this list.
 * [flyd-forwardto](https://github.com/paldepind/flyd-forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
 * [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
 * [flyd-droprepeats](https://github.com/raine/flyd-droprepeats) - Drop repeated values from a stream.
+* [flyd-keyboard](https://github.com/raine/flyd-keyboard) - Keyboard events as streams
 * Time related
   * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
   * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
