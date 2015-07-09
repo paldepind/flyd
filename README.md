@@ -240,7 +240,7 @@ the original stream produces its first value.
 
 Flyd includes a similar `map` function as part of its core.
 
-### Scaning a stream
+### Scanning a stream
 
 Lets try something else: a scan function for accumulating a stream! It could
 look like this:
