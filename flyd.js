@@ -108,7 +108,11 @@ var flushing = false;
 
 function flushUpdate() {
   flushing = true;
-  while (toUpdate.length > 0) updateDeps(toUpdate.shift());
+  while (toUpdate.length > 0) {
+    var s = toUpdate.shift();
+    if (s.vals.length > 0) s.val = s.vals.shift();
+    updateDeps(s);
+  }
   flushing = false;
 }
 
@@ -121,7 +125,6 @@ function streamToString() {
 }
 
 function updateStreamValue(s, n) {
-  console.log('update');
   if (n !== undefined && n !== null && isFunction(n.then)) {
     n.then(s);
     return;
@@ -134,9 +137,8 @@ function updateStreamValue(s, n) {
     if (toUpdate.length > 0) flushUpdate(); else flushing = false;
   } else if (inStream === s) {
     markListeners(s, s.listeners);
-  } else if (s.queued === false) {
-    console.log('queue');
-    s.queued = true;
+  } else {
+    s.vals.push(n);
     toUpdate.push(s);
   }
 }
@@ -158,7 +160,6 @@ function markListeners(s, lists) {
 
 function createStream() {
   function s(n) {
-    console.log('holo');
     var i, list;
     if (arguments.length === 0) {
       return s.val;
@@ -169,6 +170,7 @@ function createStream() {
   }
   s.hasVal = false;
   s.val = undefined;
+  s.vals = [];
   s.listeners = [];
   s.queued = false;
   s.end = undefined;
