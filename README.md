@@ -185,7 +185,7 @@ var sum = flyd.stream([x, y], function(sum, changed) {
 Instead of returning a value a stream can update itself by calling itself. This
 is handy when working with APIs that takes callbacks.
 
-```
+```javascript
 var urls = flyd.stream('/something.json');
 var responses = flyd.stream([urls], function(resp) {
   makeRequest(urls(), resp);
