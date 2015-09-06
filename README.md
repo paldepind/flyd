@@ -612,28 +612,27 @@ var m = n.of(1);
 If you're created a module for Flyd open an issue or send a pull request and it
 will be added to this list.
 
-* [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
-* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ parameters over _n_ streams.
-* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
-* [flyd-switchlatest](https://github.com/paldepind/flyd-switchlatest) – Flattens a stream of streams. The result stream reflects changes from the last stream only.
-* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keep values from one stream only when another stream is true.
-* [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
-* [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
-* [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
-* [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
-* [flyd-forwardto](https://github.com/paldepind/flyd-forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
+* [flyd/module/filter](module/filter) – Filter values from stream based on predicate.
+* [flyd/module/lift](module/lift) – Maps a function taking _n_ parameters over _n_ streams.
+* [flyd/module/flatmap](module/flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
+* [flyd/module/switchlatest](module/switchlatest) – Flattens a stream of streams. The result stream reflects changes from the last stream only.
+* [flyd/module/keepwhen](module/keepwhen) – Keep values from one stream only when another stream is true.
+* [flyd/module/obj](module/obj) – Functions for working with stream in objects.
+* [flyd/module/sampleon](module/sampleon) – Samples from a stream every time an event occurs on another stream.
+* [flyd/module/scanmerge](module/scanmerge) – Merge and scan several streams into one.
+* [flyd/module/takeuntil](module/takeuntil) – Emit values from a stream until a second stream emits a value.
+* [flyd/module/forwardto](module/forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
 * [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
-* [flyd-droprepeats](https://github.com/raine/flyd-droprepeats) - Drop repeated values from a stream.
+* [flyd/module/droprepeats](module/droprepeats) - Drop repeated values from a stream.
 * [flyd-keyboard](https://github.com/raine/flyd-keyboard) - Keyboard events as streams
 * Time related
-  * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
-  * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
-  * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
+  * [flyd/module/every](module/every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
+  * [flyd/module/aftersilence](module/aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
+  * [flyd/module/inlast](module/inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
   * [flyd-onAnimationFrame](https://github.com/ThomWright/flyd-onAnimationFrame) - Emits values from a source stream on successive animation frames.
   * [flyd-timeInterval](https://github.com/ThomWright/flyd-timeInterval) - Records the time interval between consecutive values emitted from a stream.
 
 ## Misc
-
 
 ### The name
 
