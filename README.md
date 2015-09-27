@@ -424,12 +424,13 @@ var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 
 ###flyd.on(fn, s)
 
-Similair to `map` except is doesn't return a new stream. Use `on` for doing
-side effects in reaction to stream changes.
+Similair to `map` except that the returned stream is empty. Use `on` for doing
+side effects in reaction to stream changes. Use the returned stream only if you
+need to manually end it.
 
 __Signature__
 
-`(a -> result) -> Stream a -> undefined`
+`(a -> result) -> Stream a -> Stream undefined`
 
 __Example__
 ```javascript
