@@ -341,11 +341,6 @@ describe('stream', function() {
     });
   });
   describe('on', function() {
-    it('does not return stream', function() {
-      var s = flyd.stream();
-      var f = function() {};
-      assert.strictEqual(undefined, flyd.on(f, s));
-    });
     it('is invoked when stream changes', function() {
       var s = flyd.stream();
       var result = [];
