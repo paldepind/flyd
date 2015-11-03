@@ -738,5 +738,22 @@ describe('stream', function() {
         [], [1, 3, 2], [2, 8, 7, 6], [3, 5, 4]
       ]);
     });
+    it('should call dependent streams with dependencies', function()
+    {
+      var result = [];
+      var a = flyd.stream();
+      var b = flyd.stream(0);
+      var dependent = flyd.stream([a, b], function(d, changed, a, b)
+      {
+        result.push(a());
+        result.push(b());
+      });
+      a(1)(2);
+      b(3);
+      a(4);
+      assert.deepEqual(result, [
+        1, 0, 2, 0, 2, 3, 4, 3
+      ]);
+    })
   });
 });
