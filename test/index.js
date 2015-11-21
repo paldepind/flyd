@@ -745,4 +745,75 @@ describe('stream', function() {
       ]);
     });
   });
+  
+  // Maintaining test coverage for deprecated parts of the library
+  describe('deprecated patterns', function()
+  {
+    it('does atomic updates', function() {
+      var result = [];
+      var a = stream(1);
+      var b = stream([a], function() { return a() * 2; });
+      var c = stream([a], function() { return a() + 4; });
+      var d = stream([b, c], function(self, ch) {
+        result.push(b() + c());
+      });
+      a(2);
+      assert.deepEqual(result, [7, 10]);
+    });
+    it('does not glitch', function() {
+      var result = [];
+      var s1 = stream(1);
+      var s1x2 = flyd.map(function(n) { return n*2; }, s1);
+      var s2 = stream([s1, s1x2], function() { return s1() + s1x2(); });
+      var s1x4 = stream([s1, s2], function() { return s1() + s2(); });
+      flyd.map(function(n) { result.push(n); }, s1x4);
+      s1(2)(3)(4);
+      assert.deepEqual(result, [4, 8, 12, 16]);
+    });
+    it('handles complex dependency graph', function() {
+      var result = [];
+      var a = flyd.stream();
+      var b = flyd.stream([a], function bs() { return a() + 1; });
+      var c = flyd.stream([a], function cs() { return a() + 2; });
+      var d = flyd.stream([c], function ds() { return c() + 3; });
+      var e = flyd.stream([b, d], function res(){
+        return b() + d();
+      });
+      flyd.map(function(v) { result.push(v); }, e);
+      a(1)(5)(11);
+      assert.deepEqual(result, [8, 16, 28]);
+    });
+    it('handles another complex dependency graph', function() {
+      var result = [];
+      var a = flyd.stream();
+      var b = flyd.stream([a], function() { return a() + 1; });
+      var c = flyd.stream([a], function() { return a() + 2; });
+      var d = flyd.stream([a], function() { return a() + 4; });
+      var e = flyd.stream([b, c, d], function() { return b() + c() + d(); });
+      flyd.map(function(v) { result.push(v); }, e);
+      a(1)(2)(3);
+      assert.deepEqual(result, [10, 13, 16]);
+    });
+    it('is called with all changed dependencies', function() {
+      var result = [];
+      var a = flyd.stream(0);
+      var b = flyd.stream([a], function() { return a() + 1; });
+      var c = flyd.stream([a], function() { return a() + 2; });
+
+      var d = flyd.stream(0);
+      var e = flyd.stream([d], function() { return d() + 4; });
+      var f = flyd.stream([d], function() { return d() + 5; });
+      var g = flyd.stream([d], function() { return d() + 6; });
+
+      var h = flyd.stream([a, b, c, d, e, f, g], function(self, changed) {
+        var vals = changed.map(function(s) { return s(); });
+        result.push(vals);
+        return 1;
+      });
+      a(1); d(2); a(3);
+      assert.deepEqual(result, [
+        [], [1, 3, 2], [2, 8, 7, 6], [3, 5, 4]
+      ]);
+    });
+  });
 });
