@@ -2,7 +2,7 @@ var assert = require('assert');
 var flyd = require('flyd');
 var stream = flyd.stream;
 
-var scanMerge = require('../scanmerge');
+var scanMerge = require('../index');
 
 describe('scanMerge', function() {
   it('scans and merges multiple streams', function() {

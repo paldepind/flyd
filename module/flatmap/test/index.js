@@ -1,7 +1,7 @@
 var assert = require('assert');
-var flyd = require('flyd');
+var flyd = require('../../../flyd');
 var stream = flyd.stream;
-var flatMap = require('../flatmap.js');
+var flatMap = require('../index.js');
 
 describe('flatMap', function() {
   it('applies function to values in stream', function() {

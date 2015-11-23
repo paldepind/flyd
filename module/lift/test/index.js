@@ -1,7 +1,7 @@
 var assert = require('assert');
 var flyd = require('flyd');
 var stream = flyd.stream;
-var lift = require('../flyd-lift.js');
+var lift = require('../index.js');
 
 describe('lift', function() {
   it('applies a function to two streams', function() {

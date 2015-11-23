@@ -1,8 +1,8 @@
 var assert = require('assert');
-var flyd = require('flyd');
+var flyd = require('../../flyd');
 var stream = flyd.stream;
 
-var inLast = require('../inlast.js');
+var inLast = require('../index.js');
 
 describe('inLast', function() {
   it('adds values', function(done) {

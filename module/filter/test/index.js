@@ -1,7 +1,7 @@
 var assert = require('assert');
-var flyd = require('flyd');
+var flyd = require('../../../flyd');
 
-var filter = require('../filter.js');
+var filter = require('../index.js');
 
 describe('filter', function() {
   it('only lets values passing the filter through', function() {

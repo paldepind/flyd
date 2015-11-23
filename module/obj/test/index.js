@@ -2,7 +2,7 @@ var assert = require('assert');
 var flyd = require('flyd');
 var stream = flyd.stream;
 
-var obj = require('../obj.js');
+var obj = require('../index.js');
 
 describe('stream props', function() {
   it('converts the properties in an object to streams', function() {

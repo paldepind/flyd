@@ -2,7 +2,7 @@ var assert = require('assert');
 var flyd = require('flyd');
 var stream = flyd.stream;
 
-var sampleOn = require('../sampleon.js');
+var sampleOn = require('../index.js');
 
 describe('sample On', function() {
   it('samples from second stream', function() {

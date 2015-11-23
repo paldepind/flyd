@@ -1,8 +1,8 @@
-var flyd = require('../../flyd/flyd.js');
+var flyd = require('../../../flyd');
 var stream = flyd.stream;
 var assert = require('assert');
 
-var switchLatest = require('../switchlatest.js');
+var switchLatest = require('../index.js');
 
 describe('takeUntil', function() {
   it('emits values from first stream in stream', function() {

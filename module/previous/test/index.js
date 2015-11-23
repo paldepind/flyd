@@ -2,7 +2,7 @@ var assert = require('assert');
 var flyd = require('flyd');
 var stream = flyd.stream;
 
-var previous = require('../previous.js');
+var previous = require('../index.js');
 
 describe('previous', function() {
   it('is always one value behind the source stream', function() {
