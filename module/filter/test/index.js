@@ -3,11 +3,12 @@ var flyd = require('../../../flyd');
 
 var filter = require('../index.js');
 
+function over5(n) {
+  return n > 5;
+}
+
 describe('filter', function() {
   it('only lets values passing the filter through', function() {
-    function over5(n) {
-      return n > 5;
-    }
     var result = [];
     var numbers = flyd.stream();
     var largeNumbers = filter(over5, numbers);
@@ -16,5 +17,9 @@ describe('filter', function() {
     }, largeNumbers);
     numbers(2)(6)(5)(3)(7)(10)(5);
     assert.deepEqual(result, [6, 7, 10]);
+  });
+  it('is curried', function() {
+    var numbers = flyd.stream();
+    var largeNumbers = filter(over5)(numbers);
   });
 });
