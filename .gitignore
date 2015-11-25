@@ -5,5 +5,5 @@ logs
 
 # Dependency directory
 node_modules
-
+bower_components
 
