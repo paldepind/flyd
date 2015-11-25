@@ -1,5 +1,5 @@
 var assert = require('assert');
-var flyd = require('../../../flyd');
+var flyd = require('../../../lib');
 
 var filter = require('../index.js');
 
