@@ -1,6 +1,6 @@
 var assert = require('assert');
-var flyd = require('flyd');
-var every = require('../every.js');
+var flyd = require('../../../flyd');
+var every = require('../index.js');
 
 describe('every', function() {
   var e;

@@ -1,9 +1,9 @@
 var assert = require('assert');
-var flyd = require('flyd');
-var forwardTo = require('../forwardto.js');
+var flyd = require('../../../flyd');
+var forwardTo = require('../index.js');
 
 describe('forwardTo', function() {
-  it('forwads values', function() {
+  it('forwards values', function() {
     var result = [];
     var target = flyd.stream();
     function fn1(v) { result.push(v); }

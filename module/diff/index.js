@@ -1,6 +1,6 @@
 var flyd = require('flyd');
 
-var previous = require('flyd/module/previous');
+var previous = require('../previous');
 
 module.exports = function (diffFunc, s) {
   var prevS = previous(s);

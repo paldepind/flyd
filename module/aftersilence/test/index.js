@@ -1,8 +1,8 @@
 var assert = require('assert');
-var flyd = require('flyd');
+var flyd = require('../../../flyd');
 var stream = flyd.stream;
 
-var afterSilence = require('../aftersilence.js');
+var afterSilence = require('../index.js');
 
 // KISS way of testing time dependent code :)
 

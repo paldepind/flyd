@@ -2,7 +2,7 @@ var assert = require('assert');
 var flyd = require('flyd');
 var stream = flyd.stream;
 
-var keepWhen = require('../keepwhen.js');
+var keepWhen = require('../index.js');
 
 describe('keepWhen', function() {
   it('keeps values from second stream when first is true', function() {
