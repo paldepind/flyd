@@ -117,10 +117,11 @@ down the `messages` stream.
 
 ### Dependent streams
 
-Streams can depend on other streams. Instead of calling `stream` with a value
-as in the above examples we can pass it a list of dependencies and a function.
-The function should produce a value based on its dependencies. This new
-returned value results in a new stream.
+Streams can depend on other streams. Use `var combined = flyd.combine(combineFn, [a, b, c, ...])`.
+The `combineFn` function will be called as `(a, b, c, ..., self, changed) => v`,
+where `a, b, c, ...` is a spread of each dependency, `self` is a reference to the
+combine stream itself, and `changed` is an array of streams that were atomically
+updated.
 
 Flyd automatically updates the stream whenever a dependency changes.  This
 means that the `sum` function below will be called whenever `x` and `y`
@@ -133,9 +134,9 @@ var x = flyd.stream(4);
 var y = flyd.stream(6);
 // Create a stream that depends on the two previous streams
 // and with its value given by the two added together.
-var sum = flyd.stream([x, y], function() {
+var sum = flyd.combine(function(x, y) {
   return x() + y();
-});
+}, [x, y]);
 // `sum` is automatically recalculated whenever the streams it depends on changes.
 x(12);
 console.log(sum()); // logs 18
@@ -178,6 +179,12 @@ var sum = flyd.combine(function(x, y, self, changed) {
   });
   return x() + y();
 }, [x, y]);
+```
+
+*Note* Returning `undefined` in the `combineFn` will not trigger an upodate
+to the stream. To trigger on undefined, update directly:
+```
+flyd.combine((_, self, changed) => { self(undefined); }, [depStream]);
 ```
 
 ### Using callback APIs for asynchronous operations
@@ -652,11 +659,11 @@ Consider the following example:
 
 ```javascript
 var a = flyd.stream(1);
-var b = flyd.stream([a], function() { return a() * 2; });
-var c = flyd.stream([a], function() { return a() + 4; });
-var d = flyd.stream([b, c], function(self, ch) {
+var b = flyd.combine(function(a) { return a() * 2; }, [a]);
+var c = flyd.combine(function(a) { return a() + 4; }, [a]);
+var d = flyd.combine(function(b, c, self, ch) {
   result.push(b() + c());
-});
+}, [b, c]);
 ```
 
 The dependency graph looks like this.
