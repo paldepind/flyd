@@ -432,6 +432,16 @@ describe('stream', function() {
       numbers(3)(2)(4)(10);
       assert.equal(sum(), 19);
     });
+    it('passes undefined', function() {
+      var x = stream();
+      var scan = flyd.scan(function(acc, x){
+        return acc.concat([x]);
+      }, [], x);
+      
+      x(1)(2)(undefined)(3)(4);
+      
+      assert.deepEqual(scan(), [1, 2, undefined, 3, 4]);
+    });
   });
   
   describe('merge', function() {
@@ -455,6 +465,22 @@ describe('stream', function() {
       flyd.map(function(v) { result.push(v); }, s1and2);
       s1(12)(2); s2(4)(44); s1(1); s2(12)(2);
       assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
+    });
+    it('should pass defined undefined along', function(){
+      var s1 = stream();
+      var s2 = stream(undefined);
+      var merged = flyd.merge(s1, s2);
+      
+      assert.equal(merged(), undefined);
+      
+      s1(25);
+      assert.equal(merged(), 25);
+      
+      s1(undefined);
+      assert.equal(merged(), undefined);
+      
+      s2(15);
+      assert.equal(merged(), 15);
     });
     it('ends only when both merged streams have ended', function() {
       var result = [];
