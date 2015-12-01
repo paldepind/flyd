@@ -482,6 +482,15 @@ describe('stream', function() {
       s2(15);
       assert.equal(merged(), 15);
     });
+    it('should work for s1 being defined first', function(){
+      var s1 = stream(undefined);
+      var s2 = stream();
+      var merged = flyd.merge(s1, s2);
+      assert.equal(merged(), undefined);
+      
+      s1(25);
+      assert.equal(merged(), 25);
+    });
     it('ends only when both merged streams have ended', function() {
       var result = [];
       var s1 = stream();
