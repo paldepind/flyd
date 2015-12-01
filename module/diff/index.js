@@ -1,10 +1,10 @@
-var flyd = require('flyd');
+var flyd = require('../../lib');
 
 var previous = require('../previous');
 
 module.exports = function (diffFunc, s) {
   var prevS = previous(s);
-  return flyd.stream([s, prevS], function (self) {
+  return flyd.combine(function (self) {
     return diffFunc(prevS(), s());
-  });
+  }, [s, prevS]);
 };

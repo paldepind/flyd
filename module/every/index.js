@@ -1,4 +1,4 @@
-var flyd = require('flyd');
+var flyd = require('../../lib');
 
 module.exports = function(dur) {
   var s = flyd.stream();

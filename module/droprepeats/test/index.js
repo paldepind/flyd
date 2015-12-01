@@ -1,9 +1,9 @@
-var flyd = require('../../../flyd');
+var flyd = require('../../../lib');
 var stream = flyd.stream;
 var dropRepeats = require('../').dropRepeats;
 var dropRepeatsWith = require('../').dropRepeatsWith;
 var R = require('ramda');
-var assert = require('chai').assert;
+var assert = require('assert');
 
 var collect = flyd.scan(R.flip(R.append), []);
 

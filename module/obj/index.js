@@ -1,4 +1,4 @@
-var flyd = require('flyd');
+var flyd = require('../../lib');
 
 function isPlainObject(obj) {
   return obj !== null && typeof obj === 'object' && Object.getPrototypeOf(obj) === Object.prototype;
@@ -32,9 +32,9 @@ var stream = function(obj) {
          : flyd.isStream(obj[key]) ? obj[key]
                                    : flyd.stream(obj[key]);
   });
-  return flyd.stream(streams, function() {
+  return flyd.combine(function() {
     return extractProps(obj);
-  });
+  }, streams);
 };
 
 module.exports = {

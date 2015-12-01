@@ -1,11 +1,11 @@
-var flyd = require('flyd');
+var flyd = require('../../lib');
 
 module.exports = function (s) {
   var previousValue;
-  return flyd.stream([s], skipFirstCall(function (self) {
+  return flyd.combine(skipFirstCall(function(s, self) {
     self(previousValue);
     previousValue = s();
-  }));
+  }), [s]);
 };
 
 function skipFirstCall (func) {

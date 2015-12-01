@@ -1,13 +1,13 @@
-var flyd = require('flyd');
+var flyd = require('../../lib');
 
 function dropRepeatsWith(eq, s) {
   var prev;
-  return flyd.stream([s], function(self) {
+  return flyd.combine(function(s, self) {
     if (!eq(s.val, prev)) {
       self(s.val);
       prev = s.val;
     }
-  });
+  }, [s]);
 }
 
 exports.dropRepeats = function(s) {

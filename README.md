@@ -117,10 +117,11 @@ down the `messages` stream.
 
 ### Dependent streams
 
-Streams can depend on other streams. Instead of calling `stream` with a value
-as in the above examples we can pass it a list of dependencies and a function.
-The function should produce a value based on its dependencies. This new
-returned value results in a new stream.
+Streams can depend on other streams. Use `var combined = flyd.combine(combineFn, [a, b, c, ...])`.
+The `combineFn` function will be called as `(a, b, c, ..., self, changed) => v`,
+where `a, b, c, ...` is a spread of each dependency, `self` is a reference to the
+combine stream itself, and `changed` is an array of streams that were atomically
+updated.
 
 Flyd automatically updates the stream whenever a dependency changes.  This
 means that the `sum` function below will be called whenever `x` and `y`
@@ -133,9 +134,9 @@ var x = flyd.stream(4);
 var y = flyd.stream(6);
 // Create a stream that depends on the two previous streams
 // and with its value given by the two added together.
-var sum = flyd.stream([x, y], function() {
+var sum = flyd.combine(function(x, y) {
   return x() + y();
-});
+}, [x, y]);
 // `sum` is automatically recalculated whenever the streams it depends on changes.
 x(12);
 console.log(sum()); // logs 18
@@ -149,18 +150,18 @@ Naturally, a stream with dependencies can depend on other streams with dependenc
 // Create two streams of numbers
 var x = flyd.stream(4);
 var y = flyd.stream(6);
-var squareX = flyd.stream([x], function() {
+var squareX = flyd.combine(function(x) {
   return x() * x();
-});
-var squareXPlusY = flyd.stream([y, squareX], function() {
+}, [x]);
+var squareXPlusY = flyd.combine(function(y, squareX) {
   return y() + squareX();
-});
+}, [y, squareX]);
 console.log(squareXPlusY()); // logs 22
 x(2);
 console.log(squareXPlusY()); // logs 10
 ```
 
-The body of a dependent stream is called with two parameters: itself and a list
+The body of a dependent stream is called with the spread of: each dependency, itself, and a list
 of the dependencies that have changed since its last invocation (due to [atomic
 updates](#atomic-updates) several streams could have changed).
 
@@ -168,16 +169,22 @@ updates](#atomic-updates) several streams could have changed).
 // Create two streams of numbers
 var x = flyd.stream(1);
 var y = flyd.stream(2);
-var sum = flyd.stream([x, y], function(sum, changed) {
+var sum = flyd.combine(function(x, y, self, changed) {
   // The stream can read from itself
-  console.log('Last sum was ' + sum());
+  console.log('Last sum was ' + self());
   // On the initial call no streams has changed and `changed` will be []
   changed.map(function(s) {
     var changedName = (s === y ? 'y' : 'x');
     console.log(changedName + ' changed to ' + s());
   });
   return x() + y();
-});
+}, [x, y]);
+```
+
+*Note* Returning `undefined` in the `combineFn` will not trigger an upodate
+to the stream. To trigger on undefined, update directly:
+```
+flyd.combine((_, self, changed) => { self(undefined); }, [depStream]);
 ```
 
 ### Using callback APIs for asynchronous operations
@@ -187,13 +194,13 @@ is handy when working with APIs that takes callbacks.
 
 ```javascript
 var urls = flyd.stream('/something.json');
-var responses = flyd.stream([urls], function(resp) {
-  makeRequest(urls(), resp);
-});
-flyd.stream([responses], function() {
+var responses = flyd.combine(function(urls, self) {
+  makeRequest(urls(), self);
+}, [urls]);
+flyd.combine(function(responses) {
   console.log('Received response!');
   console.log(responses());
-});
+}, [responses]);
 ```
 
 Note that the stream that logs the responses from the server should only be called
@@ -213,10 +220,10 @@ var urls = flyd.stream('/something.json');
 var responses = flyd.stream(function() {
   return requestPromise(urls());
 });
-flyd.stream([responses], function() {
+flyd.combine(function(responses) {
   console.log('Received response!');
   console.log(responses());
-});
+}, [responses]);
 ```
 
 ### Mapping over a stream
@@ -228,9 +235,9 @@ emitted by the stream. In short, a `map` function.
 
 ```javascript
 var mapStream = function(f, s) {
-  return flyd.stream([s], function() {
+  return flyd.combine(function(s) {
     return f(s());
-  });
+  }, [s]);
 };
 ```
 
@@ -247,10 +254,10 @@ look like this:
 
 ```javascript
 var scanStream = function(f, acc, s) {
-  return flyd.stream([s], function() {
+  return flyd.combine(function(s) {
     acc = f(acc, s());
     return acc;
-  });
+  }, [s]);
 };
 ```
 
@@ -283,9 +290,9 @@ the end streams of its dependencies:
 ```javascript
 var n1 = flyd.stream();
 var n2 = flyd.stream();
-var sum = flyd.stream([n1, n2], function() {
+var sum = flyd.combine(function(n1, n2) {
   return n1() + n2();
-});
+}, [n1, n2]);
 ```
 
 `sum.end` now depends on `n1.end` and `n2.end`. This means that whenever one of
@@ -296,9 +303,9 @@ You can change what a stream's end stream depends on with `flyd.endsOn`:
 ```javascript
 var number = flyd.stream(2);
 var killer = flyd.stream();
-var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream([number], function() {
+var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream(function(number) {
   return number() * number();
-}));
+}, [number]));
 ```
 
 Now `square` will end if either `number` ends or if `killer` emits a value.
@@ -329,21 +336,21 @@ var n = flyd.stream(1); // Stream with initial value `1`
 var s = flyd.stream(); // Stream with no initial value
 ```
 
-### flyd.stream(dependencies, body)
+### flyd.combine(body, dependencies)
 
 Creates a new dependent stream.
 
 __Signature__
 
-`[Stream *] -> (Stream b -> [Stream *] -> b) -> Stream b`
+`(...Stream * -> Stream b -> b) -> [Stream *] -> Stream b`
 
 __Example__
 ```javascript
 var n1 = flyd.stream(0);
 var n2 = flyd.stream(0);
-var max = flyd.stream([n1, n2], function(self, changed) {
+var max = flyd.combine(function(n1, n2, self, changed) {
   return n1() > n2() ? n1() : n2();
-});
+}, [n1, n2]);
 ```
 
 ###flyd.isStream(stream)
@@ -377,9 +384,9 @@ __Example__
 
 ```javascript
 var s = flyd.stream();
-var hasItems = flyd.immediate(flyd.stream([s], function() {
+var hasItems = flyd.immediate(flyd.stream(function(s) {
   return s() !== undefined && s().length > 0;
-});
+}, [s]);
 console.log(hasItems()); // logs `false`. Had `immediate` not been
                          // used `hasItems()` would've returned `undefined`
 s([1]);
@@ -402,9 +409,9 @@ __Example__
 var n = flyd.stream(1);
 var killer = flyd.stream();
 // `double` ends when `n` ends or when `killer` emits any value
-var double = flyd.endsOn(flyd.merge(n.end, killer), flyd.stream([n], function() {
+var double = flyd.endsOn(flyd.merge(n.end, killer), flyd.combine(function(n) {
   return 2 * n();
-});
+}, [n]);
 ```
 
 ###flyd.map(fn, s)
@@ -493,7 +500,7 @@ var tx = t.compose(
   t.dedupe()
 );
 var s2 = flyd.transduce(tx, s1);
-flyd.stream([s2], function() { results.push(s2()); });
+flyd.combine(function(s2) { results.push(s2()); }, [s2]);
 s1(1)(1)(2)(3)(3)(3)(4);
 results; // [2, 4, 6, 8]
 ```
@@ -652,11 +659,11 @@ Consider the following example:
 
 ```javascript
 var a = flyd.stream(1);
-var b = flyd.stream([a], function() { return a() * 2; });
-var c = flyd.stream([a], function() { return a() + 4; });
-var d = flyd.stream([b, c], function(self, ch) {
+var b = flyd.combine(function(a) { return a() * 2; }, [a]);
+var c = flyd.combine(function(a) { return a() + 4; }, [a]);
+var d = flyd.combine(function(b, c, self, ch) {
   result.push(b() + c());
-});
+}, [b, c]);
 ```
 
 The dependency graph looks like this.

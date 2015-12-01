@@ -1,8 +1,8 @@
-var flyd = require('../../flyd/flyd.js');
+var flyd = require('../../../lib');
 var stream = flyd.stream;
 var assert = require('assert');
 
-var takeUntil = require('../takeuntil.js');
+var takeUntil = require('../index');
 
 describe('takeUntil', function() {
   it('emits values from first stream', function() {

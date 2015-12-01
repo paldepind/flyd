@@ -1,5 +1,5 @@
 var assert = require('assert');
-var flyd = require('../../../flyd');
+var flyd = require('../../../lib');
 var forwardTo = require('../index.js');
 
 describe('forwardTo', function() {
