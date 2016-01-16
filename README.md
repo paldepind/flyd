@@ -303,7 +303,7 @@ You can change what a stream's end stream depends on with `flyd.endsOn`:
 ```javascript
 var number = flyd.stream(2);
 var killer = flyd.stream();
-var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream(function(number) {
+var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.combine(function(number) {
   return number() * number();
 }, [number]));
 ```
@@ -384,7 +384,7 @@ __Example__
 
 ```javascript
 var s = flyd.stream();
-var hasItems = flyd.immediate(flyd.stream(function(s) {
+var hasItems = flyd.immediate(flyd.combine(function(s) {
   return s() !== undefined && s().length > 0;
 }, [s]);
 console.log(hasItems()); // logs `false`. Had `immediate` not been
