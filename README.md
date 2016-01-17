@@ -217,13 +217,11 @@ fulfilled value of the promise will be sent down the stream.
 
 ```javascript
 var urls = flyd.stream('/something.json');
-var responses = flyd.stream(function() {
-  return requestPromise(urls());
-});
-flyd.combine(function(responses) {
+var responses = flyd.stream(requestPromise(urls()));
+flyd.on(function(responses) {
   console.log('Received response!');
   console.log(responses());
-}, [responses]);
+}, responses);
 ```
 
 ### Mapping over a stream
