@@ -7,7 +7,7 @@ var diff = require('../index.js');
 describe('diff', function() {
   it('calls the diff function with the previous and new value', function() {
     var s = stream(1);
-    var returnArguments = function () {
+    var returnArguments = function() {
       return Array.prototype.slice.call(arguments);
     };
     var d = diff(returnArguments, s);
@@ -19,7 +19,7 @@ describe('diff', function() {
     var s = stream();
     var calls = 0;
     flyd.on();
-    var d = diff(function () { calls += 1; }, s);
+    diff(function() { calls += 1; }, s);
     s(1);
     assert.equal(calls, 0);
     s(2);

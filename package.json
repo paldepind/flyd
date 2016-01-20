@@ -22,6 +22,7 @@
   },
   "scripts": {
     "test": "mocha",
+    "test-all": "eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
     "perf": "./perf/run-benchmarks",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "build": "browserify -s flyd lib/index.js > flyd.js"

@@ -20,7 +20,7 @@ describe('flatMap', function() {
     function f(v) {
       var s = stream();
       setImmediate(function() {
-        s(v+1)(v+2)(v+3);
+        s(v + 1)(v + 2)(v + 3);
       });
       return s;
     }

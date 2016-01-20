@@ -1,6 +1,6 @@
 var flyd = require('../../lib');
 
-module.exports = function (s) {
+module.exports = function(s) {
   var previousValue;
   return flyd.combine(skipFirstCall(function(s, self) {
     self(previousValue);
@@ -8,11 +8,11 @@ module.exports = function (s) {
   }), [s]);
 };
 
-function skipFirstCall (func) {
-  var functionToCall = function () {
+function skipFirstCall(func) {
+  var functionToCall = function() {
     functionToCall = func;
   }
-  return function () {
+  return function() {
     return functionToCall.apply(this, arguments);
   }
 }

@@ -16,7 +16,7 @@ describe('previous', function() {
     var s = stream();
     var p = previous(s);
     var calls = 0;
-    flyd.on(function () { calls += 1; }, p);
+    flyd.on(function() { calls += 1; }, p);
     s(1);
     assert.equal(calls, 0);
     s(2);

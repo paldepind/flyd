@@ -22,7 +22,7 @@ describe('dropRepeats', function() {
     s({ foo: 'bar' });
     assert.deepEqual(all(), [
       { foo: 'bar' },
-      { foo: 'bar' },
+      { foo: 'bar' }
     ]);
   });
 });
