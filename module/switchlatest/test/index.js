@@ -18,7 +18,8 @@ describe('takeUntil', function() {
   it('emits values from first and second stream in stream', function() {
     var result = [];
     var source = stream();
-    var is1 = stream(), is2 = stream();
+    var is1 = stream();
+    var is2 = stream();
     var s = switchLatest(source);
     flyd.map(function(v) { result.push(v); }, s);
     source(is1);

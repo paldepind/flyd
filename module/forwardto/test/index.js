@@ -7,7 +7,7 @@ describe('forwardTo', function() {
     var result = [];
     var target = flyd.stream();
     function fn1(v) { result.push(v); }
-    function fn2(v) { result.push(2*v); return v; }
+    function fn2(v) { result.push(2 * v); return v; }
     flyd.map(fn1, target);
     var fw = forwardTo(target, fn2);
     fw(1)(2)(3);

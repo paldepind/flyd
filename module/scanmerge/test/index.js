@@ -10,7 +10,7 @@ describe('scanMerge', function() {
     var sub = stream();
     var sum = scanMerge([
       [add, function(sum, n) { return sum + n; }],
-      [sub, function(sum, n) { return sum - n; }],
+      [sub, function(sum, n) { return sum - n; }]
     ], 0);
     add(5); sub(8); sub(4); add(12);
     assert.equal(sum(), 5);
@@ -20,7 +20,7 @@ describe('scanMerge', function() {
     var sub = stream(4);
     var sum = scanMerge([
       [add, function(sum, n) { return sum + n; }],
-      [sub, function(sum, n) { return sum - n; }],
+      [sub, function(sum, n) { return sum - n; }]
     ], 0);
     assert.equal(sum(), 0);
   });
