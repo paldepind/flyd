@@ -697,3 +697,21 @@ stream.
 
 Flyd works in all ECMAScript 5 environments. It works in older environments
 with polyfills for `Array.prototype.filter` and `Array.prototype.map`.
+
+### Run tests, generate documentation
+
+To run the test, clone this repository and:
+
+```bash
+npm install
+npm test
+```
+
+The `npm test` command run three tests: a eslint js style checker test, the test of the core library and the test of the modules. If you wan't to run only the test of the library `npm run test`.
+
+The API.md file is generated using `npm run docs` (it assumes it has documentation installed globally: `npm i -g documentation`)
+
+
+
+
+
