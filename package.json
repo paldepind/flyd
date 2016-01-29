@@ -12,17 +12,18 @@
   },
   "devDependencies": {
     "benchmark": "^1.0.0",
-    "browserify": "^10.2.4",
     "bluebird": "^2.9.13",
+    "browserify": "^10.2.4",
     "coveralls": "^2.11.2",
+    "eslint": "^1.10.3",
     "istanbul": "^0.3.15",
     "mocha": "^2.2.1",
     "mocha-lcov-reporter": "0.0.2",
     "transducers.js": "0.3.x"
   },
   "scripts": {
-    "test": "mocha",
-    "test-all": "eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
+    "test-lib": "mocha",
+    "test": "eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
     "docs": "documentation -f md lib/index.js > API.md",
     "perf": "./perf/run-benchmarks",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
