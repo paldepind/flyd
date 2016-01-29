@@ -9,8 +9,8 @@ __Usage__
 
 ```javascript
 var everySecond = every(1000);
-flyd.map(function(time) {
+flyd.on(function(time) {
   // I'm called once every second
-  console.log('Current time is, time);
+  console.log('Current time is, time');
 }, everySecond);
 ```
