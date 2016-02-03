@@ -3,6 +3,7 @@
 The modular, KISS, functional reactive programming library for JavaScript.
 
 [![Build Status](https://travis-ci.org/paldepind/flyd.svg?branch=master)](https://travis-ci.org/paldepind/flyd)
+[![Coverage Status](https://coveralls.io/repos/paldepind/flyd/badge.svg?branch=master)](https://coveralls.io/r/paldepind/flyd?branch=master)
 [![Join the chat at https://gitter.im/paldepind/flyd](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/paldepind/flyd?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Table of contents
@@ -59,6 +60,7 @@ __Other features__
   implementation](http://jsfiddle.net/ksj51q5k/).
 * [Secret combination](http://paldepind.github.io/flyd/examples/secret-combination/)
 * [Ramda transducer](https://github.com/paldepind/flyd/tree/master/examples/ramda-transducer)
+* [Who to follow](http://paldepind.github.io/flyd/examples/who-to-follow/)
 
 For other examples check the source code of the [modules](#modules).
 
@@ -92,7 +94,7 @@ var number = flyd.stream(5);
 // Get the current value of the stream.
 console.log(number()); // logs 5
 // Update the value of the stream.
-console.log(number(7)); // logs 7
+console.log(number(7));
 // The stream now returns the new value.
 console.log(number()); // logs 7
 ```
@@ -115,10 +117,11 @@ down the `messages` stream.
 
 ### Dependent streams
 
-Streams can depend on other streams. Instead of calling `stream` with a value
-as in the above examples we can pass it a list of dependencies and a function.
-The function should produce a value based on its dependencies. This new
-returned value results in a new stream.
+Streams can depend on other streams. Use `var combined = flyd.combine(combineFn, [a, b, c, ...])`.
+The `combineFn` function will be called as `(a, b, c, ..., self, changed) => v`,
+where `a, b, c, ...` is a spread of each dependency, `self` is a reference to the
+combine stream itself, and `changed` is an array of streams that were atomically
+updated.
 
 Flyd automatically updates the stream whenever a dependency changes.  This
 means that the `sum` function below will be called whenever `x` and `y`
@@ -131,9 +134,9 @@ var x = flyd.stream(4);
 var y = flyd.stream(6);
 // Create a stream that depends on the two previous streams
 // and with its value given by the two added together.
-var sum = flyd.stream([x, y], function() {
+var sum = flyd.combine(function(x, y) {
   return x() + y();
-});
+}, [x, y]);
 // `sum` is automatically recalculated whenever the streams it depends on changes.
 x(12);
 console.log(sum()); // logs 18
@@ -147,35 +150,41 @@ Naturally, a stream with dependencies can depend on other streams with dependenc
 // Create two streams of numbers
 var x = flyd.stream(4);
 var y = flyd.stream(6);
-var squareX = flyd.stream([x], function() {
+var squareX = flyd.combine(function(x) {
   return x() * x();
-});
-var squareXPlusY = flyd.stream([y, squareX], function() {
+}, [x]);
+var squareXPlusY = flyd.combine(function(y, squareX) {
   return y() + squareX();
-});
+}, [y, squareX]);
 console.log(squareXPlusY()); // logs 22
 x(2);
 console.log(squareXPlusY()); // logs 10
 ```
 
-The body of a dependent stream is called with two parameters: itself and a list
-of the dependencies that has changed since its last invocation (due to [atomic
+The body of a dependent stream is called with the spread of: each dependency, itself, and a list
+of the dependencies that have changed since its last invocation (due to [atomic
 updates](#atomic-updates) several streams could have changed).
 
 ```javascript
 // Create two streams of numbers
 var x = flyd.stream(1);
 var y = flyd.stream(2);
-var sum = flyd.stream([x, y], function(sum, changed) {
+var sum = flyd.combine(function(x, y, self, changed) {
   // The stream can read from itself
-  console.log('Last sum was ' + sum());
+  console.log('Last sum was ' + self());
   // On the initial call no streams has changed and `changed` will be []
   changed.map(function(s) {
     var changedName = (s === y ? 'y' : 'x');
     console.log(changedName + ' changed to ' + s());
   });
   return x() + y();
-});
+}, [x, y]);
+```
+
+*Note* Returning `undefined` in the `combineFn` will not trigger an upodate
+to the stream. To trigger on undefined, update directly:
+```
+flyd.combine((_, self, changed) => { self(undefined); }, [depStream]);
 ```
 
 ### Using callback APIs for asynchronous operations
@@ -183,15 +192,15 @@ var sum = flyd.stream([x, y], function(sum, changed) {
 Instead of returning a value a stream can update itself by calling itself. This
 is handy when working with APIs that takes callbacks.
 
-```
+```javascript
 var urls = flyd.stream('/something.json');
-var responses = flyd.stream([urls], function(resp) {
-  makeRequest(urls(), resp);
-});
-flyd.stream([responses], function() {
+var responses = flyd.combine(function(urls, self) {
+  makeRequest(urls(), self);
+}, [urls]);
+flyd.combine(function(responses) {
   console.log('Received response!');
   console.log(responses());
-});
+}, [responses]);
 ```
 
 Note that the stream that logs the responses from the server should only be called
@@ -208,27 +217,25 @@ fulfilled value of the promise will be sent down the stream.
 
 ```javascript
 var urls = flyd.stream('/something.json');
-var responses = flyd.stream(function() {
-  return requestPromise(urls());
-});
-flyd.stream([responses], function() {
-  console.log('Recieved response!');
+var responses = flyd.stream(requestPromise(urls()));
+flyd.on(function(responses) {
+  console.log('Received response!');
   console.log(responses());
-});
+}, responses);
 ```
 
 ### Mapping over a stream
 
 You've now seen most of the basic building block which Flyd provides. Let's see
-what we can do with them. Lets write a function that takes a stream and a
-function and returns a new stream with the function applied to every value
+what we can do with them. Let's write a function that takes a function and a
+stream and returns a new stream with the function applied to every value
 emitted by the stream. In short, a `map` function.
 
 ```javascript
 var mapStream = function(f, s) {
-  return flyd.stream([s], function() {
+  return flyd.combine(function(s) {
     return f(s());
-  });
+  }, [s]);
 };
 ```
 
@@ -238,22 +245,22 @@ the original stream produces its first value.
 
 Flyd includes a similar `map` function as part of its core.
 
-### Scaning a stream
+### Scanning a stream
 
 Lets try something else: a scan function for accumulating a stream! It could
 look like this:
 
 ```javascript
 var scanStream = function(f, acc, s) {
-  return flyd.stream([s], function() {
+  return flyd.combine(function(s) {
     acc = f(acc, s());
     return acc;
-  });
+  }, [s]);
 };
 ```
 
-Our scan function takes an accumulator function, in initial value and a stream.
-Every time the original stream emit a value we pass it to the accumulator
+Our scan function takes an accumulator function, an initial value and a stream.
+Every time the original stream emits a value we pass it to the accumulator
 function along with the accumulated value.
 
 Flyd includes a `scan` function as part of its core.
@@ -275,33 +282,33 @@ var s = flyd.stream();
 s.end(true); // this ends `s`
 ```
 
-When you create a dependent stream it's end stream will initially depend on all
-the ends streams of its dependencies:
+When you create a dependent stream its end stream will initially depend on all
+the end streams of its dependencies:
 
 ```javascript
 var n1 = flyd.stream();
 var n2 = flyd.stream();
-var sum = flyd.stream([n1, n2], function() {
+var sum = flyd.combine(function(n1, n2) {
   return n1() + n2();
-});
+}, [n1, n2]);
 ```
 
 `sum.end` now depends on `n1.end` and `n2.end`. This means that whenever one of
 the `sum`s dependencies end `sum` will end as well.
 
-You can change what a streams end stream depends on with `flyd.endsOn`:
+You can change what a stream's end stream depends on with `flyd.endsOn`:
 
 ```javascript
 var number = flyd.stream(2);
 var killer = flyd.stream();
-var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream([number], function() {
+var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.combine(function(number) {
   return number() * number();
-}));
+}, [number]));
 ```
 
 Now `square` will end if either `number` ends or if `killer` emits a value.
 
-The fact that a streams ending is itself a stream is a very powerful concept.
+The fact that a stream's ending is itself a stream is a very powerful concept.
 It means that we can use the full expressiveness of Flyd to control when a stream
 ends. For an example, take a look at the implementation of
 [`takeUntil`](https://github.com/paldepind/flyd-takeuntil).
@@ -327,21 +334,21 @@ var n = flyd.stream(1); // Stream with initial value `1`
 var s = flyd.stream(); // Stream with no initial value
 ```
 
-### flyd.stream(dependencies, body)
+### flyd.combine(body, dependencies)
 
 Creates a new dependent stream.
 
 __Signature__
 
-`[Stream *] -> (Stream b -> [Stream *] -> b) -> Stream b`
+`(...Stream * -> Stream b -> b) -> [Stream *] -> Stream b`
 
 __Example__
 ```javascript
 var n1 = flyd.stream(0);
 var n2 = flyd.stream(0);
-var max = flyd.stream([n1, n2], function(self, changed) {
+var max = flyd.combine(function(n1, n2, self, changed) {
   return n1() > n2() ? n1() : n2();
-});
+}, [n1, n2]);
 ```
 
 ###flyd.isStream(stream)
@@ -375,9 +382,9 @@ __Example__
 
 ```javascript
 var s = flyd.stream();
-var hasItems = flyd.immediate(flyd.stream([s], function() {
+var hasItems = flyd.immediate(flyd.combine(function(s) {
   return s() !== undefined && s().length > 0;
-});
+}, [s]);
 console.log(hasItems()); // logs `false`. Had `immediate` not been
                          // used `hasItems()` would've returned `undefined`
 s([1]);
@@ -400,9 +407,9 @@ __Example__
 var n = flyd.stream(1);
 var killer = flyd.stream();
 // `double` ends when `n` ends or when `killer` emits any value
-var double = flyd.endsOn(flyd.merge(n.end, killer), flyd.stream([n], function() {
+var double = flyd.endsOn(flyd.merge(n.end, killer), flyd.combine(function(n) {
   return 2 * n();
-});
+}, [n]);
 ```
 
 ###flyd.map(fn, s)
@@ -418,6 +425,22 @@ __Example__
 ```javascript
 var numbers = flyd.stream(0);
 var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
+```
+
+###flyd.on(fn, s)
+
+Similair to `map` except that the returned stream is empty. Use `on` for doing
+side effects in reaction to stream changes. Use the returned stream only if you
+need to manually end it.
+
+__Signature__
+
+`(a -> result) -> Stream a -> Stream undefined`
+
+__Example__
+```javascript
+var numbers = flyd.stream(0);
+flyd.on(function(n) { console.log('numbers changed to', n); }, numbers);
 ```
 
 ###flyd.scan(fn, acc, stream)
@@ -444,7 +467,7 @@ will be sent.
 
 __Signature__
 
-`Stream a -> Stream a - Stream a`
+`Stream a -> Stream a -> Stream a`
 
 __Example__
 ```javascript
@@ -475,7 +498,7 @@ var tx = t.compose(
   t.dedupe()
 );
 var s2 = flyd.transduce(tx, s1);
-flyd.stream([s2], function() { results.push(s2()); });
+flyd.combine(function(s2) { results.push(s2()); }, [s2]);
 s1(1)(1)(2)(3)(3)(3)(4);
 results; // [2, 4, 6, 8]
 ```
@@ -595,23 +618,28 @@ var m = n.of(1);
 If you're created a module for Flyd open an issue or send a pull request and it
 will be added to this list.
 
-* [flyd-filter](https://github.com/paldepind/flyd-filter) – Filter values from stream based on predicate.
-* [flyd-lift](https://github.com/paldepind/flyd-lift) – Maps a function taking _n_ parameters over _n_ streams.
-* [flyd-flatmap](https://github.com/paldepind/flyd-flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
-* [flyd-switchlatest](https://github.com/paldepind/flyd-switchlatest) – Flattens a stream of streams. The result stream reflects changes from the last stream only.
-* [flyd-keepwhen](https://github.com/paldepind/flyd-keepwhen) – Keep values from one stream only when another stream is true.
-* [flyd-obj](https://github.com/paldepind/flyd-obj) – Functions for working with stream in objects.
-* [flyd-sampleon](https://github.com/paldepind/flyd-sampleon) – Samples from a stream every time an event occurs on another stream.
-* [flyd-scanmerge](https://github.com/paldepind/flyd-scanmerge) – Merge and scan several streams into one.
-* [flyd-takeuntil](https://github.com/paldepind/flyd-takeuntil) – Emit values from a stream until a second stream emits a value.
-* [flyd-forwardto](https://github.com/paldepind/flyd-forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
+* [flyd/module/filter](module/filter) – Filter values from stream based on predicate.
+* [flyd/module/lift](module/lift) – Maps a function taking _n_ parameters over _n_ streams.
+* [flyd/module/flatmap](module/flatmap) – Maps a function over a stream of streams and flattens the result to a single stream.
+* [flyd/module/switchlatest](module/switchlatest) – Flattens a stream of streams. The result stream reflects changes from the last stream only.
+* [flyd/module/keepwhen](module/keepwhen) – Keep values from one stream only when another stream is true.
+* [flyd/module/obj](module/obj) – Functions for working with stream in objects.
+* [flyd/module/sampleon](module/sampleon) – Samples from a stream every time an event occurs on another stream.
+* [flyd/module/scanmerge](module/scanmerge) – Merge and scan several streams into one.
+* [flyd/module/mergeall](module/mergeall) – Merge merge a list of streams.
+* [flyd/module/takeuntil](module/takeuntil) – Emit values from a stream until a second stream emits a value.
+* [flyd/module/forwardto](module/forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
+* [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
+* [flyd/module/droprepeats](module/droprepeats) - Drop repeated values from a stream.
+* [flyd-keyboard](https://github.com/raine/flyd-keyboard) - Keyboard events as streams
 * Time related
-  * [flyd-every](https://github.com/paldepind/flyd-every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
-  * [flyd-aftersilence](https://github.com/paldepind/flyd-aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
-  * [flyd-inlast](https://github.com/paldepind/flyd-inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
+  * [flyd/module/every](module/every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
+  * [flyd/module/aftersilence](module/aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
+  * [flyd/module/inlast](module/inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
+  * [flyd-onAnimationFrame](https://github.com/ThomWright/flyd-onAnimationFrame) - Emits values from a source stream on successive animation frames.
+  * [flyd-timeInterval](https://github.com/ThomWright/flyd-timeInterval) - Records the time interval between consecutive values emitted from a stream.
 
 ## Misc
-
 
 ### The name
 
@@ -630,11 +658,11 @@ Consider the following example:
 
 ```javascript
 var a = flyd.stream(1);
-var b = flyd.stream([a], function() { return a() * 2; });
-var c = flyd.stream([a], function() { return a() + 4; });
-var d = flyd.stream([b, c], function(self, ch) {
+var b = flyd.combine(function(a) { return a() * 2; }, [a]);
+var c = flyd.combine(function(a) { return a() + 4; }, [a]);
+var d = flyd.combine(function(b, c, self, ch) {
   result.push(b() + c());
-});
+}, [b, c]);
 ```
 
 The dependency graph looks like this.
@@ -669,3 +697,21 @@ stream.
 
 Flyd works in all ECMAScript 5 environments. It works in older environments
 with polyfills for `Array.prototype.filter` and `Array.prototype.map`.
+
+### Run tests, generate documentation
+
+To run the test, clone this repository and:
+
+```bash
+npm install
+npm test
+```
+
+The `npm test` command run three tests: a eslint js style checker test, the test of the core library and the test of the modules. If you wan't to run only the test of the library `npm run test`.
+
+The API.md file is generated using `npm run docs` (it assumes it has documentation installed globally: `npm i -g documentation`)
+
+
+
+
+
