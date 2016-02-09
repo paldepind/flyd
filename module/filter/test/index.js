@@ -20,6 +20,6 @@ describe('filter', function() {
   });
   it('is curried', function() {
     var numbers = flyd.stream();
-    var largeNumbers = filter(over5)(numbers);
+    assert(filter(over5)(numbers));
   });
 });

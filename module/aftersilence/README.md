@@ -10,7 +10,7 @@ __Example__
 
 ```javascript
 afterSilence(function(values) {
-  console.log('You achieved a combo of + values.length + '!');
+  console.log('You achieved a combo of ' + values.length + '!');
 }, afterSilence(1000, birdsShot);
 ```
 

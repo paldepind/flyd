@@ -12,7 +12,7 @@ describe('stream props', function() {
     assert.equal(o.two, oS.two());
     assert.equal(o.three, oS.three());
   });
-  it('handles converting nested properties to nested streams', function(){
+  it('handles converting nested properties to nested streams', function() {
     var o = {nested: {value: 'val', deeper: {deepVal: 'deepVal'}}};
     var oS = obj.streamProps(o);
     assert.equal(o.nested.value, oS.nested.value());
@@ -37,10 +37,10 @@ describe('stream object', function() {
       {one: 1, two: 2, three: 3},
       {one: 4, two: 2, three: 3},
       {one: 4, two: 2, three: 4},
-      {one: 4, two: 4, three: 4},
+      {one: 4, two: 4, three: 4}
     ]);
   });
-  it('handles prop changes in nested objects', function(){
+  it('handles prop changes in nested objects', function() {
     var o = {nested: {value: 'val', deeper: {deepVal: 'deepVal'}}};
     var oS = obj.streamProps(o);
     var result = [];
@@ -55,7 +55,7 @@ describe('stream object', function() {
       {nested: {value: 'val3', deeper: {deepVal: 'deepVal2'}}}
     ]);
   });
-  it('retains the values of non-streams', function(){
+  it('retains the values of non-streams', function() {
     var oS = {nested: {value: stream('val'), deeper: {constant: 'constantVal'}}};
     var result = [];
     flyd.map(function(o) { result.push(o); }, obj.stream(oS));

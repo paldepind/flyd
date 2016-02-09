@@ -217,13 +217,11 @@ fulfilled value of the promise will be sent down the stream.
 
 ```javascript
 var urls = flyd.stream('/something.json');
-var responses = flyd.stream(function() {
-  return requestPromise(urls());
-});
-flyd.combine(function(responses) {
+var responses = flyd.stream(requestPromise(urls()));
+flyd.on(function(responses) {
   console.log('Received response!');
   console.log(responses());
-}, [responses]);
+}, responses);
 ```
 
 ### Mapping over a stream
@@ -303,7 +301,7 @@ You can change what a stream's end stream depends on with `flyd.endsOn`:
 ```javascript
 var number = flyd.stream(2);
 var killer = flyd.stream();
-var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.stream(function(number) {
+var square = flyd.endsOn(flyd.merge(number.end, killer), flyd.combine(function(number) {
   return number() * number();
 }, [number]));
 ```
@@ -384,7 +382,7 @@ __Example__
 
 ```javascript
 var s = flyd.stream();
-var hasItems = flyd.immediate(flyd.stream(function(s) {
+var hasItems = flyd.immediate(flyd.combine(function(s) {
   return s() !== undefined && s().length > 0;
 }, [s]);
 console.log(hasItems()); // logs `false`. Had `immediate` not been
@@ -628,6 +626,7 @@ will be added to this list.
 * [flyd/module/obj](module/obj) – Functions for working with stream in objects.
 * [flyd/module/sampleon](module/sampleon) – Samples from a stream every time an event occurs on another stream.
 * [flyd/module/scanmerge](module/scanmerge) – Merge and scan several streams into one.
+* [flyd/module/mergeall](module/mergeall) – Merge merge a list of streams.
 * [flyd/module/takeuntil](module/takeuntil) – Emit values from a stream until a second stream emits a value.
 * [flyd/module/forwardto](module/forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
 * [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
@@ -698,3 +697,21 @@ stream.
 
 Flyd works in all ECMAScript 5 environments. It works in older environments
 with polyfills for `Array.prototype.filter` and `Array.prototype.map`.
+
+### Run tests, generate documentation
+
+To run the test, clone this repository and:
+
+```bash
+npm install
+npm test
+```
+
+The `npm test` command run three tests: a eslint js style checker test, the test of the core library and the test of the modules. If you wan't to run only the test of the library `npm run test`.
+
+The API.md file is generated using `npm run docs` (it assumes it has documentation installed globally: `npm i -g documentation`)
+
+
+
+
+
