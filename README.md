@@ -429,7 +429,7 @@ var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 
 ###flyd.on(fn, s)
 
-Similair to `map` except that the returned stream is empty. Use `on` for doing
+Similar to `map` except that the returned stream is empty. Use `on` for doing
 side effects in reaction to stream changes. Use the returned stream only if you
 need to manually end it.
 
@@ -626,7 +626,7 @@ will be added to this list.
 * [flyd/module/obj](module/obj) – Functions for working with stream in objects.
 * [flyd/module/sampleon](module/sampleon) – Samples from a stream every time an event occurs on another stream.
 * [flyd/module/scanmerge](module/scanmerge) – Merge and scan several streams into one.
-* [flyd/module/mergeall](module/mergeall) – Merge merge a list of streams.
+* [flyd/module/mergeall](module/mergeall) – Merge a list of streams.
 * [flyd/module/takeuntil](module/takeuntil) – Emit values from a stream until a second stream emits a value.
 * [flyd/module/forwardto](module/forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
 * [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
@@ -707,7 +707,7 @@ npm install
 npm test
 ```
 
-The `npm test` command run three tests: a eslint js style checker test, the test of the core library and the test of the modules. If you wan't to run only the test of the library `npm run test`.
+The `npm test` command run three tests: a eslint js style checker test, the test of the core library and the test of the modules. If you want to run only the test of the library `npm run test`.
 
 The API.md file is generated using `npm run docs` (it assumes it has documentation installed globally: `npm i -g documentation`)
 
