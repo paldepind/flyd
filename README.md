@@ -632,6 +632,7 @@ will be added to this list.
 * [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
 * [flyd/module/droprepeats](module/droprepeats) - Drop repeated values from a stream.
 * [flyd-keyboard](https://github.com/raine/flyd-keyboard) - Keyboard events as streams
+* [flyd-glob](https://github.com/StreetStrider/flyd-glob) – File glob and watch for Flyd.
 * Time related
   * [flyd/module/every](module/every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
   * [flyd/module/aftersilence](module/aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
