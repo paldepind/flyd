@@ -181,7 +181,7 @@ var sum = flyd.combine(function(x, y, self, changed) {
 }, [x, y]);
 ```
 
-*Note* Returning `undefined` in the `combineFn` will not trigger an upodate
+*Note* Returning `undefined` in the `combineFn` will not trigger an update
 to the stream. To trigger on undefined, update directly:
 ```
 flyd.combine((_, self, changed) => { self(undefined); }, [depStream]);
