@@ -629,16 +629,16 @@ will be added to this list.
 * [flyd/module/mergeall](module/mergeall) – Merge a list of streams.
 * [flyd/module/takeuntil](module/takeuntil) – Emit values from a stream until a second stream emits a value.
 * [flyd/module/forwardto](module/forwardto) – Create a new stream that passes all values through a function and forwards them to a target stream.
-* [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) - Cache a stream's output until triggered by another stream.
-* [flyd/module/droprepeats](module/droprepeats) - Drop repeated values from a stream.
-* [flyd-keyboard](https://github.com/raine/flyd-keyboard) - Keyboard events as streams
+* [flyd-cacheUntil](https://github.com/ThomWright/flyd-cacheUntil) – Cache a stream's output until triggered by another stream.
+* [flyd/module/droprepeats](module/droprepeats) – Drop repeated values from a stream.
+* [flyd-keyboard](https://github.com/raine/flyd-keyboard) – Keyboard events as streams.
 * [flyd-glob](https://github.com/StreetStrider/flyd-glob) – File glob and watch for Flyd.
 * Time related
-  * [flyd/module/every](module/every) - Takes a number of milliseconds t and creates a stream of the current time updated every t.
+  * [flyd/module/every](module/every) – Takes a number of milliseconds t and creates a stream of the current time updated every t.
   * [flyd/module/aftersilence](module/aftersilence) – Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream.
-  * [flyd/module/inlast](module/inlast) - Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
-  * [flyd-onAnimationFrame](https://github.com/ThomWright/flyd-onAnimationFrame) - Emits values from a source stream on successive animation frames.
-  * [flyd-timeInterval](https://github.com/ThomWright/flyd-timeInterval) - Records the time interval between consecutive values emitted from a stream.
+  * [flyd/module/inlast](module/inlast) – Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration.
+  * [flyd-onAnimationFrame](https://github.com/ThomWright/flyd-onAnimationFrame) – Emits values from a source stream on successive animation frames.
+  * [flyd-timeInterval](https://github.com/ThomWright/flyd-timeInterval) – Records the time interval between consecutive values emitted from a stream.
 
 ## Misc
 
