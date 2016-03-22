@@ -6,6 +6,7 @@ var t = require('transducers.js');
 var flyd = require('../lib');
 var stream = flyd.stream;
 var combine = flyd.combine;
+var Either = flyd.Either;
 
 // Some combinators
 function doubleFn(x) { return x() * 2; }
@@ -342,6 +343,15 @@ describe('stream', function() {
         }, 20);
       }));
     });
+    it('pushes promise.reject down the stream as and either.left', function(done) {
+      var s = stream();
+      combine(function(s) {
+        assert(s.isLeft(), true);
+        assert.equal(s.left(), 12);
+        done();
+      }, [s]);
+      s(Promise.reject(12));
+    });
   });
 
   describe('on', function() {
@@ -351,6 +361,14 @@ describe('stream', function() {
       var f = function(val) { result.push(val); };
       flyd.on(f, s);
       s(1)(2);
+      assert.deepEqual(result, [1, 2]);
+    });
+    it('is only invoked when the stream changes to a Right', function() {
+      var s = flyd.stream();
+      var result = [];
+      var f = function(v) { result.push(v); };
+      flyd.on(f, s);
+      s(Either.Right(1))(Either.Left(-1))(Either.Right(2));
       assert.deepEqual(result, [1, 2]);
     });
   });
@@ -404,6 +422,13 @@ describe('stream', function() {
       assert.equal(s1(), s2());
       x(12);
       assert.equal(s1(), s2());
+    });
+    it('only works on Rights', function() {
+      var result = []
+      var s = stream(Either.Right(1));
+      flyd.map(function(v) { result.push(v); }, s);
+      s(Either.Right(2))(Either.Left(-1))(Either.Right(3));
+      assert.deepEqual(result, [1, 2, 3]);
     });
   });
 
@@ -787,6 +812,66 @@ describe('stream', function() {
       assert.deepEqual(result, [
         [], [1, 3, 2], [2, 8, 7, 6], [3, 5, 4]
       ]);
+    });
+  });
+
+  describe('right', function() {
+    it('throws if the current value in the stream is a Left', function() {
+      var s = stream(Either.Left(1));
+      assert.throws(s, TypeError);
+    });
+    it('can return a Right containing undefined', function() {
+      var s = stream(Either.Right(undefined));
+      assert.equal(s(), undefined);
+    })
+  });
+
+  describe('left', function() {
+    it('gets the current value in the stream if it is a Left', function() {
+      var s = stream(Either.Left(-1));
+      assert.equal(s.left(), -1);
+    });
+    it('throws if the current value in the stream is a Right', function() {
+      var s = stream(Either.Right(1));
+      assert.throws(s.left, TypeError);
+    });
+    it('can return a Left containing undefined', function() {
+      var s = stream(Either.Left(undefined));
+      assert.equal(s.left(), undefined);
+    });
+    it('can set a left value', function() {
+      var s = stream().left(0);
+      assert.throws(s, TypeError);
+      assert.equal(s.left(), 0);
+    });
+  });
+
+  describe('isLeft', function() {
+    it('returns true if the value in the stream is a Left', function() {
+      var s = stream(Either.Left(0));
+      assert.equal(s.isLeft(), true);
+      s(Either.Right(1));
+      assert.equal(s.isLeft(), false);
+    });
+    it('returns false if the value in the stream is a plain value', function() {
+      var s = stream(1);
+      assert.equal(s.isLeft(), false);
+    });
+  });
+
+  describe('mapAll', function() {
+    it('works on both Lefts and Rights', function() {
+      var result = [];
+      var a = Either.Right(1);
+      var s = stream(a);
+      flyd.mapAll(function(v) {
+        result.push(v);
+      }, s);
+      var b = Either.Right(2);
+      var c = Either.Left(-1);
+      var d = Either.Right(3);
+      s(b)(c)(d);
+      assert.deepEqual(result, [a, b, c, d]);
     });
   });
 });
