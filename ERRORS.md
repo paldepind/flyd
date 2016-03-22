@@ -26,13 +26,15 @@
 ### Getting data
 + `s()` get the last right value or throws an exception if there is a left value
 + `s.left()` get the last left value or throws an exception if there is a right value
++ `s.either()` get the last value out as an Either
 
 ### Checking stream state
-+ `s.isLeft()` return boolean so you know what the stream contains
++ `s.isLeft()` return true if the stream contains a left value
++ `s.isRight()` return true if the stream contains a right value
 
 ### Core functions
 + `.map()` works only on rights and ignores lefts
-+ `.mapAll()` gets all events as an `Either`
++ `.mapEither()` gets all events as an `Either`
 + `.combine()` and `.merge()` stay the same they work on streams
 + `ap()` works on `rights` only
 + `.scan()` works on `rights` only

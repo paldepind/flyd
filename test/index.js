@@ -859,12 +859,34 @@ describe('stream', function() {
     });
   });
 
-  describe('mapAll', function() {
+  describe('isRight', function() {
+    it('returns true if the value in the stream is a Right', function() {
+      var s = stream(Either.Left(0));
+      assert.equal(s.isRight(), false);
+      s(Either.Right(1));
+      assert.equal(s.isRight(), true);
+    });
+    it('returns true if the value in the stream is a plain value', function() {
+      var s = stream(1);
+      assert.equal(s.isRight(), true);
+    });
+  });
+
+  describe('either', function() {
+    it('can get stream values as Eithers', function() {
+      var s = stream(2);
+      assert.deepEqual(s.either(), Either.Right(2));
+      s.left(1);
+      assert.deepEqual(s.either(), Either.Left(1));
+    });
+  });
+
+  describe('mapEither', function() {
     it('works on both Lefts and Rights', function() {
       var result = [];
       var a = Either.Right(1);
       var s = stream(a);
-      flyd.mapAll(function(v) {
+      flyd.mapEither(function(v) {
         result.push(v);
       }, s);
       var b = Either.Right(2);
