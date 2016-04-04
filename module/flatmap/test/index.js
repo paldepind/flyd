@@ -35,4 +35,27 @@ describe('flatMap', function() {
                                 6, 7, 8]);
     });
   });
+  it('passed bug outlined in https://github.com/paldepind/flyd/issues/31', function(done) {
+    function delay(val, ms) {
+      var outStream = flyd.stream();
+
+      setTimeout(function() {
+        outStream(val);
+        outStream.end(true);
+      }, ms);
+
+      return outStream;
+    }
+
+    var main = delay(1, 500);
+    var merged = flatMap(function(v) {
+      return delay(v, 1000)
+    }, main);
+
+    flyd.on(function() {
+      assert(main() === 1);
+      assert(merged() === 1);
+      done();
+    }, merged.end);
+  });
 });
