@@ -38,6 +38,20 @@ describe('dropRepeatsWith', function() {
     ]);
   });
 
+  it('always includes first value so we can safely test for equality', function() {
+    var s = stream();
+    var all = collect(dropRepeatsWith(function(a, b) {
+      return a[0] === b[0] || a[1] === b[1];
+    }, s));
+    s([1, 2]);
+    s([1, 3]);
+    s([2, 3]);
+    assert.deepEqual(all(), [
+      [1, 2],
+      [2, 3]
+    ]);
+  });
+
   it('is curried', function() {
     var s = stream();
     var equalsDropper = dropRepeatsWith(R.equals);
