@@ -18,7 +18,7 @@ var flyd = require('../../lib');
  * s(0)(1)(2);
  * // flat = 0, 1, 2
  */
-module.exports = function(f, s) {
+module.exports = flyd.curryN(2, function(f, s) {
   // Internal state to end flat map stream
   var flatEnd = flyd.stream(1);
   var internalEnded = flyd.on(function() {
@@ -44,4 +44,4 @@ module.exports = function(f, s) {
   flyd.endsOn(flatEnd.end, flatStream);
 
   return flatStream;
-};
+});
