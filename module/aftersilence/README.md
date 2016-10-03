@@ -1,21 +1,31 @@
 # flyd-aftersilence
-Buffers values from a source stream in an array and emits it after a
-specified duration of silence from the source stream.
+Buffers values from a source stream into an array and emits the array once the source stream has had the specified duration of silence.
+
+__Graph__
+
+```marbles
+(ticks represent 10ms)
+a:                   {-1-2-3--5-6-}
+afterSilence(20, a): {--------.---}
+                              [1,2,3]
+```
 
 __Signature__
 
-`Stream a -> Stream b`
+`(Integer, Stream a) -> Stream b`
 
 __Example__
 
 ```javascript
-afterSilence(function(values) {
-  console.log('You achieved a combo of ' + values.length + '!');
-}, afterSilence(1000, birdsShot);
-```
+const afterSilence = require('flyd/module/aftersilence')
 
-```javascript
-afterSilence(function(values) {
-  console.log('You typed: "' + values.join('') + '" without any pauses');
-}, afterSilence(300, characterTyped);
+const source = flyd.stream()
+const result = flyd.afterSilence(100, source)
+
+source(1); source(2); source(3)
+result() // undefined
+
+// wait 100ms and print result
+setTimeout(() => console.log(result()), 100)
+// -> prints [1,2,3]
 ```
