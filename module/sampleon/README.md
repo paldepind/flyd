@@ -1,8 +1,15 @@
 # flyd-sampleon
-sampleOn for Flyd.
 
-Samples from the second stream every time an event occurs on the first
+Sample from the second stream every time an event occurs on the first
 stream.
+
+__Graph__
+
+```
+a:              {--t--t--t-------t}
+b:              {---1---2---3---4-}
+sampleOn(a, b): {-----1--2-------4}
+```
 
 __Signature__
 
@@ -11,9 +18,21 @@ __Signature__
 __Usage__
 
 ```javascript
-// Assume `sendBtnClicked` emits whenever a send button is pressed and
-// `messageText` is a stream of the current content of an input field.
-// Then `sendMessage` emits the content of the text field whenever the button
-// is pressed.
-var sendMessage = sampleOn(sendBtnClicked, messageText);
+const sampleOn = require('flyd/module/sampleon')
+
+const sample = flyd.stream()
+const on = flyd.stream()
+const result = sampleOn(on, sample)
+
+on(true)
+result() // undefined
+
+sample(1)
+on(true)
+result() // 1
+
+sample(2)
+sample(3)
+on(true)
+result() // 3
 ```

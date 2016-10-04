@@ -1,10 +1,17 @@
 # flyd-forwardto
+
+Forward values from one stream into another existing stream.
+
 Create a new stream that passes all values through a function and forwards them
 to a target stream.
 
-This function is inspired by the [Elm
-function](http://package.elm-lang.org/packages/elm-lang/core/2.0.1/Signal#forwardTo)
-of the same name.
+__Graph__
+
+```
+a:                       {1---2---3---}
+forwardTo(a, parseInt):  {--2---3---2-}
+flyd.map(square, a):     {1-4-4-9-9-4-}
+```
 
 __Signature__
 
@@ -13,16 +20,23 @@ __Signature__
 __Example__
 
 ```javascript
-// We create a stream of numbers
-var numbers = flyd.stream();
-// And another stream that squares the numbers
-var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
-// Add a logger just for show
-flyd.map(function(n) { console.log(n); }, squaredNumbers);
-// For some reason we have a lot of string of numbers, but we can't
-// send them down the `numbers` stream. That would wreck havoc in the
-// squaring function. `forwardTo` to the resque!
-var stringNumbers = forwardTo(numbers, parseInt);
-stringNumbers('7'); // `49` is logged
+const forwardTo = require('flyd/module/forwardto')
+const R = require('ramda')
+
+// A stream of numbers
+const numbers = flyd.stream()
+// Another stream that squares the numbers
+const squaredNumbers = flyd.map(R.square, numbers)
+
+// A stream of numbers as strings
+// we want to convert them to ints and forward them into the numbers stream above:
+const stringNumbers = forwardTo(numbers, parseInt)
+
+stringNumbers('7')
+squaredNumbers() // -> 49
+numbers(4)
+squaredNumbers() // -> 16
+stringNumbers('9')
+squaredNumbers() // -> 81
 ```
 

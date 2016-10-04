@@ -1,13 +1,16 @@
 # flyd-droprepeats
 
 Drops consecutively repeated values from a
-[Flyd](https://github.com/paldepind/flyd) stream.
+[Flyd](https://github.com/paldepind/flyd) stream. Equality is determined by reference.
 
-## API
+## dropRepeats(s)
 
-### dropRepeats(s)
+__Graph__
 
-Drops repeated values from stream `s`. Equality is determined by reference.
+```
+a:              {---11--12-2-3-4-}
+dropRepeats(a): {---1----2---3-4-}
+```
 
 __Signature__
 
@@ -16,34 +19,35 @@ __Signature__
 __Usage__
 
 ```js
-var dropRepeats = require('flyd-droprepeats').dropRepeats;
-var append = function(arr, x) {
-  return arr.concat(x);
-};
+const dropRepeats = require('flyd/module/droprepeats').dropRepeats
 
-var s = flyd.stream();
-var noRepeats = dropRepeats(s);
-var collect = flyd.scan(append, [], noRepeats);
-s(1)(2)(2)(3);
+const s = flyd.stream()
+const noRepeats = dropRepeats(s)
+const collect = flyd.scan((ls, n) => ls.concat(n), [], noRepeats)
+s(1)(2)(2)(3)
 collect() // [1, 2, 3]
 ```
 
-### dropRepeatsWith(fn, s)
+## dropRepeatsWith(fn, s)
 
 Drops repeated values from stream `s`, but also takes a function `fn` that
 will be used to determine equality.
 
 __Signature__
 
-`(a -> b -> Boolean) -> Stream a -> Stream a`
+`(a -> a -> Boolean) -> Stream a -> Stream a`
+
+__Usage__
 
 ```js
-var dropRepeatsWith = require('flyd-droprepeats').dropRepeatsWith;
-var s = flyd.stream();
+const dropRepeatsWith = require('flyd/module/droprepeats').dropRepeatsWith
+const s = flyd.stream()
+
 // Ramda's `equals` determines equality by value
-var noRepeats = dropRepeatsWith(R.equals, s);
-var collect = flyd.scan(append, [], noRepeats);
-s({ foo: 'bar' });
-s({ foo: 'bar' });
+const R = require('ramda')
+const noRepeats = dropRepeatsWith(R.equals, s)
+const collect = flyd.scan((ls, n) => ls.concat(n), [], noRepeats)
+s({ foo: 'bar' })
+s({ foo: 'bar' })
 collect() // [{ foo: 'bar' }]
 ```
