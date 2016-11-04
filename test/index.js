@@ -28,6 +28,22 @@ describe('stream', function() {
     var s = stream();
     assert.equal(s, s(23));
   });
+  it('can works with JSON.stringify', function() {
+    var obj = {
+      num: stream(23),
+      str: stream('string'),
+      obj: stream({is_object: true})
+    };
+    var expected_outcome = {
+      num: 23,
+      str: 'string',
+      obj: {
+        is_object: true
+      }
+    };
+    var jsonObject = JSON.parse(JSON.stringify(obj));
+    assert.deepEqual(jsonObject, expected_outcome);
+  });
   it("let's explicit `undefined` flow down streams", function() {
     var result = [];
     var s1 = stream(undefined);
