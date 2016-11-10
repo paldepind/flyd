@@ -68,9 +68,7 @@ For other examples check the source code of the [modules](#modules).
 
 This is not general introduction to functional reactive programming. For that take
 a look at [The introduction to Reactive Programming you've been
-missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) and/or [this Elm
-tutorial](http://elm-lang.org/learn/Using-Signals.elm) if you are comfortable
-with reading Haskell-like code.
+missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754).
 
 This is not a demonstration of how you would write code with Flyd on a day to
 day basis. For that take a look at the [examples](#examples).
