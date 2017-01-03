@@ -36,11 +36,11 @@ res() // 15
 ```javascript
 const append = flyd.stream()
 const remove = flyd.stream()
-const arr = scanMerge([
+const items = scanMerge([
   [append, (list, elem) => list.concat(elem)],
 , [remove, (list, item) => list.filter(elm => elm !== item)]
 ], [])
-addItem(1)(2)(3)(4)(5)
-rmItem(3)
+append(1)(2)(3)(4)(5)
+remove(3)
 items() // [1,2,4,5]
 ```
