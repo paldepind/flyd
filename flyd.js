@@ -40,6 +40,9 @@ flyd.stream = function(initialValue) {
   s.end = endStream;
   s.fnArgs = [];
   endStream.listeners.push(s);
+  s.toJSON = function() {
+    return s();
+  };
   if (arguments.length > 0) s(initialValue);
   return s;
 }
@@ -185,7 +188,7 @@ flyd.map = curryN(2, function(f, s) {
 /**
  * Listen to stream events
  *
- * Similair to `map` except that the returned stream is empty. Use `on` for doing
+ * Similar to `map` except that the returned stream is empty. Use `on` for doing
  * side effects in reaction to stream changes. Use the returned stream only if you
  * need to manually end it.
  *
@@ -343,7 +346,7 @@ function boundMap(f) { return flyd.map(f, this); }
  *
  * @name stream.ap
  * @param {stream} stream - the values stream
- * @return {stream} a new stram with the functions applied to values
+ * @return {stream} a new stream with the functions applied to values
  *
  * @example
  * var add = flyd.curryN(2, function(x, y) { return x + y; });
@@ -634,10 +637,10 @@ var _curryN = require('./internal/_curryN');
 
 
 /**
- * Returns a curried equivalent of the provided function, with the
- * specified arity. The curried function has two unusual capabilities.
- * First, its arguments needn't be provided one at a time. If `g` is
- * `R.curryN(3, f)`, the following are equivalent:
+ * Returns a curried equivalent of the provided function, with the specified
+ * arity. The curried function has two unusual capabilities. First, its
+ * arguments needn't be provided one at a time. If `g` is `R.curryN(3, f)`, the
+ * following are equivalent:
  *
  *   - `g(1)(2)(3)`
  *   - `g(1)(2, 3)`
@@ -646,8 +649,8 @@ var _curryN = require('./internal/_curryN');
  *
  * Secondly, the special placeholder value `R.__` may be used to specify
  * "gaps", allowing partial application of any combination of arguments,
- * regardless of their positions. If `g` is as above and `_` is `R.__`,
- * the following are equivalent:
+ * regardless of their positions. If `g` is as above and `_` is `R.__`, the
+ * following are equivalent:
  *
  *   - `g(1, 2, 3)`
  *   - `g(_, 2, 3)(1)`
@@ -659,6 +662,7 @@ var _curryN = require('./internal/_curryN');
  *
  * @func
  * @memberOf R
+ * @since v0.5.0
  * @category Function
  * @sig Number -> (* -> a) -> (* -> a)
  * @param {Number} length The arity for the returned function.
@@ -667,11 +671,9 @@ var _curryN = require('./internal/_curryN');
  * @see R.curry
  * @example
  *
- *      var addFourNumbers = function() {
- *        return R.sum([].slice.call(arguments, 0, 4));
- *      };
+ *      var sumArgs = (...args) => R.sum(args);
  *
- *      var curriedAddFourNumbers = R.curryN(4, addFourNumbers);
+ *      var curriedAddFourNumbers = R.curryN(4, sumArgs);
  *      var f = curriedAddFourNumbers(1, 2);
  *      var g = f(3);
  *      g(4); //=> 10
@@ -685,7 +687,7 @@ module.exports = _curry2(function curryN(length, fn) {
 
 },{"./internal/_arity":3,"./internal/_curry1":4,"./internal/_curry2":5,"./internal/_curryN":6}],3:[function(require,module,exports){
 module.exports = function _arity(n, fn) {
-  // jshint unused:vars
+  /* eslint-disable no-unused-vars */
   switch (n) {
     case 0: return function() { return fn.apply(this, arguments); };
     case 1: return function(a0) { return fn.apply(this, arguments); };
@@ -703,8 +705,11 @@ module.exports = function _arity(n, fn) {
 };
 
 },{}],4:[function(require,module,exports){
+var _isPlaceholder = require('./_isPlaceholder');
+
+
 /**
- * Optimized internal two-arity curry function.
+ * Optimized internal one-arity curry function.
  *
  * @private
  * @category Function
@@ -713,9 +718,7 @@ module.exports = function _arity(n, fn) {
  */
 module.exports = function _curry1(fn) {
   return function f1(a) {
-    if (arguments.length === 0) {
-      return f1;
-    } else if (a != null && a['@@functional/placeholder'] === true) {
+    if (arguments.length === 0 || _isPlaceholder(a)) {
       return f1;
     } else {
       return fn.apply(this, arguments);
@@ -723,8 +726,9 @@ module.exports = function _curry1(fn) {
   };
 };
 
-},{}],5:[function(require,module,exports){
+},{"./_isPlaceholder":7}],5:[function(require,module,exports){
 var _curry1 = require('./_curry1');
+var _isPlaceholder = require('./_isPlaceholder');
 
 
 /**
@@ -737,28 +741,24 @@ var _curry1 = require('./_curry1');
  */
 module.exports = function _curry2(fn) {
   return function f2(a, b) {
-    var n = arguments.length;
-    if (n === 0) {
-      return f2;
-    } else if (n === 1 && a != null && a['@@functional/placeholder'] === true) {
-      return f2;
-    } else if (n === 1) {
-      return _curry1(function(b) { return fn(a, b); });
-    } else if (n === 2 && a != null && a['@@functional/placeholder'] === true &&
-                          b != null && b['@@functional/placeholder'] === true) {
-      return f2;
-    } else if (n === 2 && a != null && a['@@functional/placeholder'] === true) {
-      return _curry1(function(a) { return fn(a, b); });
-    } else if (n === 2 && b != null && b['@@functional/placeholder'] === true) {
-      return _curry1(function(b) { return fn(a, b); });
-    } else {
-      return fn(a, b);
+    switch (arguments.length) {
+      case 0:
+        return f2;
+      case 1:
+        return _isPlaceholder(a) ? f2
+             : _curry1(function(_b) { return fn(a, _b); });
+      default:
+        return _isPlaceholder(a) && _isPlaceholder(b) ? f2
+             : _isPlaceholder(a) ? _curry1(function(_a) { return fn(_a, b); })
+             : _isPlaceholder(b) ? _curry1(function(_b) { return fn(a, _b); })
+             : fn(a, b);
     }
   };
 };
 
-},{"./_curry1":4}],6:[function(require,module,exports){
+},{"./_curry1":4,"./_isPlaceholder":7}],6:[function(require,module,exports){
 var _arity = require('./_arity');
+var _isPlaceholder = require('./_isPlaceholder');
 
 
 /**
@@ -767,8 +767,9 @@ var _arity = require('./_arity');
  * @private
  * @category Function
  * @param {Number} length The arity of the curried function.
- * @return {array} An array of arguments received thus far.
+ * @param {Array} received An array of arguments received thus far.
  * @param {Function} fn The function to curry.
+ * @return {Function} The curried function.
  */
 module.exports = function _curryN(length, received, fn) {
   return function() {
@@ -779,8 +780,7 @@ module.exports = function _curryN(length, received, fn) {
     while (combinedIdx < received.length || argsIdx < arguments.length) {
       var result;
       if (combinedIdx < received.length &&
-          (received[combinedIdx] == null ||
-           received[combinedIdx]['@@functional/placeholder'] !== true ||
+          (!_isPlaceholder(received[combinedIdx]) ||
            argsIdx >= arguments.length)) {
         result = received[combinedIdx];
       } else {
@@ -788,14 +788,22 @@ module.exports = function _curryN(length, received, fn) {
         argsIdx += 1;
       }
       combined[combinedIdx] = result;
-      if (result == null || result['@@functional/placeholder'] !== true) {
+      if (!_isPlaceholder(result)) {
         left -= 1;
       }
       combinedIdx += 1;
     }
-    return left <= 0 ? fn.apply(this, combined) : _arity(left, _curryN(length, combined, fn));
+    return left <= 0 ? fn.apply(this, combined)
+                     : _arity(left, _curryN(length, combined, fn));
   };
 };
 
-},{"./_arity":3}]},{},[1])(1)
+},{"./_arity":3,"./_isPlaceholder":7}],7:[function(require,module,exports){
+module.exports = function _isPlaceholder(a) {
+  return a != null &&
+         typeof a === 'object' &&
+         a['@@functional/placeholder'] === true;
+};
+
+},{}]},{},[1])(1)
 });
