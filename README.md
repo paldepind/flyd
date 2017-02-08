@@ -638,12 +638,17 @@ Modules listed with names in the format `flyd/module/filter` are builtin to the 
 | [**flyd-keyboard**](https://github.com/raine/flyd-keyboard) | Keyboard events as streams. |
 | [**flyd-glob**](https://github.com/StreetStrider/flyd-glob) | File glob and watch for Flyd. |
 | [**flyd-skip**](https://github.com/littlehaker/flyd-skip) | Skip function for flyd. |
+| [**flyd-bufferCount**](https://github.com/bertofer/flyd-bufferCount) | Buffers the source stream and emits all values together. |
+| [**flyd-mergeAll (with high order streams)**](https://github.com/bertofer/flyd-mergeAll) | rxjs-like implementation of [mergeAll](http://reactivex.io/rxjs/class/es6/Observable.js~Observable.html#instance-method-mergeAll) for flyd. |
+| [**flyd-once**](https://github.com/bertofer/flyd-once) | Only emits the first value of the source stream. |
+| [**flyd-withLatestFrom**](https://github.com/bertofer/flyd-withLatestFrom) | When the source observable emits, the value also contains the latest value from withLatestFrom parameter stream. |
 | **Time related** |
 | [flyd/module/**every**](module/every) | Takes a number of milliseconds t and creates a stream of the current time updated every t. |
 | [flyd/module/**aftersilence**](module/aftersilence) | Buffers values from a source stream in an array and emits it after a specified duration of silence from the source stream. |
 | [flyd/module/**inlast**](module/inlast) | Creates a stream that emits a list of all values from the source stream that were emitted in a specified duration. |
 | [**flyd-onAnimationFrame**](https://github.com/ThomWright/flyd-onAnimationFrame) | Emits values from a source stream on successive animation frames. |
 | [**flyd-timeInterval**](https://github.com/ThomWright/flyd-timeInterval) | Records the time interval between consecutive values emitted from a stream. |
+| [**flyd-debounceTime**](https://github.com/bertofer/flyd-debounceTime) | Like aftersilence, but only emits the latest value of the stream. |
 
 ## Misc
 
@@ -697,7 +702,7 @@ several streams change at the same time.
 
 Flyd implements atomic updates with a _O(n)_ topological sort where _n_
 is number of streams that directly or indirectly depends on the updated
-stream. 
+stream.
 
 ### Environment support
 
