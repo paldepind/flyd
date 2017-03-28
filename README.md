@@ -621,7 +621,7 @@ will be added to this list.
 Modules listed with names in the format `flyd/module/filter` are builtin to the main `flyd` module and can be required with `require('flyd/module/filter')`. Other modules must be installed first with npm.
 
 | Module | Description |
-| --- | --- | --- |
+| --- | --- |
 | [flyd/module/**filter**](module/filter) | Filter values from stream based on predicate. |
 | [flyd/module/**lift**](module/lift) | Maps a function taking _n_ parameters over _n_ streams. |
 | [flyd/module/**flatmap**](module/flatmap) | Maps a function over a stream of streams and flattens the result to a single stream. |
