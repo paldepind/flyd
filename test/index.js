@@ -19,6 +19,7 @@ describe('stream', function() {
   });
   it('can be set', function() {
     var s = stream();
+    assert.equal(s(), undefined);
     s(23);
     assert.equal(s(), 23);
     s(3);
