@@ -13,7 +13,6 @@
   "devDependencies": {
     "benchmark": "^1.0.0",
     "bluebird": "^2.9.13",
-    "browserify": "^10.2.4",
     "coveralls": "^2.11.2",
     "eslint": "^2.7.0",
     "istanbul": "^0.3.15",
@@ -27,12 +26,11 @@
   },
   "scripts": {
     "test-lib": "mocha",
-    "compile": "rollup -c",
-    "test": "npm run compile && eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
+    "test": "rollup -c && eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
     "docs": "documentation build -f md lib/index.js > API.md",
     "perf": "./perf/run-benchmarks",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
-    "build": "npm run compile && browserify -s flyd flyd.js && uglifyjs flyd.js -o flyd.min.js"
+    "build": "rollup -c && uglifyjs flyd.js -o flyd.min.js"
   },
   "repository": {
     "type": "git",
