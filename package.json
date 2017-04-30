@@ -2,7 +2,7 @@
   "name": "flyd",
   "version": "0.2.4",
   "description": "The less is more, modular, functional reactive programming library",
-  "main": "lib/index.js",
+  "main": "flyd.js",
   "directories": {
     "example": "examples",
     "test": "test"
