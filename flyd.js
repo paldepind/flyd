@@ -1,7 +1,7 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
-	(factory());
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define('flyd', factory) :
+	(global.flyd = factory());
 }(this, (function () { 'use strict';
 
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
@@ -674,6 +674,6 @@ StreamTransformer.prototype['@@transducer/init'] = function() { };
 StreamTransformer.prototype['@@transducer/result'] = function() { };
 StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };
 
-module.exports = flyd;
+return flyd;
 
 })));
