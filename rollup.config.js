@@ -1,10 +1,12 @@
 import resolve from 'rollup-plugin-node-resolve';
+const id = "flyd"
 
 export default {
   entry: 'lib/index.js',
-  dest: 'flyd.js',
+  dest: id + '.js',
   format: 'umd',
-  moduleName: "flyd",
+  moduleId: id,
+  moduleName: id,
   plugins: [
     resolve({
       modulesOnly: true
