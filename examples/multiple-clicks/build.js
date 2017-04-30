@@ -73,7 +73,7 @@ function map(s, f) {
   return stream([s], function() { return f(s()); }, true);
 }
 
-var reduce = curryN(3, function(f, acc, s) {
+var reduce = curry3(function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
   }, true);
@@ -81,7 +81,7 @@ var reduce = curryN(3, function(f, acc, s) {
   return ns;
 });
 
-var merge = curryN(2, function(s1, s2) {
+var merge = curry2(function(s1, s2) {
   return stream(function(n, changed) {
     var v1, v2;
     if (changed) return changed();
@@ -198,7 +198,7 @@ function stream(arg) {
   return s;
 }
 
-var transduce = curryN(2, function(xform, source) {
+var transduce = curry2(function(xform, source) {
   xform = xform(new StreamTransformer(stream));
   return stream([source], function() {
     return xform.step(undefined, source());
@@ -328,7 +328,7 @@ return {
   merge: merge,
   reduce: reduce,
   destroy: destroy,
-  map: curryN(2, function(f, s) { return map(s, f); }),
+  map: curry2(function(f, s) { return map(s, f); }),
   curryN: curryN,
   _: _,
 };

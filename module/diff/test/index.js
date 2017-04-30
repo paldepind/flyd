@@ -1,5 +1,5 @@
 var assert = require('assert');
-var flyd = require('../../../lib');
+var flyd = require('../../../flyd');
 var stream = flyd.stream;
 
 var diff = require('../index.js');

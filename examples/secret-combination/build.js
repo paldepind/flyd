@@ -10,7 +10,7 @@ module.exports = function(fn, s) {
 },{"flyd":5}],2:[function(require,module,exports){
 var flyd = require('flyd');
 
-module.exports = flyd.curryN(2, function(dur, s) {
+module.exports = flyd.curry2(function(dur, s) {
   var values = [];
   return flyd.stream([s], function(self) {
     setTimeout(function() {
@@ -35,7 +35,7 @@ module.exports = function(f /* , streams */) {
 },{"flyd":5}],4:[function(require,module,exports){
 var flyd = require('flyd');
 
-module.exports = flyd.curryN(2, function(s1, s2) {
+module.exports = flyd.curry2(function(s1, s2) {
   return flyd.stream([s1], function() {
     return s2();
   });
@@ -86,7 +86,7 @@ function map(s, f) {
   return stream([s], function() { return f(s()); });
 }
 
-var reduce = curryN(3, function(f, acc, s) {
+var reduce = curry3(function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
   });
@@ -94,7 +94,7 @@ var reduce = curryN(3, function(f, acc, s) {
   return ns;
 });
 
-var merge = curryN(2, function(s1, s2) {
+var merge = curry2(function(s1, s2) {
   return stream([s1, s2], function(n, changed) {
     var v1, v2;
     if (changed) return changed();
@@ -195,7 +195,7 @@ function stream(arg, fn, waitForDeps) {
   return s;
 }
 
-var transduce = curryN(2, function(xform, source) {
+var transduce = curry2(function(xform, source) {
   xform = xform(new StreamTransformer(stream));
   return stream([source], function() {
     return xform.step(undefined, source());
@@ -325,7 +325,7 @@ return {
   merge: merge,
   reduce: reduce,
   destroy: destroy,
-  map: curryN(2, function(f, s) { return map(s, f); }),
+  map: curry2(function(f, s) { return map(s, f); }),
   curryN: curryN,
   _: _,
 };

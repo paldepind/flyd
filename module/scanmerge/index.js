@@ -1,6 +1,6 @@
-var flyd = require('../../lib');
+var flyd = require('../../flyd');
 
-module.exports = flyd.curryN(2, function(pairs, acc) {
+module.exports = flyd.curry2(function(pairs, acc) {
   var streams = pairs.map(function(p) { return p[0]; });
   // use immediate because we want each stream to fire regardless of if the others have ever had a value
   return flyd.immediate(flyd.combine(function() {

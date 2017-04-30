@@ -22,7 +22,7 @@ function on(f, s) {
 
 function boundMap(f) { return map(f, this); }
 
-var scan = curryN(3, function(f, acc, s) {
+var scan = curry3(function(f, acc, s) {
   var ns = combine(function(s, self) {
     self(acc = f(acc, s.val));
   }, [s]);
@@ -30,7 +30,7 @@ var scan = curryN(3, function(f, acc, s) {
   return ns;
 });
 
-var merge = curryN(2, function(s1, s2) {
+var merge = curry2(function(s1, s2) {
   var s = immediate(combine(function(s1, s2, self, changed) {
     if (changed[0]) {
       self(changed[0]());
@@ -267,7 +267,7 @@ function combine(fn, streams) {
   return s;
 }
 
-var transduce = curryN(2, function(xform, source) {
+var transduce = curry2(function(xform, source) {
   xform = xform(new StreamTransformer());
   return combine(function(source, self) {
     var res = xform['@@transducer/step'](undefined, source.val);
@@ -287,20 +287,20 @@ StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };
 
 module.exports = {
   stream: stream,
-  combine: curryN(2, combine),
+  combine: curry2(combine),
   isStream: isStream,
   transduce: transduce,
   merge: merge,
   scan: scan,
   endsOn: endsOn,
-  map: curryN(2, map),
-  on: curryN(2, on),
+  map: curry2(map),
+  on: curry2(on),
   curryN: curryN,
   immediate: immediate,
 };
 
 },{"ramda/src/curryN":4}],2:[function(require,module,exports){
-var flyd = require('../../lib');
+var flyd = require('../../flyd');
 
 module.exports = function(f, s) {
   return flyd.combine(function(s, own) {
@@ -309,7 +309,7 @@ module.exports = function(f, s) {
 };
 
 },{"../../lib":1}],3:[function(require,module,exports){
-var flyd = require('../../lib');
+var flyd = require('../../flyd');
 
 module.exports = function(src, term) {
   return flyd.endsOn(flyd.merge(term, src.end), flyd.combine(function(src, self) {
@@ -328,7 +328,7 @@ var _curryN = require('./internal/_curryN');
  * Returns a curried equivalent of the provided function, with the
  * specified arity. The curried function has two unusual capabilities.
  * First, its arguments needn't be provided one at a time. If `g` is
- * `R.curryN(3, f)`, the following are equivalent:
+ * `R.curry3(f)`, the following are equivalent:
  *
  *   - `g(1)(2)(3)`
  *   - `g(1)(2, 3)`

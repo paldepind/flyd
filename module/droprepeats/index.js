@@ -1,4 +1,4 @@
-var flyd = require('../../lib');
+var flyd = require('../../flyd');
 
 function dropRepeatsWith(eq, s) {
   var prev;
@@ -14,7 +14,7 @@ exports.dropRepeats = function(s) {
   return dropRepeatsWith(strictEq, s);
 };
 
-exports.dropRepeatsWith = flyd.curryN(2, dropRepeatsWith);
+exports.dropRepeatsWith = flyd.curry2(dropRepeatsWith);
 
 function strictEq(a, b) {
   return a === b;
