@@ -29,7 +29,7 @@
     "test-lib": "mocha",
     "compile": "rollup -c",
     "test": "npm run compile && eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
-    "docs": "documentation -f md lib/index.js > API.md",
+    "docs": "documentation build -f md lib/index.js > API.md",
     "perf": "./perf/run-benchmarks",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "build": "npm run compile && browserify -s flyd flyd.js && uglifyjs flyd.js -o flyd.min.js"
