@@ -8,7 +8,7 @@
     "test": "test"
   },
   "dependencies": {
-    "ramda": "^0.19.1"
+    "@most/prelude": "^1.6.0"
   },
   "devDependencies": {
     "benchmark": "^1.0.0",
@@ -19,6 +19,7 @@
     "istanbul": "^0.3.15",
     "mocha": "^2.2.1",
     "mocha-lcov-reporter": "0.0.2",
+    "ramda": "^0.19.1",
     "transducers.js": "0.3.x",
     "uglifyjs": "^2.4.10"
   },
