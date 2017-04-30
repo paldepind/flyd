@@ -42,6 +42,8 @@ git checkout HEAD -- $SOURCE_FILENAME_WITH_EXTENSION
 ## Run the benchmarks
 cd "$DIRECTORY_CONTAINING_THIS_SCRIPT"
 
+npm run compile
+
 node perf.js
 
 
