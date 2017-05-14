@@ -18,7 +18,7 @@ __Signature__
 
 __Usage__
 
-```
+```js
 const flatMap = require('flyd/module/flatmap')
 const request = require('flyd-ajax')
 
