@@ -21,7 +21,7 @@ __Usage__
 
 ```js
 const flydObj = require('flyd/module/object')
-const obj = {x: 1, y: {z: 1}}
+const obj = {x: 1, y: {z: 2}}
 const objOfStreams = flydObj.streamProps(obj)
 
 objOfStreams.x() // 1
