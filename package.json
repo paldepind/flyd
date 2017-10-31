@@ -27,6 +27,7 @@
     "test": "eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
     "docs": "documentation -f md lib/index.js > API.md",
     "perf": "./perf/run-benchmarks",
+    "format": "eslint --fix lib/ test/ module/",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "build": "browserify -s flyd lib/index.js > flyd.js && uglifyjs flyd.js -o flyd.min.js"
   },
