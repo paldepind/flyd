@@ -5,28 +5,32 @@ var stream = flyd.stream;
 var combine = flyd.combine;
 var on = flyd.on;
 
-describe('more stream', function () {
+function double(x) {
+    return 2 * x;
+}
 
-    describe('paldepind/flyd/issues/105', () => {
+describe('more stream', function() {
 
-        it('Non-atomic update of dependent stream created within a dependent stream', function () {
-            const result = [];
-            const a = flyd.stream();
+    describe('paldepind/flyd/issues/105', function() {
+
+        it('Non-atomic update of dependent stream created within a dependent stream', function() {
+            var result = [];
+            var a = flyd.stream();
             a._name = 'a';
-            const globul = flyd.on(body, a);
+            var globul = flyd.on(body, a);
             globul._name = 'globul';
 
             function body(v) {
-                const b = flyd.stream(v);
+                var b = flyd.stream(v);
                 b._name = 'b';
-                const d = flyd.stream(v);
+                var d = flyd.stream(v);
                 d._name = 'd';
-                const c = flyd.combine((_b, _d) => {
+                var c = flyd.combine(function(_b, _d) {
                     return 'c_' + _b() + '+' + _d();
                 }, [b, d]);
                 c._name = 'c';
 
-                const out = flyd.on((v) => {
+                var out = flyd.on(function(v) {
                     result.push(v);
                 }, c);
                 out._name = 'out';
@@ -37,37 +41,33 @@ describe('more stream', function () {
             assert.deepEqual(result, ['c_2+2']);
         });
 
-        it('alternative case', function () {
-            const result = [];
-            const double = x => 2 * x;
-            const q = flyd.stream(2);
+        it('alternative case', function() {
+            var result = [];
+            var q = flyd.stream(2);
             q.mark = 'q';
-            const qq = flyd.map(double, q);
+            var qq = flyd.map(double, q);
             qq.mark = 'qq';
             flyd.on(body, qq);
 
             function body(v) {
-                const a = flyd.stream(v);
+                var a = flyd.stream(v);
                 a.mark = 'a';
-                const aa = flyd.map(double, a);
+                var aa = flyd.map(double, a);
                 aa.mark = 'aa';
-                const aaa = flyd.map(double, aa);
+                var aaa = flyd.map(double, aa);
                 aaa.mark = 'aaa';
                 flyd.on(body2, aaa);
-                // flyd.on((v) => {
-                //     result.push(v)
-                // }, aaa);
                 function body2(v) {
-                    const b = flyd.stream(v);
+                    var b = flyd.stream(v);
                     b.mark = 'b';
-                    const bb = flyd.map(double, b);
+                    var bb = flyd.map(double, b);
                     bb.mark = 'bb';
                     flyd.on(body3, bb);
 
                     function body3(v) {
-                        const c = flyd.stream(v);
+                        var c = flyd.stream(v);
                         c.mark = 'c';
-                        flyd.on((v) => {
+                        flyd.on(function(v) {
                             result.push(v)
                         }, c);
                     }
@@ -78,39 +78,38 @@ describe('more stream', function () {
         });
     });
 
-    describe('multistream', () => {
+    describe('multistream', function() {
 
-        it('plain multistream combine', () => {
+        it('plain multistream combine', function() {
 
-            const result = [];
-            const c = flyd.combine((q, w, e, r) => {
+            var result = [];
+            var c = flyd.combine(function(q, w, e, r) {
                 return [q(), w(), e(), r()];
             }, [stream(1), stream(2), stream(3), stream(4)]);
-            flyd.on(v => {
+            flyd.on(function(v) {
                 result.push(v);
             }, c);
 
             assert.deepEqual(result, [[1, 2, 3, 4]]);
         });
 
-        it('nested multistream combine', function () {
-            const ticker = { base: 0, combine: 0, collapse: 0 };
-            const result = [];
-            const double = x => 2 * x;
-            const q = stream(2);
+        it('nested multistream combine', function() {
+            var ticker = { base: 0, combine: 0, collapse: 0 };
+            var result = [];
+            var q = stream(2);
             q.mark = 'q';
-            const qq = flyd.map(double, q);
+            var qq = flyd.map(double, q);
             qq.mark = 'qq';
 
             function body(v) {
 
                 ticker.base++;
 
-                const h = flyd.combine((q, w, e, r) => {
+                var h = flyd.combine(function(q, w, e, r) {
                     ticker.combine++;
                     return [q(), w(), e(), r()];
                 }, [stream(1), stream(2), stream(3), stream(4)]);
-                flyd.on(v => {
+                flyd.on(function(v) {
                     ticker.collapse++;
                     result.push(v);
                 }, h);
