@@ -74,6 +74,18 @@ describe('stream', function() {
     });
     assert.equal(result, 101);
   });
+
+  it('streams created within stream bodies whose dependencies are not met at creation are updated after their dependencies are met', function() {
+    var result;
+    stream(1).map(function() {
+      var n = stream();
+      n.map(function(v) { result = v + 100; });
+      n(1);
+      assert.equal(result, 101);
+    });
+    assert.equal(result, 101);
+  });
+
   it('has pretty string representation', function() {
     var ns = stream(1);
     var ss = stream('hello');
