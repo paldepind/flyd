@@ -64,6 +64,16 @@ describe('stream', function() {
     assert(flyd.isStream(s3));
     assert(!flyd.isStream(f));
   });
+
+  it('streams created within stream bodies whose dependencies are met are evaluated instantly rather than pushed on a queue', function() {
+    var result;
+    stream(1).map(function() {
+      var n = flyd.stream(1);
+      n.map(function(v) { result = v + 100; });
+      assert.equal(result, 101);
+    });
+    assert.equal(result, 101);
+  });
   it('has pretty string representation', function() {
     var ns = stream(1);
     var ss = stream('hello');
