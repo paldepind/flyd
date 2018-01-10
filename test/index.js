@@ -269,8 +269,8 @@ describe('stream', function() {
       var result = undefined;
       stream(1).map(function() {
         var n = stream();
-        n.end(true);
         n.map(function(v) { result = v + 100; });
+        n.end(true);
         n(1);
         n(2);
         assert.equal(result, undefined);
