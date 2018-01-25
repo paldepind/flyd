@@ -20,8 +20,11 @@
     "mocha": "^2.2.1",
     "mocha-lcov-reporter": "0.0.2",
     "np": "^2.19.0",
-    "transducers.js": "0.3.x",
-    "uglifyjs": "^2.4.10"
+    "rollup": "^0.56.2",
+    "rollup-plugin-commonjs": "^8.3.0",
+    "rollup-plugin-node-resolve": "^3.0.3",
+    "rollup-plugin-uglify": "^3.0.0",
+    "transducers.js": "0.3.x"
   },
   "scripts": {
     "test-lib": "mocha",
@@ -30,7 +33,7 @@
     "perf": "./perf/run-benchmarks",
     "coverage": "istanbul cover _mocha -- -R spec",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
-    "build": "browserify -s flyd lib/index.js > flyd.js && uglifyjs flyd.js -o flyd.min.js",
+    "build": "rollup -c rollup.config.dev.js && rollup -c rollup.config.js",
     "release": "np"
   },
   "repository": {
