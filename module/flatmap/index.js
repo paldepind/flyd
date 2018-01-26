@@ -18,30 +18,4 @@ var flyd = require('../../lib');
  * s(0)(1)(2);
  * // flat = 0, 1, 2
  */
-module.exports = flyd.curryN(2, function(f, s) {
-  // Internal state to end flat map stream
-  var flatEnd = flyd.stream(1);
-  var internalEnded = flyd.on(function() {
-    var alive = flatEnd() - 1;
-    flatEnd(alive);
-    if (alive <= 0) {
-      flatEnd.end(true);
-    }
-  });
-
-  internalEnded(s.end);
-
-  var flatStream = flyd.combine(function(s, own) {
-    // Our fn stream makes streams
-    var newS = f(s());
-    flatEnd(flatEnd() + 1);
-    internalEnded(newS.end);
-
-    // Update self on call -- newS is never handed out so deps don't matter
-    flyd.on(own, newS);
-  }, [s]);
-
-  flyd.endsOn(flatEnd.end, flatStream);
-
-  return flatStream;
-});
+module.exports = flyd.chain;
