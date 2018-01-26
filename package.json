@@ -8,6 +8,7 @@
     "test": "test"
   },
   "dependencies": {
+    "fantasy-land": "^3.5.0",
     "ramda": "^0.19.1"
   },
   "devDependencies": {
@@ -24,7 +25,7 @@
   },
   "scripts": {
     "test-lib": "mocha",
-    "test": "eslint lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
+    "test": "eslint --fix lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
     "docs": "documentation -f md lib/index.js > API.md",
     "perf": "./perf/run-benchmarks",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
