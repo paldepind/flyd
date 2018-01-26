@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "fantasy-land": "^3.5.0",
-    "ramda": "^0.19.1"
+    "ramda": "^0.25.0"
   },
   "devDependencies": {
     "benchmark": "^1.0.0",

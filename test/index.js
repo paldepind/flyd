@@ -454,6 +454,63 @@ describe('stream', function() {
     });
   });
 
+  describe('chain', function() {
+    it('applies function to values in stream', function() {
+      var result = [];
+      function f(v) {
+        result.push(v);
+        return stream();
+      }
+      var s = stream();
+      flyd.chain(f, s);
+      s(1)(2)(3)(4)(5);
+      assert.deepEqual(result, [1, 2, 3, 4, 5]);
+    });
+    it('returns stream with result from all streams created by function', function() {
+      var result = [];
+      function f(v) {
+        var s = stream();
+        setImmediate(function() {
+          s(v + 1)(v + 2)(v + 3);
+        });
+        return s;
+      }
+      var s = stream();
+      flyd.map(function(v) {
+        result.push(v);
+      }, flyd.chain(f, s));
+      s(1)(3)(5);
+      setImmediate(function() {
+        assert.deepEqual(result, [2, 3, 4,
+          4, 5, 6,
+          6, 7, 8]);
+      });
+    });
+    it('passed bug outlined in https://github.com/paldepind/flyd/issues/31', function(done) {
+      function delay(val, ms) {
+        var outStream = flyd.stream();
+
+        setTimeout(function() {
+          outStream(val);
+          outStream.end(true);
+        }, ms);
+
+        return outStream;
+      }
+
+      var main = delay(1, 500);
+      var merged = flyd.chain(function(v) {
+        return delay(v, 1000)
+      }, main);
+
+      flyd.on(function() {
+        assert(main() === 1);
+        assert(merged() === 1);
+        done();
+      }, merged.end);
+    });
+  });
+
   describe('scan', function() {
     it('has initial acc as value when stream is undefined', function() {
       var numbers = stream();
@@ -838,5 +895,44 @@ describe('stream', function() {
         [], [1, 3, 2], [2, 8, 7, 6], [3, 5, 4]
       ]);
     });
+  });
+
+  describe('fantasy-land', function() {
+    it('map', function() {
+      var s = stream(1);
+      var mapped = R.map(R.add(3), s);
+      assert.equal(mapped(), 4);
+      assert.equal(s(), 1);
+    });
+
+    it('chain', function() {
+      var s = stream(1);
+      var chained = R.chain(R.compose(stream, R.add(3)), s);
+      assert.equal(chained(), 4);
+      assert.equal(s(), 1);
+    });
+
+    it('ap', function() {
+      var s = stream(R.add(3));
+      var val = stream(3);
+      var applied = R.ap(s, val);
+      assert.equal(applied(), 6);
+    });
+
+    it('old ap', function() {
+      var s = stream(R.add(3))
+        .ap(stream(3));
+      assert.equal(s(), 6);
+    });
+
+    it('of', function() {
+      var s = flyd.of(3);
+      var s2 = s['fantasy-land/of'](5);
+      assert(flyd.isStream(s));
+      assert.equal(s(), 3);
+
+      assert(flyd.isStream(s2));
+      assert.equal(s2(), 5);
+    })
   });
 });
