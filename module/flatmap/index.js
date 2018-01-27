@@ -1,5 +1,7 @@
 var flyd = require('../../lib');
 
+console.warn('flyd/module/flatmap has been deprecated in favour of flyd.chain');
+
 /**
  * Given a stream of streams, returns a single stream of merged values
  * from the created streams.
