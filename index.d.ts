@@ -7,6 +7,7 @@ declare namespace flyd {
   interface Stream<T> {
     (): T;
     (value: T): Stream<T>;
+    (value: Promise<T> | PromiseLike<T>): Stream<T>;
 
 
     /**
@@ -54,12 +55,12 @@ declare namespace flyd {
   interface CreateStream {
     <T>(): Stream<T>;
     <T>(value: T): Stream<T>;
+    <T>(value: Promise<T> | PromiseLike<T>): Stream<T>;
     (): Stream<void>;
   }
 
   interface Static {
     stream: CreateStream;
-    of: CreateStream;
 
     immediate<T>(stream: Stream<T>): Stream<T>;
     isStream(stream: any): boolean;
@@ -88,8 +89,6 @@ declare namespace flyd {
 
     transduce<T, V>(mapfn: Function, stream: Stream<T>): Stream<V>;
     transduce<T, V>(mapfn: Function): (stream: Stream<T>) => Stream<V>;
-
-    fromPromise<T>(promise: Promise<T> | PromiseLike<T>): Stream<T>;
 
     curryN(length: number, fn: (...args: Array<any>) => void): Function;
   }

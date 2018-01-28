@@ -46,9 +46,7 @@ __Other features__
 
 * Supports the transducer protocol. You can for instance transduce streams with
   [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
-* Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
 * [Elegant support for promises](#using-promises-for-asynchronous-operations).
-  monad specification.
 * [Atomic updates](#atomic-updates).
 
 ## Examples
@@ -224,17 +222,6 @@ flyd.on(function(responses) {
 }, responses);
 ```
 
-__Note:__ this functionality has been deprecated in favour of `flyd.fromPromise`.
-The above example should idiomatically be written as:
-
-```javascript
-var urls = flyd.stream('/something.json');
-var responses = flyd.fromPromise(requestPromise(urls()));
-flyd.on(function(responses) {
-  console.log('Received response!');
-  console.log(responses());
-}, responses);
-```
 ### Mapping over a stream
 
 You've now seen most of the basic building block which Flyd provides. Let's see
@@ -450,7 +437,7 @@ __Example__
 ```javascript
 var filter = flyd.stream('filter');
 var search_results = flyd.chain(function(filter){
-  return flyd.fromPromise(getResults(filter));
+  return flyd.stream(getResults(filter));
 }, filter);
 ```
 
@@ -471,7 +458,7 @@ while it can not seem useful immediately consider this example
 
 ```javascript
 var get_results = function (filter, sortProperty, sortDirection) {
-  return flyd.fromPromise(fetch(`${base_url}/search?q=${filter}&sort=${sortProperty} ${sortDirection}`))
+  return flyd.stream(fetch(`${base_url}/search?q=${filter}&sort=${sortProperty} ${sortDirection}`))
 };
 
 // this would eventually be linked to an input field
@@ -565,21 +552,6 @@ s1(1)(1)(2)(3)(3)(3)(4);
 results; // [2, 4, 6, 8]
 ```
 
-### flyd.fromPromise(promise)
-
-Transforms a promise into a stream.
-
-__Signature__
-`Promise a -> Stream a`
-
-__Example__
-```javascript
-const urls = flyd.stream('./something.json');
-const requests = flyd.chain(function(url){
-  return flyd.fromPromise(requestPromise(url));
-}, urls);
-```
-
 ### flyd.curryN(n, fn)
 
 Returns `fn` curried to `n`. Use this function to curry functions exposed by
@@ -650,7 +622,7 @@ var squaredNumbers = numbers
 var filter = flyd.stream('filter');
 var search_results = filter
   .pipe(flyd.chain(function(filter){
-    return flyd.fromPromise(getResults(filter));
+    return flyd.stream(getResults(filter));
   }));
 
 // use with a flyd module
