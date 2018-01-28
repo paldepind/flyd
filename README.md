@@ -425,7 +425,10 @@ var numbers = flyd.stream(0);
 var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 ```
 ### flyd.chain(fn, s)
-Given a stream of streams, returns a single stream of merged values from the created streams.
+`fn` must return a stream.
+
+`fn` is run every time a value is pushed into `s`.
+Returns a single stream of merged values from the created streams.
 
 Ends when every created stream and the main stream ends
 
