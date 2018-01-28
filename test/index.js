@@ -926,7 +926,7 @@ describe('stream', function() {
     });
 
     it('of', function() {
-      var s = flyd.of(3);
+      var s = flyd.stream(3);
       var s2 = s['fantasy-land/of'](5);
       assert(flyd.isStream(s));
       assert.equal(s(), 3);
