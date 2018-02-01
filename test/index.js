@@ -8,6 +8,7 @@ var stream = flyd.stream;
 var combine = flyd.combine;
 var map = flyd.map;
 var ap = flyd.ap;
+var chain = flyd.chain;
 
 // Some combinators
 function doubleFn(x) { return x() * 2; }
@@ -508,6 +509,31 @@ describe('stream', function() {
         assert(merged() === 1);
         done();
       }, merged.end);
+    });
+
+    it('preserves ordering', function() {
+      function delay(val, ms) {
+        var outStream = flyd.stream();
+
+        setTimeout(function() {
+          outStream(val);
+          outStream.end(true);
+        }, ms);
+
+        return outStream;
+      }
+
+      var s = stream();
+
+      var s2 = s
+        .pipe(chain(function(val) {
+          return delay(val, 100);
+        }));
+      s(1)(2)(3)(4);
+
+      flyd.on(function(val) {
+        assert.equal(val, 4);
+      }, s2)
     });
   });
 

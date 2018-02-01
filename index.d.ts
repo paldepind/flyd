@@ -1,33 +1,22 @@
 type CurriedFunction2<T1, T2, R> = ((t1: T1, t2: T2) => R) & ((t1: T1, ...rest: Array<void>) => (t2: T2) => R);
 
 declare namespace flyd {
-  interface Morphism<T, V> {
-    (value: T): V;
-  }
   interface Stream<T> {
     (): T;
     (value: T): Stream<T>;
     (value: Promise<T> | PromiseLike<T>): Stream<T>;
 
 
-    /**
-     * @deprecated
-     */
-    map<V>(accessor: Morphism<T, V>): Stream<V>;
-    /**
-     * @deprecated
-     */
+    map<V>(project: (value: T) => V): Stream<V>;
     ap<A, B>(this: Stream<(value: A) => B>, stream: Stream<A>): Stream<B>;
-    /**
-     * @deprecated
-     */
+    chain<V>(project: (value: T) => Stream<V>): Stream<V>;
     of<V>(...values: V[]): Stream<V>;
 
     pipe<V>(operator: (input: Stream<T>) => Stream<V>): Stream<V>;
 
-    ['fantasy-land/map']<V>(accessor: Morphism<T, V>): Stream<V>;
-    ['fantasy-land/ap']<V>(morphism: Morphism<Stream<T>, V>): Stream<V>;
-    ['fantasy-land/chain']<V>(morphism: Morphism<T, Stream<V>>): Stream<V>;
+    ['fantasy-land/map']<V>(project: (value: T) => V): Stream<V>;
+    ['fantasy-land/ap']<V>(fn: (value: Stream<T>) => V): Stream<V>;
+    ['fantasy-land/chain']<V>(project: (value: T) => Stream<V>): Stream<V>;
     ['fantasy-land/of']<V>(...values: V[]): Stream<V>;
 
     end: Stream<boolean>;
@@ -68,14 +57,14 @@ declare namespace flyd {
     combine: Combine;
     endsOn<T>(end$: Stream<any>, stream: Stream<T>): Stream<T>;
 
-    map<T, V>(accessor: Morphism<T, V>): (stream: Stream<T>) => Stream<V>;
-    map<T, V>(accessor: Morphism<T, V>, stream: Stream<T>): Stream<V>;
+    map<T, V>(accessor: (value: T) => V): (stream: Stream<T>) => Stream<V>;
+    map<T, V>(accessor: (value: T) => V, stream: Stream<T>): Stream<V>;
 
     ap<A, B>(value$: Stream<A>, transform$: Stream<(value: A) => B>): Stream<B>;
-    ap<A>(value$: Stream<A>): <B>(transform$: Stream<Morphism<A, B>>) => Stream<B>
+    ap<A>(value$: Stream<A>): <B>(transform$: Stream<(value: A) => B>) => Stream<B>
 
-    chain<T, V>(accessor: Morphism<T, Stream<V>>): (stream: Stream<T>) => Stream<V>;
-    chain<T, V>(accessor: Morphism<T, Stream<V>>, stream: Stream<T>): Stream<V>;
+    chain<T, V>(accessor: (value: T) => Stream<V>): (stream: Stream<T>) => Stream<V>;
+    chain<T, V>(accessor: (value: T) => Stream<V>, stream: Stream<T>): Stream<V>;
 
     on<T>(onfn: (value: T) => void): (stream: Stream<T>) => Stream<void>;
     on<T>(onfn: (value: T) => void, stream: Stream<T>): Stream<void>;
@@ -128,10 +117,9 @@ declare module 'flyd/module/every' {
 }
 
 declare module 'flyd/module/filter' {
-  type projection<T> = (val: T) => boolean;
   interface Filter {
-    <T>(project: projection<T>, stream: flyd.Stream<T>): flyd.Stream<T>;
-    <T>(project: projection<T>): (stream: flyd.Stream<T>) => flyd.Stream<T>;
+    <T, V extends T>(project: (val: T) => val is V, stream: flyd.Stream<T>): flyd.Stream<T>;
+    <T, V extends T>(project: (val: T) => val is V): (stream: flyd.Stream<T>) => flyd.Stream<T>;
   }
   const _Filter: Filter;
   export = _Filter;
