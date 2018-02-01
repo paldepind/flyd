@@ -369,26 +369,86 @@ describe('stream', function() {
     });
   });
 
-  describe('promise swallowing', function() {
-    it('pushes result of promise down the stream', function(done) {
-      var s = flyd.fromPromise(Promise.resolve(12));
-      combine(function(s) {
-        assert.equal(s(), 12);
-        done();
-      }, [s]);
+  describe('Promises', function() {
+    describe('fromPromise', function() {
+      it('pushes result of promise down the stream', function(done) {
+        var s = flyd.fromPromise(Promise.resolve(12));
+        combine(function(s) {
+          assert.equal(s(), 12);
+          done();
+        }, [s]);
+      });
+      it('recursively unpacks promise', function(done) {
+        var s = flyd.fromPromise(new Promise(function(res) {
+          setTimeout(function() {
+            res(new Promise(function(res) {
+              setTimeout(res.bind(null, 12));
+            }));
+          }, 20);
+        }));
+        combine(function(s) {
+          assert.equal(s(), 12);
+          done();
+        }, [s]);
+      });
+
+      it('does not process out of order promises', function(done) {
+        var promises = [];
+        var delay = function(ms, val) {
+          var p = new Promise(function(res) {
+            setTimeout(function() {
+              res(val);
+            }, ms)
+          });
+          promises.push(p);
+          return p;
+        };
+
+        var s = stream();
+        var res = s.chain(function(val) {
+          return flyd.fromPromise(delay(val, val));
+        })
+          .pipe(flyd.scan(function(acc, v) {
+            return acc + v;
+          }, 0));
+        s(100)(50)(70)(200);
+
+        Promise.all(promises).then(function() {
+          assert.equal(res(), 200);
+          done();
+        });
+
+      });
     });
-    it('recursively unpacks promise', function(done) {
-      var s = flyd.fromPromise(new Promise(function(res) {
-        setTimeout(function() {
-          res(new Promise(function(res) {
-            setTimeout(res.bind(null, 12));
-          }));
-        }, 20);
-      }));
-      combine(function(s) {
-        assert.equal(s(), 12);
-        done();
-      }, [s]);
+    describe('flattenPromise', function() {
+      it('processes out of order promises', function(done) {
+        var promises = [];
+        var delay = function(ms, val) {
+          var p = new Promise(function(res) {
+            setTimeout(function() {
+              res(val);
+            }, ms)
+          });
+          promises.push(p);
+          return p;
+        };
+
+        var s = stream();
+        var res = s.map(function(val) {
+          return delay(val, val);
+        })
+          .pipe(flyd.flattenPromise)
+          .pipe(flyd.scan(function(acc, v) {
+            return acc + v;
+          }, 0));
+        s(100)(50)(70)(200);
+
+        Promise.all(promises).then(function() {
+          assert.equal(res(), 420);
+          done();
+        });
+
+      });
     });
   });
 

@@ -46,6 +46,7 @@ __Other features__
 
 * Supports the transducer protocol. You can for instance transduce streams with
   [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
+* Conforms to the fantasy land [monad](https://github.com/fantasyland/fantasy-land#monad) specification
 * [Atomic updates](#atomic-updates).
 
 ## Examples
