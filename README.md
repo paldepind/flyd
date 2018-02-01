@@ -46,7 +46,6 @@ __Other features__
 
 * Supports the transducer protocol. You can for instance transduce streams with
   [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
-* [Elegant support for promises](#using-promises-for-asynchronous-operations).
 * [Atomic updates](#atomic-updates).
 
 ## Examples
@@ -207,19 +206,31 @@ after an actual response has been received (otherwise `responses()` would return
 streams has received a value (this behaviour can be circumvented with
 [flyd.immediate](#flydimmediatestream)).
 
-### Using promises for asynchronous operations
+### Promises
+Flyd has two helpers for dealing with promises: `flyd.fromPromise` and `flyd.flattenPromise`.
 
-Flyd has inbuilt support for promises. Similarly to how a promise can never be
-resolved with a promise, a promise can never flow down a stream. Instead the
-fulfilled value of the promise will be sent down the stream.
+Let's say you're building a filtered list. It is important to you that the latest filter always corresponds
+to the latest promise and its resolution. using `flyd.fromPromise` guarantees the ordering, and can skip intermediate results.
 
-```javascript
-var urls = flyd.stream('/something.json');
-var responses = flyd.stream(requestPromise(urls()));
-flyd.on(function(responses) {
-  console.log('Received response!');
-  console.log(responses());
-}, responses);
+```js
+const filter = flyd.stream('');
+const results = filter
+  .pipe(flyd.chain(
+    filter => flyd.fromPromise(requestPromise(`https://example.com?q=${filter}`))
+  ));
+```
+
+On the other hand let's say you want to sum some numbers from a service you've written.
+Every time someone clicks on your site you want to send a request and get back a random number to be tallied.
+
+`flyd.flattenPromise` gives you the guarantee that every promise resolution will be handled, regardless of order.
+
+```js
+const clicks = flyd.stream();
+const total = clicks
+  .map(getNumberAsync)
+  .pipe(flyd.flattenPromise)
+  .pipe(flyd.scan((acc, v)=> acc + v, 0));
 ```
 
 ### Mapping over a stream

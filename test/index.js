@@ -371,14 +371,14 @@ describe('stream', function() {
 
   describe('promise swallowing', function() {
     it('pushes result of promise down the stream', function(done) {
-      var s = flyd.stream(Promise.resolve(12));
+      var s = flyd.fromPromise(Promise.resolve(12));
       combine(function(s) {
         assert.equal(s(), 12);
         done();
       }, [s]);
     });
     it('recursively unpacks promise', function(done) {
-      var s = flyd.stream(new Promise(function(res) {
+      var s = flyd.fromPromise(new Promise(function(res) {
         setTimeout(function() {
           res(new Promise(function(res) {
             setTimeout(res.bind(null, 12));

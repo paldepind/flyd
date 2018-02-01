@@ -79,6 +79,9 @@ declare namespace flyd {
     transduce<T, V>(mapfn: Function, stream: Stream<T>): Stream<V>;
     transduce<T, V>(mapfn: Function): (stream: Stream<T>) => Stream<V>;
 
+    fromPromise<T>(promise: PromiseLike<T>): Stream<T>;
+    flattenPromise<T>(promise$: Stream<PromiseLike<T>>): Stream<T>;
+
     curryN(length: number, fn: (...args: Array<any>) => void): Function;
   }
 }
@@ -196,8 +199,8 @@ declare module 'flyd/module/obj' {
 }
 
 declare module 'flyd/module/previous' {
-  type previous<T> =
-    const _previous: previous; (stream: flyd.Stream<T>) => flyd.Stream<T>;
+  type previous<T> = (stream: flyd.Stream<T>) => flyd.Stream<T>;
+  const _previous: previous;;
   export = _previous;
 }
 
