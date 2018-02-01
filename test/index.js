@@ -702,6 +702,14 @@ describe('stream', function() {
   });
 
   describe('of', function() {
+    it('can be accessed through the constructor property', function() {
+      var s1 = stream(2);
+      var s2 = s1.constructor.of(3);
+      var s3 = s2.constructor['fantasy-land/of'](3);
+      assert.equal(flyd.isStream(s2), true);
+      assert.equal(s2(), 3);
+      assert.equal(s3(), 3);
+    });
     it('returns a stream with the passed value', function() {
       var s1 = stream(2);
       var s2 = s1.of(3);
