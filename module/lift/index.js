@@ -1,4 +1,4 @@
-var flyd = require('../../lib');
+var flyd = require('../../flyd');
 
 module.exports = function(f /* , streams */) {
   var streams = Array.prototype.slice.call(arguments, 1);

@@ -1,4 +1,4 @@
-var flyd = require('../../../lib');
+var flyd = require('../../../flyd');
 var stream = flyd.stream;
 var assert = require('assert');
 

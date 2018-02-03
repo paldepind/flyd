@@ -28,7 +28,7 @@ function map(f, s) {
 
 function boundMap(f) { return map(f, this); }
 
-var scan = curryN(3, function(f, acc, s) {
+var scan = curry3(function(f, acc, s) {
   var ns = stream([s], function() {
     return (acc = f(acc, s()));
   });
@@ -36,7 +36,7 @@ var scan = curryN(3, function(f, acc, s) {
   return ns;
 });
 
-var merge = curryN(2, function(s1, s2) {
+var merge = curry2(function(s1, s2) {
   var s = immediate(stream([s1, s2], function(n, changed) {
     return changed[0] ? changed[0]()
          : s1.hasVal  ? s1()
@@ -226,7 +226,7 @@ function stream(arg, fn) {
   return s;
 }
 
-var transduce = curryN(2, function(xform, source) {
+var transduce = curry2(function(xform, source) {
   xform = xform(new StreamTransformer());
   return stream([source], function(self) {
     var res = xform['@@transducer/step'](undefined, source());
@@ -363,7 +363,7 @@ return {
   reduce: scan, // Legacy
   scan: scan,
   endsOn: endsOn,
-  map: curryN(2, map),
+  map: curry2(map),
   curryN: curryN,
   _: _,
   immediate: immediate,

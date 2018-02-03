@@ -1,6 +1,6 @@
-var flyd = require('../../lib');
+var flyd = require('../../flyd');
 
-module.exports = flyd.curryN(2, function(dur, s) {
+module.exports = flyd.curry2(function(dur, s) {
   var scheduled;
   var buffer = [];
   return flyd.combine(function(s, self) {

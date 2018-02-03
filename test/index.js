@@ -3,7 +3,7 @@ var Promise = require('bluebird');
 var R = require('ramda');
 var t = require('transducers.js');
 
-var flyd = require('../lib');
+var flyd = require('../flyd');
 var stream = flyd.stream;
 var combine = flyd.combine;
 
@@ -591,7 +591,7 @@ describe('stream', function() {
     });
     it('supports neat ap pattern', function() {
       var result = [];
-      var sumThree = flyd.curryN(3, function(x, y, z) {
+      var sumThree = flyd.curry3(function(x, y, z) {
         return x + y + z;
       });
       var s1 = stream(0);
@@ -604,7 +604,7 @@ describe('stream', function() {
     });
     it('applies functions if streams have no initial value', function() {
       var result = [];
-      var add = flyd.curryN(2, function(x, y) { return x + y; });
+      var add = flyd.curry2(function(x, y) { return x + y; });
       var numbers1 = stream();
       var numbers2 = stream();
       var addToNumbers1 = flyd.map(add, numbers1);

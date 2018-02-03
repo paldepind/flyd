@@ -37,7 +37,8 @@ cp $SOURCE_FILENAME_WITH_EXTENSION $OLD_VERSION_FILENAME_WITH_EXTENSION
 
 git checkout HEAD -- $SOURCE_FILENAME_WITH_EXTENSION
 
-
+# Make sure that the source file is the newest possible version
+rollup -c
 
 ## Run the benchmarks
 cd "$DIRECTORY_CONTAINING_THIS_SCRIPT"

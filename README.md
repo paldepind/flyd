@@ -503,20 +503,16 @@ s1(1)(1)(2)(3)(3)(3)(4);
 results; // [2, 4, 6, 8]
 ```
 
-### flyd.curryN(n, fn)
+### flyd.curry2(fn) / flyd.curry3(fn)
 
-Returns `fn` curried to `n`. Use this function to curry functions exposed by
+Returns `fn` curried to `2` or `3`. Use this function to curry functions exposed by
 modules for Flyd.
-
-__Signature__
-
-`Integer -> (* -> a) -> (* -> a)`
 
 __Example__
 
 ```javascript
 function add(x, y) { return x + y; };
-flyd.curryN(2, add);
+flyd.curry2(add);
 var add
 ```
 
@@ -591,7 +587,7 @@ Called bound to `Stream (a -> b)`: `a -> Stream b`
 __Example__
 
 ```javascript
-var add = flyd.curryN(2, function(x, y) { return x + y; });
+var add = flyd.curry2(function(x, y) { return x + y; });
 var numbers1 = flyd.stream();
 var numbers2 = flyd.stream();
 var addToNumbers1 = flyd.map(add, numbers1);

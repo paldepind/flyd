@@ -1,4 +1,4 @@
-var flyd = require('../../../lib');
+var flyd = require('../../../flyd');
 var stream = flyd.stream;
 var dropRepeats = require('../').dropRepeats;
 var dropRepeatsWith = require('../').dropRepeatsWith;

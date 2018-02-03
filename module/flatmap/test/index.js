@@ -30,9 +30,7 @@ describe('flatMap', function() {
     }, flatMap(f, s));
     s(1)(3)(5);
     setImmediate(function() {
-      assert.deepEqual(result, [2, 3, 4,
-                                4, 5, 6,
-                                6, 7, 8]);
+      assert.deepEqual(result, [2, 3, 4, 4, 5, 6, 6, 7, 8]);
     });
   });
   it('passed bug outlined in https://github.com/paldepind/flyd/issues/31', function(done) {

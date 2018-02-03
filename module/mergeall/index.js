@@ -1,4 +1,4 @@
-var flyd = require('../../lib');
+var flyd = require('../../flyd');
 
 module.exports = function mergeAll(streams) {
   var s = flyd.immediate(flyd.combine(function() {
