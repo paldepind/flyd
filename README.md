@@ -513,7 +513,7 @@ stream with and accumulator and the incoming value.
 
 __Signature__
 
-`(a -> b -> a) -> a -> Stream b -> Stream a`
+`((a, b) -> a) -> a -> Stream b -> Stream a`
 
 __Example__
 ```javascript
