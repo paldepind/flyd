@@ -46,9 +46,6 @@ __Other features__
 
 * Supports the transducer protocol. You can for instance transduce streams with
   [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
-* Complies to the [fantasy land](https://github.com/fantasyland/fantasy-land)
-  applicative specification.
-* [Elegant support for promises](#using-promises-for-asynchronous-operations).
 * [Atomic updates](#atomic-updates).
 
 ## Examples
@@ -209,19 +206,31 @@ after an actual response has been received (otherwise `responses()` would return
 streams has received a value (this behaviour can be circumvented with
 [flyd.immediate](#flydimmediatestream)).
 
-### Using promises for asynchronous operations
+### Promises
+Flyd has two helpers for dealing with promises: `flyd.fromPromise` and `flyd.flattenPromise`.
 
-Flyd has inbuilt support for promises. Similarly to how a promise can never be
-resolved with a promise, a promise can never flow down a stream. Instead the
-fulfilled value of the promise will be sent down the stream.
+Let's say you're building a filtered list. It is important to you that the latest filter always corresponds
+to the latest promise and its resolution. using `flyd.fromPromise` guarantees the ordering, and can skip intermediate results.
 
-```javascript
-var urls = flyd.stream('/something.json');
-var responses = flyd.stream(requestPromise(urls()));
-flyd.on(function(responses) {
-  console.log('Received response!');
-  console.log(responses());
-}, responses);
+```js
+const filter = flyd.stream('');
+const results = filter
+  .pipe(flyd.chain(
+    filter => flyd.fromPromise(requestPromise(`https://example.com?q=${filter}`))
+  ));
+```
+
+On the other hand let's say you want to sum some numbers from a service you've written.
+Every time someone clicks on your site you want to send a request and get back a random number to be tallied.
+
+`flyd.flattenPromise` gives you the guarantee that every promise resolution will be handled, regardless of order.
+
+```js
+const clicks = flyd.stream();
+const total = clicks
+  .map(getNumberAsync)
+  .pipe(flyd.flattenPromise)
+  .pipe(flyd.scan((acc, v)=> acc + v, 0));
 ```
 
 ### Mapping over a stream
@@ -426,6 +435,60 @@ __Example__
 var numbers = flyd.stream(0);
 var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
 ```
+### flyd.chain(fn, s)
+`fn` must return a stream.
+
+`fn` is run every time a value is pushed into `s`.
+Returns a single stream of merged values from the created streams.
+
+Ends when every created stream and the main stream ends
+
+__Signature__
+
+`(a -> Stream b) -> Stream a -> Stream b`
+
+__Example__
+```javascript
+var filter = flyd.stream('filter');
+var search_results = flyd.chain(function(filter){
+  return flyd.stream(getResults(filter));
+}, filter);
+```
+
+### flyd.ap(valueStream, functionStream)
+
+Applies the value in `valueStream` to the function in `functionStream`
+
+__Signature__
+`Stream a -> Stream (a -> b) -> Stream b`
+
+__Example__
+```javascript
+function add3(x) { return x + 3; }
+flyd.ap(flyd.stream(5), flyd.stream(add3)) // stream(8);
+```
+
+while it can not seem useful immediately consider this example
+
+```javascript
+var get_results = function (filter, sortProperty, sortDirection) {
+  return flyd.stream(fetch(`${base_url}/search?q=${filter}&sort=${sortProperty} ${sortDirection}`))
+};
+
+// this would eventually be linked to an input field
+var filter = flyd.stream('');
+var sortProperty = flyd.stream('name');
+var sortDirection = flyd.stream('descending');
+
+var results = flyd.stream(flyd.curryN(3, get_results))
+  .pipe(flyd.ap(filter))
+  .pipe(flyd.ap(sortProperty))
+  .pipe(flyd.ap(sortDirection))
+  .pipe(flyd.map(function(d){ return d; }));
+```
+
+In the above example you have a stream of results that triggers a call for get_results
+every time `filter`, `sortProperty`, or `sortDirection` is changed.
 
 ### flyd.on(fn, s)
 
@@ -555,7 +618,36 @@ names(); // 'Bohr'
 A stream that emits `true` when the stream ends. If `true` is pushed down the
 stream the parent stream ends.
 
-### stream.map(f)
+### stream.pipe(fn)
+
+Returns the result of applying function `fn` to the stream.
+
+__Signature__
+Called bound to `Stream a`: `(Stream a -> Stream b) -> Stream b`
+
+__Example__
+```javascript
+// map a stream
+var numbers = flyd.stream(0);
+var squaredNumbers = numbers
+  .pipe(flyd.map(function(n) { return n*n; }));
+
+// Chain a stream
+var filter = flyd.stream('filter');
+var search_results = filter
+  .pipe(flyd.chain(function(filter){
+    return flyd.stream(getResults(filter));
+  }));
+
+// use with a flyd module
+var filter = require('flyd/module/filter');
+var numbers = flyd.stream(0);
+var isEven = function(x){ return x % 2 === 0; };
+var evenNumbers = numbers
+  .pipe(filter(isEven));
+```
+
+### stream.map(f) __Deprecated__
 
 Returns a new stream identical to the original except every
 value will be passed through `f`.
@@ -574,7 +666,7 @@ var numbers = flyd.stream(0);
 var squaredNumbers = numbers.map(function(n) { return n*n; });
 ```
 
-### stream1.ap(stream2)
+### stream1.ap(stream2) __Deprecated__
 
 `stream1` must be a stream of functions.
 
@@ -624,7 +716,6 @@ Modules listed with names in the format `flyd/module/filter` are builtin to the 
 | --- | --- |
 | [flyd/module/**filter**](module/filter) | Filter values from stream based on predicate. |
 | [flyd/module/**lift**](module/lift) | Maps a function taking _n_ parameters over _n_ streams. |
-| [flyd/module/**flatmap**](module/flatmap) | Maps a function over a stream of streams and flattens the result to a single stream. |
 | [flyd/module/**switchlatest**](module/switchlatest) | Flattens a stream of streams. The result stream reflects changes from the last stream only. |
 | [flyd/module/**keepwhen**](module/keepwhen) | Keep values from one stream only when another stream is true. |
 | [flyd/module/**obj**](module/obj) | Functions for working with stream in objects. |
