@@ -648,7 +648,7 @@ var evenNumbers = numbers
   .pipe(filter(isEven));
 ```
 
-### stream.map(f) __Deprecated__
+### stream.map(f)
 
 Returns a new stream identical to the original except every
 value will be passed through `f`.
@@ -667,7 +667,7 @@ var numbers = flyd.stream(0);
 var squaredNumbers = numbers.map(function(n) { return n*n; });
 ```
 
-### stream1.ap(stream2) __Deprecated__
+### stream1.ap(stream2)
 
 `stream1` must be a stream of functions.
 
