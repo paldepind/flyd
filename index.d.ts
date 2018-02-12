@@ -128,16 +128,6 @@ declare module 'flyd/module/filter' {
   export = _Filter;
 }
 
-declare module 'flyd/module/flatmap' {
-  type projection<T, V> = (val: T) => flyd.Stream<V>;
-  interface flatMap {
-    <T, V>(project: projection<T, V>, source: flyd.Stream<T>): flyd.Stream<V>;
-    <T, V>(project: projection<T, V>): (source: flyd.Stream<T>) => flyd.Stream<V>;
-  }
-  const _flatMap: flatMap;
-  export = _flatMap;
-}
-
 declare module 'flyd/module/forwardto' {
   interface ForwardTo {
     <T, V>(stream: flyd.Stream<V>, project: (value: V) => T): flyd.Stream<T>;
