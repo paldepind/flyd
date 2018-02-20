@@ -46,6 +46,7 @@ __Other features__
 
 * Supports the transducer protocol. You can for instance transduce streams with
   [Ramda](http://ramdajs.com/) and [transducers.js](https://github.com/jlongster/transducers.js).
+* Conforms to the fantasy land [monad](https://github.com/fantasyland/fantasy-land#monad) specification
 * [Atomic updates](#atomic-updates).
 
 ## Examples
@@ -647,7 +648,7 @@ var evenNumbers = numbers
   .pipe(filter(isEven));
 ```
 
-### stream.map(f) __Deprecated__
+### stream.map(f)
 
 Returns a new stream identical to the original except every
 value will be passed through `f`.
@@ -666,7 +667,7 @@ var numbers = flyd.stream(0);
 var squaredNumbers = numbers.map(function(n) { return n*n; });
 ```
 
-### stream1.ap(stream2) __Deprecated__
+### stream1.ap(stream2)
 
 `stream1` must be a stream of functions.
 

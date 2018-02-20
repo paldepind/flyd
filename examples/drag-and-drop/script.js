@@ -1,5 +1,4 @@
 var flyd = require('flyd');
-var flatMap = require('flyd/module/flatmap');
 var takeUntil = require('flyd/module/takeuntil');
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -13,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('mousemove', mousemove);
   document.addEventListener('mouseup', mouseup);
 
-  var mousedrag = flatMap(function(md) {
+  var mousedrag = flyd.chain(function(md) {
     var startX = md.offsetX, startY = md.offsetY;
 
     return takeUntil(flyd.map(function(mm) {
