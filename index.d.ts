@@ -180,7 +180,8 @@ declare module 'flyd/module/mergeall' {
 
 declare module 'flyd/module/obj' {
   interface ObjModule {
-    streamProps<T>(obj: T): {[P in keyof T]: flyd.Stream<T[P]> };
+    streamProps<T>(obj: T): { [P in keyof T]: flyd.Stream<T[P]> };
+    stream<T extends { [key: string]: flyd.Stream<any> }>(obj: T): flyd.Stream<{ [P in keyof T]: T[P]['val'] }>;
     extractProps(obj: any): any;
   }
 
