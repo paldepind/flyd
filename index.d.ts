@@ -121,8 +121,10 @@ declare module 'flyd/module/every' {
 
 declare module 'flyd/module/filter' {
   interface Filter {
-    <T, V extends T>(project: (val: T) => val is V, stream: flyd.Stream<T>): flyd.Stream<T>;
-    <T, V extends T>(project: (val: T) => val is V): (stream: flyd.Stream<T>) => flyd.Stream<T>;
+    <T>(predicate: (val: T) => boolean, stream: flyd.Stream<T>): flyd.Stream<T>;
+    <T>(predicate: (val: T) => boolean): (stream: flyd.Stream<T>) => flyd.Stream<T>;
+    <T, V extends T>(project: (val: T) => val is V, stream: flyd.Stream<T>): flyd.Stream<V>;
+    <T, V extends T>(project: (val: T) => val is V): (stream: flyd.Stream<T>) => flyd.Stream<V>;
   }
   const _Filter: Filter;
   export = _Filter;
