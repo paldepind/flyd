@@ -192,8 +192,8 @@ declare module 'flyd/module/obj' {
 }
 
 declare module 'flyd/module/previous' {
-  type previous<T> = (stream: flyd.Stream<T>) => flyd.Stream<T>;
-  const _previous: previous;;
+  type previous = <T>(stream: flyd.Stream<T>) => flyd.Stream<T>;
+  const _previous: previous;
   export = _previous;
 }
 
