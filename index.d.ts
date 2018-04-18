@@ -121,8 +121,10 @@ declare module 'flyd/module/every' {
 
 declare module 'flyd/module/filter' {
   interface Filter {
-    <T, V extends T>(project: (val: T) => val is V, stream: flyd.Stream<T>): flyd.Stream<T>;
-    <T, V extends T>(project: (val: T) => val is V): (stream: flyd.Stream<T>) => flyd.Stream<T>;
+    <T>(predicate: (val: T) => boolean, stream: flyd.Stream<T>): flyd.Stream<T>;
+    <T>(predicate: (val: T) => boolean): (stream: flyd.Stream<T>) => flyd.Stream<T>;
+    <T, V extends T>(project: (val: T) => val is V, stream: flyd.Stream<T>): flyd.Stream<V>;
+    <T, V extends T>(project: (val: T) => val is V): (stream: flyd.Stream<T>) => flyd.Stream<V>;
   }
   const _Filter: Filter;
   export = _Filter;
@@ -180,7 +182,8 @@ declare module 'flyd/module/mergeall' {
 
 declare module 'flyd/module/obj' {
   interface ObjModule {
-    streamProps<T>(obj: T): {[P in keyof T]: flyd.Stream<T[P]> };
+    streamProps<T>(obj: T): { [P in keyof T]: flyd.Stream<T[P]> };
+    stream<T extends { [key: string]: flyd.Stream<any> }>(obj: T): flyd.Stream<{ [P in keyof T]: T[P]['val'] }>;
     extractProps(obj: any): any;
   }
 
