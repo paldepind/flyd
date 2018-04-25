@@ -6,12 +6,12 @@ __Graph__
 ```
 a:               {---1---2---3---4}
 b:               {---------x------}
-takeUntil(a, b): {---1---2--------}
+takeUntil(b, a): {---1---2--------}
 ```
 
 __Signature__
 
-`Stream a -> Stream b -> Stream a`
+`Stream a -> Stream b -> Stream b`
 
 __Usage__
 
@@ -20,7 +20,7 @@ const takeUntil = require('flyd/module/takeuntil')
 
 const source = flyd.stream()
 const end = flyd.stream()
-const result = takeUntil(source, end)
+const result = takeUntil(end, source)
 
 source(1)(2)
 result() // 2
