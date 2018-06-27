@@ -1004,7 +1004,7 @@ describe('stream', function() {
         [], [1, 3, 2], [2, 8, 7, 6], [3, 5, 4]
       ]);
     });
-    it('#179 nested streams atomic update', function() {
+    it('nested streams atomic update', function() {
       var invocationCount = 0;
       var mapper = function(val) {
         invocationCount += 1;
