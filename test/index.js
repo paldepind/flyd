@@ -291,6 +291,23 @@ describe('stream', function() {
       });
       assert.equal(result, 2);
     });
+    it('can create multi-level dependent streams inside a stream body part 2', function() {
+      var result = '';
+      var externalStream = stream(0);
+      var theStream = stream(1);
+      function mapper(val) {
+        result += '' + val;
+        return val + 1;
+      }
+      theStream.map(function() {
+        externalStream
+          .map(mapper)
+          .map(mapper);
+        return;
+      });
+      theStream(1);
+      assert.equal(result, '0101');
+    });
   });
 
   describe('ending a stream', function() {
