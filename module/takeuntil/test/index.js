@@ -11,7 +11,7 @@ describe('takeUntil', function() {
     var terminator = stream();
     var s = takeUntil(source, terminator);
     flyd.map(function(v) { result.push(v); }, s);
-    s(1)(2)(3);
+    source(1)(2)(3);
     assert.deepEqual(result, [1, 2, 3]);
   });
   it('ends when value emitted from second stream', function() {
