@@ -213,7 +213,13 @@ var toUpdate = [];
 var inStream;
 var order = [];
 var orderNextIdx = -1;
-var flushing = false;
+var flushingUpdateQueue = false;
+var flushingStreamValue = false;
+
+function flushing() {
+  return flushingUpdateQueue || flushingStreamValue;
+}
+
 
 /** @namespace */
 var flyd = {};
@@ -380,9 +386,10 @@ flyd.endsOn = function(endS, s) {
  * var squaredNumbers = flyd.map(function(n) { return n*n; }, numbers);
  */
 // Library functions use self callback to accept (null, undefined) update triggers.
-flyd.map = curryN_1(2, function(f, s) {
+function map(f, s) {
   return combine(function(s, self) { self(f(s.val)); }, [s]);
-});
+}
+flyd.map = curryN_1(2, map);
 
 /**
  * Chain a stream
@@ -579,7 +586,7 @@ flyd.curryN = curryN_1;
  * var numbers = flyd.stream(0);
  * var squaredNumbers = numbers.map(function(n) { return n*n; });
  */
-function boundMap(f) { return flyd.map(f, this); }
+function boundMap(f) { return map(f, this); }
 
 /**
  * Returns the result of applying function `fn` to this stream
@@ -621,7 +628,7 @@ function chain(f, s) {
     internalEnded(newS.end);
 
     // Update self on call -- newS is never handed out so deps don't matter
-    last = flyd.map(own, newS);
+    last = map(own, newS);
   }, [s]);
 
   flyd.endsOn(flatEnd.end, flatStream);
@@ -724,12 +731,12 @@ function streamToString() {
 function createStream() {
   function s(n) {
     if (arguments.length === 0) return s.val
-    updateStreamValue(s, n);
+    updateStreamValue(n, s);
     return s
   }
   s.hasVal = false;
   s.val = undefined;
-  s.vals = [];
+  s.updaters = [];
   s.listeners = [];
   s.queued = false;
   s.end = undefined;
@@ -780,11 +787,23 @@ function createDependentStream(deps, fn) {
  * @param {stream} stream - the stream to check depencencies from
  * @return {Boolean} `true` if all dependencies have vales, `false` otherwise
  */
-function initialDepsNotMet(stream) {
+function initialDependenciesMet(stream) {
   stream.depsMet = stream.deps.every(function(s) {
     return s.hasVal;
   });
-  return !stream.depsMet;
+  return stream.depsMet;
+}
+
+function dependenciesAreMet(stream) {
+  return stream.depsMet === true || initialDependenciesMet(stream);
+}
+
+function isEnded(stream) {
+  return stream.end && stream.end.val === true;
+}
+
+function listenersNeedUpdating(s) {
+  return s.listeners.some(function(s) { return s.shouldUpdate; });
 }
 
 /**
@@ -793,12 +812,9 @@ function initialDepsNotMet(stream) {
  * @param {stream} stream - the stream to update
  */
 function updateStream(s) {
-  if ((s.depsMet !== true && initialDepsNotMet(s)) ||
-    (s.end !== undefined && s.end.val === true)) return;
+  if (isEnded(s) || !dependenciesAreMet(s)) return;
   if (inStream !== undefined) {
-    toUpdate.push(function() {
-      updateStream(s);
-    });
+    updateLaterUsing(updateStream, s);
     return;
   }
   inStream = s;
@@ -810,7 +826,15 @@ function updateStream(s) {
   inStream = undefined;
   if (s.depsChanged !== undefined) s.depsChanged = [];
   s.shouldUpdate = false;
-  if (flushing === false) flushUpdate();
+  if (flushing() === false) flushUpdate();
+  if (listenersNeedUpdating(s)) {
+    if (!flushingStreamValue) s(s.val);
+    else {
+      s.listeners.forEach(function(listener) {
+        if (listener.shouldUpdate) updateLaterUsing(updateStream, listener);
+      });
+    }
+  }
 }
 
 /**
@@ -818,7 +842,7 @@ function updateStream(s) {
  * Update the dependencies of a stream
  * @param {stream} stream
  */
-function updateDeps(s) {
+function updateListeners(s) {
   var i, o, list;;;
   var listeners = s.listeners;
   for (i = 0; i < listeners.length; ++i) {
@@ -856,16 +880,23 @@ function findDeps(s) {
   }
 }
 
+function updateLaterUsing(updater, stream) {
+  toUpdate.push(stream);
+  stream.updaters.push(updater);
+  stream.shouldUpdate = true;
+}
+
 /**
  * @private
  */
 function flushUpdate() {
-  flushing = true;
+  flushingUpdateQueue = true;
   while (toUpdate.length > 0) {
-    var updater = toUpdate.shift();
-    updater();
+    var stream = toUpdate.shift();
+    var nextUpdateFn = stream.updaters.shift();
+    if (nextUpdateFn && stream.shouldUpdate) nextUpdateFn(stream);
   }
-  flushing = false;
+  flushingUpdateQueue = false;
 }
 
 /**
@@ -874,19 +905,18 @@ function flushUpdate() {
  * @param {stream} stream
  * @param {*} value
  */
-function updateStreamValue(s, n) {
+function updateStreamValue(n, s) {
   s.val = n;
   s.hasVal = true;
   if (inStream === undefined) {
-    flushing = true;
-    updateDeps(s);
-    if (toUpdate.length > 0) flushUpdate(); else flushing = false;
+    flushingStreamValue = true;
+    updateListeners(s);
+    if (toUpdate.length > 0) flushUpdate();
+    flushingStreamValue = false;
   } else if (inStream === s) {
     markListeners(s, s.listeners);
   } else {
-    toUpdate.push(function() {
-      updateStreamValue(s, n);
-    });
+    updateLaterUsing(function(s) { updateStreamValue(n, s); }, s);
   }
 }
 
