@@ -28,7 +28,7 @@
   },
   "scripts": {
     "test-lib": "mocha",
-    "test": "eslint --fix lib/ test/ module/ && mocha -R dot test/*.js module/**/test/*.js",
+    "test": "eslint --fix lib/ test/ module/ && mocha test/*.js module/**/test/*.js",
     "docs": "documentation -f md lib/index.js > API.md",
     "perf": "./perf/run-benchmarks",
     "coverage": "istanbul cover _mocha -- -R spec",

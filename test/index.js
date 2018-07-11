@@ -279,19 +279,34 @@ describe('stream', function() {
     it('can create multi-level dependent streams inside a stream body', function() {
       var result = 0;
       var externalStream = stream(0);
+      function mapper(val) {
+        ++result;
+        return val + 1;
+      }
       stream(1).map(function() {
         externalStream
-          .map(function() {
-            result += 1;
-            return 0;
-          })
-          .map(function() {
-            result += 2;
-            return 0;
-          });
+          .map(mapper)
+          .map(mapper);
         return;
       });
-      assert.equal(result, 3);
+      assert.equal(result, 2);
+    });
+    it('can create multi-level dependent streams inside a stream body part 2', function() {
+      var result = '';
+      var externalStream = stream(0);
+      var theStream = stream(1);
+      function mapper(val) {
+        result += '' + val;
+        return val + 1;
+      }
+      theStream.map(function() {
+        externalStream
+          .map(mapper)
+          .map(mapper);
+        return;
+      });
+      theStream(1);
+      assert.equal(result, '0101');
     });
   });
 
@@ -1005,6 +1020,19 @@ describe('stream', function() {
       assert.deepEqual(result, [
         [], [1, 3, 2], [2, 8, 7, 6], [3, 5, 4]
       ]);
+    });
+    it('nested streams atomic update', function() {
+      var invocationCount = 0;
+      var mapper = function(val) {
+        invocationCount += 1;
+        return val + 1;
+      };
+      stream(1).map(function() {
+        stream(0)
+        .map(mapper)
+        .map(mapper);
+      });
+      assert.equal(invocationCount, 2);
     });
   });
 
