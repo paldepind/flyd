@@ -747,6 +747,7 @@ Modules listed with names in the format `flyd/module/filter` are builtin to the 
 | [**flyd-onAnimationFrame**](https://github.com/ThomWright/flyd-onAnimationFrame) | Emits values from a source stream on successive animation frames. |
 | [**flyd-timeInterval**](https://github.com/ThomWright/flyd-timeInterval) | Records the time interval between consecutive values emitted from a stream. |
 | [**flyd-debounceTime**](https://github.com/bertofer/flyd-debounceTime) | Like aftersilence, but only emits the latest value of the stream. |
+| [**flyd-group-within**](https://github.com/sourcevault/flyd-group-within) |  buffers values within x millisecond  |
 
 ## Misc
 
