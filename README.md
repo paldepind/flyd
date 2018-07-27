@@ -730,6 +730,7 @@ Modules listed with names in the format `flyd/module/filter` are builtin to the 
 | [**flyd-keyboard**](https://github.com/raine/flyd-keyboard) | Keyboard events as streams. |
 | [**flyd-glob**](https://github.com/StreetStrider/flyd-glob) | File glob and watch for Flyd. |
 | [**flyd-skip**](https://github.com/littlehaker/flyd-skip) | Skip function for flyd. |
+| [**flyd-until**](https://github.com/sourcevault/flyd-until) | only accept *n* event values - mirror function to `flyd-skip`. |
 | [**flyd-bufferCount**](https://github.com/bertofer/flyd-bufferCount) | Buffers the source stream and emits all values together. |
 | [**flyd-mergeAll (with high order streams)**](https://github.com/bertofer/flyd-mergeAll) | rxjs-like implementation of [mergeAll](http://reactivex.io/rxjs/class/es6/Observable.js~Observable.html#instance-method-mergeAll) for flyd. |
 | [**flyd-once**](https://github.com/bertofer/flyd-once) | Only emits the first value of the source stream. |
@@ -747,7 +748,7 @@ Modules listed with names in the format `flyd/module/filter` are builtin to the 
 | [**flyd-onAnimationFrame**](https://github.com/ThomWright/flyd-onAnimationFrame) | Emits values from a source stream on successive animation frames. |
 | [**flyd-timeInterval**](https://github.com/ThomWright/flyd-timeInterval) | Records the time interval between consecutive values emitted from a stream. |
 | [**flyd-debounceTime**](https://github.com/bertofer/flyd-debounceTime) | Like aftersilence, but only emits the latest value of the stream. |
-| [**flyd-group-within**](https://github.com/sourcevault/flyd-group-within) |  buffers values within x millisecond  |
+| [**flyd-group-within**](https://github.com/sourcevault/flyd-group-within) |  buffers values within x millisecond.  |
 
 ## Misc
 
