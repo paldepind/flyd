@@ -8,7 +8,8 @@
     "test": "test"
   },
   "dependencies": {
-    "ramda": "^0.25.0"
+    "ramda": "^0.25.0",
+    "whatwg-fetch": "^3.0.0"
   },
   "devDependencies": {
     "benchmark": "^1.0.0",
@@ -33,7 +34,7 @@
     "perf": "./perf/run-benchmarks",
     "coverage": "istanbul cover _mocha -- -R spec",
     "post-to-coveralls-io": "istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
-    "build": "rollup -c rollup.config.dev.js && rollup -c rollup.config.js",
+    "build": "rollup -c rollup.config.dev.js && rollup -c rollup.config.js && node ./build-examples.js",
     "release": "np"
   },
   "repository": {

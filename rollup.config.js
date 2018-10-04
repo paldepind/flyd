@@ -1,17 +1,15 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
 import uglify from 'rollup-plugin-uglify';
 
-export default {
-  input: './lib/index.js',
-  output: {
+import config from './rollup.config.base';
+
+config.plugins.push(uglify());
+
+config.input = './lib/index.js';
+
+config.output = {
     file: './flyd.min.js',
     name: 'flyd',
     format: 'umd'
-  },
-  plugins: [
-    resolve(),
-    commonjs(),
-    uglify()
-  ]
-};
+}
+
+export default config;

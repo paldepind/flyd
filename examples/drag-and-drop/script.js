@@ -1,5 +1,5 @@
-var flyd = require('flyd');
-var takeUntil = require('flyd/module/takeuntil');
+var flyd = require('../../lib');
+var takeUntil = require('../../module/takeuntil');
 
 document.addEventListener('DOMContentLoaded', function() {
   var dragElm = document.getElementById('drag');

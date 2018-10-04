@@ -1,15 +1,13 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 
-export default {
-  input: './lib/index.js',
-  output: {
+import config from './rollup.config.base';
+
+config.input = './lib/index.js';
+config.output = {
     file: './flyd.js',
     name: 'flyd',
     format: 'umd'
-  },
-  plugins: [
-    resolve(),
-    commonjs()
-  ]
-};
+}
+
+export default config;

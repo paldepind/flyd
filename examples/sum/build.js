@@ -1,4 +1,4 @@
-var multipleclicks = (function () {
+var sum = (function () {
 'use strict';
 
 function _arity(n, fn) {
@@ -994,36 +994,51 @@ StreamTransformer.prototype['@@transducer/step'] = function(s, v) { return v; };
 
 var lib = flyd;
 
-var aftersilence = lib.curryN(2, function(dur, s) {
-  var scheduled;
-  var buffer = [];
-  return lib.combine(function(s, self) {
-    buffer.push(s());
-    clearTimeout(scheduled);
-    scheduled = setTimeout(function() {
-      self(buffer);
-      buffer = [];
-    }, dur);
-  }, [s]);
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-  var btnElm = document.getElementById('btn');
-  var msgElm = document.getElementById('msg');
-
-  var clickStream = lib.stream();
-  btnElm.addEventListener('click', clickStream);
-
-  var groupedClicks = aftersilence(250, clickStream);
-  var nrStream = lib.map(function(clicks) { return clicks.length; }, groupedClicks);
-
-  lib.map(function(nr) {
-    msgElm.textContent = nr === 1 ? 'click' : nr + ' clicks';
-  }, nrStream);
-
-  lib.map(function(nr) {
-    msgElm.textContent = '';
-  }, aftersilence(1000, nrStream));
+var stream = lib.stream;
+var x, y; // Let x and y be globals
+document.addEventListener("DOMContentLoaded", function() {
+  var sumBox = document.getElementById("sumBox");
+  var xBox = document.getElementById("xBox");
+  var yBox = document.getElementById("yBox");
+  x = stream(10);
+  y = stream(20);
+  var sum = lib.combine(
+    function(x, y) {
+      return x() + y();
+    },
+    [x, y]
+  );
+  lib.map(function(sum) {
+    sumBox.innerHTML = sum;
+  }, sum);
+  lib.map(function(x) {
+    if (typeof x !== "number") {
+      // Use called x or y with invalid value
+      console.log("Numbers only, please!");
+    }
+    xBox.innerHTML = x;
+  }, x);
+  lib.map(function(y) {
+    if (typeof y !== "number") {
+      // Use called x or y with invalid value
+      console.log("Numbers only, please!");
+    }
+    yBox.innerHTML = y;
+  }, y);
+  // Do animations
+  function animate(s, elm) {
+    lib.map(function() {
+      elm.style.background = "black";
+      elm.style.color = "yellow";
+      setTimeout(function() {
+        elm.style.background = "#ececec";
+        elm.style.color = "black";
+      }, 220);
+    }, s);
+  }
+  animate(x, xBox);
+  animate(y, yBox);
+  animate(sum, sumBox);
 });
 
 var script = {

@@ -843,7 +843,7 @@ function updateStream(s) {
  * @param {stream} stream
  */
 function updateListeners(s) {
-  var i, o, list;;;
+  var i, o, list;
   var listeners = s.listeners;
   for (i = 0; i < listeners.length; ++i) {
     list = listeners[i];
