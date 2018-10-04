@@ -3,6 +3,8 @@
   "version": "0.2.8",
   "description": "The less is more, modular, functional reactive programming library",
   "main": "lib/index.js",
+  "module": "es/index.js",
+  "unpkg": "flyd.min.js",
   "directories": {
     "example": "examples",
     "test": "test"
@@ -24,6 +26,7 @@
     "rollup": "^0.56.2",
     "rollup-plugin-commonjs": "^8.3.0",
     "rollup-plugin-node-resolve": "^3.0.3",
+    "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-uglify": "^3.0.0",
     "transducers.js": "0.3.x"
   },
