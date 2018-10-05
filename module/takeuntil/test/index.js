@@ -38,4 +38,24 @@ describe('takeUntil', function() {
     assert.deepEqual(result, [1]);
     assert(s.end());
   });
+
+  it('works in nested streams', function() {
+    var source = stream(1);
+    var terminator = stream(true);
+
+    var value = stream(1).chain(function() {
+      return takeUntil(source, terminator);
+    })
+      .map(function(val) {
+        return val + 1;
+      });
+
+    source(2)(3)(4)(5);
+
+    terminator(true);
+
+    source(6)(7)(8)(9);
+
+    assert.equal(value(), 6);
+  })
 });
