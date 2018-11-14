@@ -93,8 +93,8 @@ declare module 'flyd' {
 
 declare module 'flyd/module/aftersilence' {
   interface aftersilence {
-    <T>(delay: number, stream: flyd.Stream<T>): flyd.Stream<T>;
-    <T>(delay: number): (stream: flyd.Stream<T>) => flyd.Stream<T>;
+    <T>(delay: number, stream: flyd.Stream<T>): flyd.Stream<T[]>;
+    <T>(delay: number): (stream: flyd.Stream<T>) => flyd.Stream<T[]>;
   }
   export = aftersilence;
 }
@@ -103,8 +103,8 @@ declare module 'flyd/module/droprepeats' {
     <T>(s: flyd.Stream<T>): flyd.Stream<T>;
   }
   interface dropRepeatsWith {
-    <T>(isEqual: (value: T) => boolean, stream: flyd.Stream<T>): flyd.Stream<T>;
-    <T>(isEqual: (value: T) => boolean): (stream: flyd.Stream<T>) => flyd.Stream<T>;
+    <T>(isEqual: (a: T, b: T) => boolean, stream: flyd.Stream<T>): flyd.Stream<T>;
+    <T>(isEqual: (a: T, b: T) => boolean): (stream: flyd.Stream<T>) => flyd.Stream<T>;
   }
 
   export const dropRepeats: dropRepeats;
