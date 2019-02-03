@@ -510,7 +510,7 @@ flyd.on(function(n) { console.log('numbers changed to', n); }, numbers);
 ### flyd.scan(fn, acc, stream)
 
 Creates a new stream with the results of calling the function on every incoming
-stream with and accumulator and the incoming value.
+stream with an accumulator and the incoming value.
 
 __Signature__
 
