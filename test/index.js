@@ -559,25 +559,38 @@ describe('stream', function() {
       s(1)(2)(3)(4)(5);
       assert.deepEqual(result, [1, 2, 3, 4, 5]);
     });
-    it('returns stream with result from all streams created by function', function() {
+    it('returns stream with result from all streams created by function', function(done) {
       var result = [];
+      function wait(ms) {
+        return new Promise(function(resolve) { setTimeout(resolve, ms); })
+      }
       function f(v) {
         var s = stream();
-        setImmediate(function() {
+        setTimeout(function() {
           s(v + 1)(v + 2)(v + 3);
         });
         return s;
       }
       var s = stream();
-      flyd.map(function(v) {
-        result.push(v);
-      }, flyd.chain(f, s));
-      s(1)(3)(5);
-      setImmediate(function() {
-        assert.deepEqual(result, [2, 3, 4,
-          4, 5, 6,
-          6, 7, 8]);
-      });
+      s.chain(f).map(result.push.bind(result));
+
+      function pushToStream(value) {
+        return function() {
+          s(value);
+          return wait(0);
+        };
+      }
+
+      pushToStream(1)()
+        .then(pushToStream(3))
+        .then(pushToStream(5))
+        .then(function() {
+          assert.deepEqual(result, [
+            2, 3, 4,
+            4, 5, 6,
+            6, 7, 8]);
+          done();
+        });
     });
     it('passed bug outlined in https://github.com/paldepind/flyd/issues/31', function(done) {
       function delay(val, ms) {
