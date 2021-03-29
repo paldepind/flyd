@@ -226,8 +226,8 @@ declare module 'flyd/module/switchlatest' {
 
 declare module 'flyd/module/takeuntil' {
   interface takeuntil {
-    <T, V>(source: flyd.Stream<T>, end: flyd.Stream<V>): flyd.Stream<T>;
-    <T>(source: flyd.Stream<T>): <V>(end: flyd.Stream<V>) => flyd.Stream<T>;
+    <T, V>(end: flyd.Stream<T>, src: flyd.Stream<V>): flyd.Stream<V>;
+    <T>(end: flyd.Stream<T>): <V>(src: flyd.Stream<V>) => flyd.Stream<V>;
   }
   const _takeuntil: takeuntil;
   export = _takeuntil;
