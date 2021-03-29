@@ -727,6 +727,18 @@ describe('stream', function() {
       assert(s1and2.end());
       assert.deepEqual(result, [12, 2, 4, 44, 1, 12, 2]);
     });
+    it('emmits all events from atomic update', function () {
+      var result = [];
+      var a = stream(1);
+      var b = stream([a], function() { return a() * 2; });
+      var c = stream([a], function() { return a() + 4; });
+      var d = flyd.merge(b, c);
+      stream([d], function () {
+        result.push(d());
+      });
+      a(2);
+      assert.deepEqual(result, [2, 5, 4, 6]);
+    });
   });
 
   describe('ap', function() {
