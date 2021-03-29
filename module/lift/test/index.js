@@ -29,4 +29,13 @@ describe('lift', function() {
     a(3); c(3);
     assert.equal(sum(), a() + b() + c() + d() + e());
   });
+  it('updates on undefined', function() {
+    var and = function(x, y) { return x && y; };
+    var x = stream(true);
+    var y = stream(true);
+    var s = lift(and, x, y);
+    assert.equal(s(), true);
+    x(undefined);
+    assert.equal(s(), undefined);
+  });
 });
