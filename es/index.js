@@ -1,6 +1,43 @@
-import curryN from 'ramda/es/curryN';
-
 // Utility
+var slice = Array.prototype.slice;
+var concat = Array.prototype.concat;
+
+// This syntax should work in modern ES, but the test runner has problems with it.
+// function curryN(n, func) {
+//   return (...args) => args.length >= n ?
+//          func(...args) :
+//          curryN(n - args.length, (...inner) => func(...args, ...inner));
+// }
+
+/**
+ * @function curryN
+ * @param {Integer} n
+ * @param {Function} func
+ * @returns {Function}
+ * @description Not entirely sure why dynamic currying was needed to begin with.
+ * Inside the library all of the functions are called with specific airity and the
+ * dynamic curry airity depth feature doesn't seem to be used anywhere. Regardless,
+ * this function is a drop in replacement for Ramda's curryN function which was
+ * previously being imported from the dependency, for backwards compatibility.
+ */
+function curryN(n, func) {
+  return function() {
+    var curargs = slice.call(arguments);
+
+    if (curargs.length >= n) {
+      return func.apply(null, curargs);
+    }
+
+    return curryN(n - curargs.length, function() {
+      return func.apply(null, concat.call(curargs, slice.call(arguments)));
+    });
+  }
+}
+
+function curry(func) {
+  return curryN(func.length, func);
+}
+
 function isFunction(obj) {
   return !!(obj && obj.constructor && obj.call && obj.apply);
 }
@@ -366,6 +403,7 @@ flyd.transduce = curryN(2, function(xform, source) {
  * a(2)(4) // => 6
  */
 flyd.curryN = curryN;
+flyd.curry = curry;
 
 /**
  * Returns a new stream identical to the original except every
