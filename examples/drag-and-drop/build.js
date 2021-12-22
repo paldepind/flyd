@@ -1,205 +1,46 @@
 var draganddrop = (function () {
 'use strict';
 
-function _arity(n, fn) {
-  /* eslint-disable no-unused-vars */
-  switch (n) {
-    case 0:
-      return function () {
-        return fn.apply(this, arguments);
-      };
-    case 1:
-      return function (a0) {
-        return fn.apply(this, arguments);
-      };
-    case 2:
-      return function (a0, a1) {
-        return fn.apply(this, arguments);
-      };
-    case 3:
-      return function (a0, a1, a2) {
-        return fn.apply(this, arguments);
-      };
-    case 4:
-      return function (a0, a1, a2, a3) {
-        return fn.apply(this, arguments);
-      };
-    case 5:
-      return function (a0, a1, a2, a3, a4) {
-        return fn.apply(this, arguments);
-      };
-    case 6:
-      return function (a0, a1, a2, a3, a4, a5) {
-        return fn.apply(this, arguments);
-      };
-    case 7:
-      return function (a0, a1, a2, a3, a4, a5, a6) {
-        return fn.apply(this, arguments);
-      };
-    case 8:
-      return function (a0, a1, a2, a3, a4, a5, a6, a7) {
-        return fn.apply(this, arguments);
-      };
-    case 9:
-      return function (a0, a1, a2, a3, a4, a5, a6, a7, a8) {
-        return fn.apply(this, arguments);
-      };
-    case 10:
-      return function (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) {
-        return fn.apply(this, arguments);
-      };
-    default:
-      throw new Error('First argument to _arity must be a non-negative integer no greater than ten');
-  }
-}
-var _arity_1 = _arity;
-
-function _isPlaceholder(a) {
-       return a != null && typeof a === 'object' && a['@@functional/placeholder'] === true;
-}
-var _isPlaceholder_1 = _isPlaceholder;
-
-/**
- * Optimized internal one-arity curry function.
- *
- * @private
- * @category Function
- * @param {Function} fn The function to curry.
- * @return {Function} The curried function.
- */
-
-
-function _curry1(fn) {
-  return function f1(a) {
-    if (arguments.length === 0 || _isPlaceholder_1(a)) {
-      return f1;
-    } else {
-      return fn.apply(this, arguments);
-    }
-  };
-}
-var _curry1_1 = _curry1;
-
-/**
- * Optimized internal two-arity curry function.
- *
- * @private
- * @category Function
- * @param {Function} fn The function to curry.
- * @return {Function} The curried function.
- */
-
-
-function _curry2(fn) {
-  return function f2(a, b) {
-    switch (arguments.length) {
-      case 0:
-        return f2;
-      case 1:
-        return _isPlaceholder_1(a) ? f2 : _curry1_1(function (_b) {
-          return fn(a, _b);
-        });
-      default:
-        return _isPlaceholder_1(a) && _isPlaceholder_1(b) ? f2 : _isPlaceholder_1(a) ? _curry1_1(function (_a) {
-          return fn(_a, b);
-        }) : _isPlaceholder_1(b) ? _curry1_1(function (_b) {
-          return fn(a, _b);
-        }) : fn(a, b);
-    }
-  };
-}
-var _curry2_1 = _curry2;
-
-/**
- * Internal curryN function.
- *
- * @private
- * @category Function
- * @param {Number} length The arity of the curried function.
- * @param {Array} received An array of arguments received thus far.
- * @param {Function} fn The function to curry.
- * @return {Function} The curried function.
- */
-
-
-function _curryN(length, received, fn) {
-  return function () {
-    var combined = [];
-    var argsIdx = 0;
-    var left = length;
-    var combinedIdx = 0;
-    while (combinedIdx < received.length || argsIdx < arguments.length) {
-      var result;
-      if (combinedIdx < received.length && (!_isPlaceholder_1(received[combinedIdx]) || argsIdx >= arguments.length)) {
-        result = received[combinedIdx];
-      } else {
-        result = arguments[argsIdx];
-        argsIdx += 1;
-      }
-      combined[combinedIdx] = result;
-      if (!_isPlaceholder_1(result)) {
-        left -= 1;
-      }
-      combinedIdx += 1;
-    }
-    return left <= 0 ? fn.apply(this, combined) : _arity_1(left, _curryN(length, combined, fn));
-  };
-}
-var _curryN_1 = _curryN;
-
-/**
- * Returns a curried equivalent of the provided function, with the specified
- * arity. The curried function has two unusual capabilities. First, its
- * arguments needn't be provided one at a time. If `g` is `R.curryN(3, f)`, the
- * following are equivalent:
- *
- *   - `g(1)(2)(3)`
- *   - `g(1)(2, 3)`
- *   - `g(1, 2)(3)`
- *   - `g(1, 2, 3)`
- *
- * Secondly, the special placeholder value [`R.__`](#__) may be used to specify
- * "gaps", allowing partial application of any combination of arguments,
- * regardless of their positions. If `g` is as above and `_` is [`R.__`](#__),
- * the following are equivalent:
- *
- *   - `g(1, 2, 3)`
- *   - `g(_, 2, 3)(1)`
- *   - `g(_, _, 3)(1)(2)`
- *   - `g(_, _, 3)(1, 2)`
- *   - `g(_, 2)(1)(3)`
- *   - `g(_, 2)(1, 3)`
- *   - `g(_, 2)(_, 3)(1)`
- *
- * @func
- * @memberOf R
- * @since v0.5.0
- * @category Function
- * @sig Number -> (* -> a) -> (* -> a)
- * @param {Number} length The arity for the returned function.
- * @param {Function} fn The function to curry.
- * @return {Function} A new, curried function.
- * @see R.curry
- * @example
- *
- *      var sumArgs = (...args) => R.sum(args);
- *
- *      var curriedAddFourNumbers = R.curryN(4, sumArgs);
- *      var f = curriedAddFourNumbers(1, 2);
- *      var g = f(3);
- *      g(4); //=> 10
- */
-
-
-var curryN = /*#__PURE__*/_curry2_1(function curryN(length, fn) {
-  if (length === 1) {
-    return _curry1_1(fn);
-  }
-  return _arity_1(length, _curryN_1(length, [], fn));
-});
-var curryN_1 = curryN;
-
 // Utility
+var slice = Array.prototype.slice;
+var concat = Array.prototype.concat;
+
+// This syntax should work in modern ES, but the test runner has problems with it.
+// function curryN(n, func) {
+//   return (...args) => args.length >= n ?
+//          func(...args) :
+//          curryN(n - args.length, (...inner) => func(...args, ...inner));
+// }
+
+/**
+ * @function curryN
+ * @param {Integer} n
+ * @param {Function} func
+ * @returns {Function}
+ * @description Not entirely sure why dynamic currying was needed to begin with.
+ * Inside the library all of the functions are called with specific airity and the
+ * dynamic curry airity depth feature doesn't seem to be used anywhere. Regardless,
+ * this function is a drop in replacement for Ramda's curryN function which was
+ * previously being imported from the dependency, for backwards compatibility.
+ */
+function curryN(n, func) {
+  return function() {
+    var curargs = slice.call(arguments);
+
+    if (curargs.length >= n) {
+      return func.apply(null, curargs);
+    }
+
+    return curryN(n - curargs.length, function() {
+      return func.apply(null, concat.call(curargs, slice.call(arguments)));
+    });
+  }
+}
+
+function curry(func) {
+  return curryN(func.length, func);
+}
+
 function isFunction(obj) {
   return !!(obj && obj.constructor && obj.call && obj.apply);
 }
@@ -266,7 +107,7 @@ flyd.stream['fantasy-land/of'] = flyd.stream.of = flyd.stream;
  *   return n1() > n2() ? n1() : n2();
  * }, [n1, n2]);
  */
-flyd.combine = curryN_1(2, combine);
+flyd.combine = curryN(2, combine);
 function combine(fn, streams) {
   var i, s, deps, depEndStreams;
   var endStream = createDependentStream([], trueFn);
@@ -386,7 +227,7 @@ flyd.endsOn = function(endS, s) {
 function map(f, s) {
   return combine(function(s, self) { self(f(s.val)); }, [s]);
 }
-flyd.map = curryN_1(2, map);
+flyd.map = curryN(2, map);
 
 /**
  * Chain a stream
@@ -409,7 +250,7 @@ flyd.map = curryN_1(2, map);
  *   return flyd.stream(findUsers(filter));
  * }, filter);
  */
-flyd.chain = curryN_1(2, chain);
+flyd.chain = curryN(2, chain);
 
 /**
  * Apply a stream
@@ -435,7 +276,7 @@ flyd.chain = curryN_1(2, chain);
  *   .pipe(ap(n2));
  * added_pipe() // 3
  */
-flyd.ap = curryN_1(2, ap);
+flyd.ap = curryN(2, ap);
 
 /**
  * Listen to stream events
@@ -451,7 +292,7 @@ flyd.ap = curryN_1(2, ap);
  * @param {stream} stream - the stream
  * @return {stream} an empty stream (can be ended)
  */
-flyd.on = curryN_1(2, function(f, s) {
+flyd.on = curryN(2, function(f, s) {
   return combine(function(s) { f(s.val); }, [s]);
 });
 
@@ -473,7 +314,7 @@ flyd.on = curryN_1(2, function(f, s) {
  * numbers(2)(3)(5);
  * sum(); // 10
  */
-flyd.scan = curryN_1(3, function(f, acc, s) {
+flyd.scan = curryN(3, function(f, acc, s) {
   var ns = combine(function(s, self) {
     self(acc = f(acc, s.val));
   }, [s]);
@@ -499,7 +340,7 @@ flyd.scan = curryN_1(3, function(f, acc, s) {
  * button2Elm.addEventListener(btn2Clicks);
  * var allClicks = flyd.merge(btn1Clicks, btn2Clicks);
  */
-flyd.merge = curryN_1(2, function(s1, s2) {
+flyd.merge = curryN(2, function(s1, s2) {
   var s = flyd.immediate(combine(function(s1, s2, self, changed) {
     if (changed[0]) {
       self(changed[0]());
@@ -536,7 +377,7 @@ flyd.merge = curryN_1(2, function(s1, s2) {
  * s1(1)(1)(2)(3)(3)(3)(4);
  * results; // => [2, 4, 6, 8]
  */
-flyd.transduce = curryN_1(2, function(xform, source) {
+flyd.transduce = curryN(2, function(xform, source) {
   xform = xform(new StreamTransformer());
   return combine(function(source, self) {
     var res = xform['@@transducer/step'](undefined, source.val);
@@ -564,7 +405,8 @@ flyd.transduce = curryN_1(2, function(xform, source) {
  * var a = flyd.curryN(2, add);
  * a(2)(4) // => 6
  */
-flyd.curryN = curryN_1;
+flyd.curryN = curryN;
+flyd.curry = curry;
 
 /**
  * Returns a new stream identical to the original except every
